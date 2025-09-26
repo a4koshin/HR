@@ -1,0 +1,28 @@
+# ignore node_modules bothe client and server   
+client/node_modules
+server/node_modules
+node_modules/
+
+#ignore enviroment files inside both client and server
+client/.env
+server/.env
+.env
+
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build outputs
+client/dist/
+server/dist/
+dist/
+build/
