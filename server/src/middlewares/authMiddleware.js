@@ -50,3 +50,11 @@ export const protectHR = async (req, res, next) => {
     res.status(401).json({ success: false, message: "Invalid token" });
   }
 };
+
+// inside middlewares/authMiddleware.js
+export const adminOnly = (req, res, next) => {
+  if (req.user && req.user.role === "Admin") {
+    return next();
+  }
+  return res.status(403).json({ message: "Access denied. Admin only." });
+};

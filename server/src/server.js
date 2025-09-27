@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import { connectDB } from "./config/db.js";
 import userRouter from "./routes/userRoute.js";
 import departmentRouter from "./routes/departmentRoute.js";
-import EmployeeRouter from "./routes/employeeRoute.js";
+import employeeRouter from "./routes/employeeRoute.js";
 // dotenv
 dotenv.config();
 const app = express();
@@ -15,8 +15,11 @@ const port = process.env.PORT || 3001;
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+
 //ROutes
 app.use("/api/auth", userRouter);
+app.use("/api/departments", departmentRouter);
+app.use("/api/employees", employeeRouter);
 
 // Databse config
 connectDB().then(() => {

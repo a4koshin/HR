@@ -6,20 +6,21 @@ import {
   updateDepartment,
   deleteDepartment,
 } from "../controllers/departmentController.js";
-import { protectHR } from "../middlewares/authMiddleware.js";
+import { protectHR, adminOnly } from "../middlewares/authMiddleware.js";
 
 const departmentRouter = express.Router();
 
-// Protect all department routes → Only HR/Admin can manage departments
+// All routes require HR/Admin access
 departmentRouter.use(protectHR);
 
-// Create and getting the depts
+// HR/Admin can create, list, view, update
 departmentRouter.post("/", createDepartment);
 departmentRouter.get("/", getDepartments);
-
-// department by ID
 departmentRouter.get("/:id", getDepartment);
 departmentRouter.put("/:id", updateDepartment);
-departmentRouter.delete("/:id", deleteDepartment);
+
+// Only Admin can delete department
+
+departmentRouter.delete("/:id", adminOnly, deleteDepartment);
 
 export default departmentRouter;
