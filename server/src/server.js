@@ -6,6 +6,7 @@ import { connectDB } from "./config/db.js";
 import userRouter from "./routes/userRoute.js";
 import departmentRouter from "./routes/departmentRoute.js";
 import employeeRouter from "./routes/employeeRoute.js";
+import attendanceRouter from "./routes/attendanceRoute.js";
 // dotenv
 dotenv.config();
 const app = express();
@@ -20,6 +21,7 @@ app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use("/api/auth", userRouter);
 app.use("/api/departments", departmentRouter);
 app.use("/api/employees", employeeRouter);
+app.use("/api/attendance", attendanceRouter);
 
 // Databse config
 connectDB().then(() => {
