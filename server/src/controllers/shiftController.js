@@ -1,21 +1,10 @@
-import Shift from "../models/shiftModel.js";
+import Shift from "../models/shift.js";
 
-// ---------------- Create Shift ----------------
-export const createShift = async (req, res) => {
-  try {
-    const { name, startTime, endTime, assignedEmployees } = req.body;
-
-    const shift = await Shift.create({
-      name,
-      startTime,
-      endTime,
-      assignedEmployees,
-    });
-
-    res.status(201).json({ success: true, shift });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+// toTal hours calculations
+const CalculateHours = (startTime, endTime) => {
+  const diffs = new Date(endTime) - new Date(startTime);
+  const hours = diffs / (1000 * 60 * 60);
+  return Number(hours.toFixed(2));
 };
 
 // ---------------- Get All Shifts ----------------
@@ -25,7 +14,16 @@ export const getShifts = async (req, res) => {
       "assignedEmployees",
       "fullname email role"
     );
-    res.status(200).json({ success: true, count: shifts.length, shifts });
+
+    // Calculate total hours for each shift
+    const totalShiftHours = shifts.map((shift) => ({
+      ...shift.toObject(),
+      totalHours: CalculateHours(shift.startTime, shift.endTime),
+    }));
+
+    res
+      .status(200)
+      .json({ success: true, count: shifts.length, shifts: totalShiftHours });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -39,13 +37,36 @@ export const getShiftById = async (req, res) => {
       "fullname email role"
     );
 
+    // Calculate total hours for each shift
+    const totalShiftHour = shift.map((shift) => ({
+      ...shift.toObject(),
+      totalHours: CalculateHours(shift.startTime, shift.endTime),
+    }));
+
     if (!shift) {
       return res
         .status(404)
         .json({ success: false, message: "Shift not found" });
     }
 
-    res.status(200).json({ success: true, shift });
+    res.status(200).json({ success: true, shift: totalShiftHour });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+// ---------------- Create Shift ----------------
+export const createShift = async (req, res) => {
+  try {
+    const { name, startTime, endTime, assignedEmployees } = req.body;
+
+    const shift = await Shift.create({
+      name,
+      startTime,
+      endTime,
+      assignedEmployees,
+    });
+
+    res.status(201).json({ success: true, shift });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
