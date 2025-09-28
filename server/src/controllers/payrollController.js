@@ -1,4 +1,4 @@
-import Payroll from "../models/Payroll.js";
+import Payroll from "../models/payroll.js";
 import { payrollValidation } from "../validation/payrollValidation.js";
 import { calculatePayroll } from "../helpers/payrollHelper.js";
 
@@ -19,7 +19,12 @@ export const createPayroll = async (req, res) => {
       paymentMethod,
     } = req.body;
 
-    const { overtimePay, grossPay, netPay } = calculatePayroll({ basicSalary, overtimeHours, overtimeRate, deduction });
+    const { overtimePay, grossPay, netPay } = calculatePayroll({
+      basicSalary,
+      overtimeHours,
+      overtimeRate,
+      deduction,
+    });
 
     const payroll = await Payroll.create({
       employee,
@@ -44,7 +49,10 @@ export const createPayroll = async (req, res) => {
 // GET all payrolls
 export const getPayrolls = async (req, res) => {
   try {
-    const payrolls = await Payroll.find().populate("employee", "fullname email role");
+    const payrolls = await Payroll.find().populate(
+      "employee",
+      "fullname email role"
+    );
     res.json({ success: true, payrolls });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -54,8 +62,14 @@ export const getPayrolls = async (req, res) => {
 // GET single payroll by ID
 export const getPayrollById = async (req, res) => {
   try {
-    const payroll = await Payroll.findById(req.params.id).populate("employee", "fullname email role");
-    if (!payroll) return res.status(404).json({ success: false, message: "Payroll not found" });
+    const payroll = await Payroll.findById(req.params.id).populate(
+      "employee",
+      "fullname email role"
+    );
+    if (!payroll)
+      return res
+        .status(404)
+        .json({ success: false, message: "Payroll not found" });
 
     res.json({ success: true, payroll });
   } catch (error) {
@@ -70,7 +84,10 @@ export const updatePayroll = async (req, res) => {
 
   try {
     const payroll = await Payroll.findById(req.params.id);
-    if (!payroll) return res.status(404).json({ success: false, message: "Payroll not found" });
+    if (!payroll)
+      return res
+        .status(404)
+        .json({ success: false, message: "Payroll not found" });
 
     const {
       basicSalary = payroll.basicSalary,
@@ -83,7 +100,12 @@ export const updatePayroll = async (req, res) => {
       paymentMethod = payroll.paymentMethod,
     } = req.body;
 
-    const { overtimePay, grossPay, netPay } = calculatePayroll({ basicSalary, overtimeHours, overtimeRate, deduction });
+    const { overtimePay, grossPay, netPay } = calculatePayroll({
+      basicSalary,
+      overtimeHours,
+      overtimeRate,
+      deduction,
+    });
 
     const updatedPayroll = await Payroll.findByIdAndUpdate(
       req.params.id,
@@ -113,7 +135,10 @@ export const updatePayroll = async (req, res) => {
 export const deletePayroll = async (req, res) => {
   try {
     const payroll = await Payroll.findById(req.params.id);
-    if (!payroll) return res.status(404).json({ success: false, message: "Payroll not found" });
+    if (!payroll)
+      return res
+        .status(404)
+        .json({ success: false, message: "Payroll not found" });
 
     await payroll.deleteOne();
     res.json({ success: true, message: "Payroll deleted successfully" });
