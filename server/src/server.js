@@ -8,9 +8,9 @@ import departmentRouter from "./routes/departmentRoute.js";
 import employeeRouter from "./routes/employeeRoute.js";
 import attendanceRouter from "./routes/attendanceRoute.js";
 import shiftRouter from "./routes/shiftRoute.js";
-import payrollRouter from "./routes/payrollRoute.js"
-import leaveRouter from "./routes/leaveRoute.js"
-import trainingRouter from "./routes/trainingRoute.js"
+import payrollRouter from "./routes/payrollRoute.js";
+import leaveRouter from "./routes/leaveRoute.js";
+import trainingRouter from "./routes/trainingRoute.js";
 // dotenv
 dotenv.config();
 const app = express();
@@ -19,7 +19,7 @@ const port = process.env.PORT || 3001;
 // middleware
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 
 //ROutes
 app.use("/api/auth", userRouter);
@@ -27,9 +27,9 @@ app.use("/api/departments", departmentRouter);
 app.use("/api/employees", employeeRouter);
 app.use("/api/attendance", attendanceRouter);
 app.use("/api/shifts", shiftRouter);
-app.use("/api/payrolls",payrollRouter)
-app.use("/api/leaves",leaveRouter)
-app.use("/api/trainings",trainingRouter)
+app.use("/api/payrolls", payrollRouter);
+app.use("/api/leaves", leaveRouter);
+app.use("/api/trainings", trainingRouter);
 
 // Databse config
 connectDB().then(() => {
