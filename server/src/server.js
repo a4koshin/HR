@@ -8,6 +8,7 @@ import departmentRouter from "./routes/departmentRoute.js";
 import employeeRouter from "./routes/employeeRoute.js";
 import attendanceRouter from "./routes/attendanceRoute.js";
 import shiftRouter from "./routes/shiftRoute.js";
+import payrollRouter from "./routes/payrollRoute.js"
 // dotenv
 dotenv.config();
 const app = express();
@@ -24,6 +25,7 @@ app.use("/api/departments", departmentRouter);
 app.use("/api/employees", employeeRouter);
 app.use("/api/attendance", attendanceRouter);
 app.use("/api/shifts", shiftRouter);
+app.use("/api/payrolls",payrollRouter)
 
 // Databse config
 connectDB().then(() => {
