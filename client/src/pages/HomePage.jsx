@@ -7,11 +7,6 @@ const HomePage = () => {
     <>
       <header className="flex justify-around items-center px-8 py-4 shadow">
         <div className="flex items-center gap-3">
-          <img
-            src="./logo.svg"
-            alt="Task Management Logo"
-            className="w-12 h-12"
-          />
           <span className="text-2xl font-semibold text-blue-700">
             HR Management
           </span>

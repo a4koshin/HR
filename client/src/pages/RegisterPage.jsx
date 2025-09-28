@@ -31,7 +31,7 @@ const RegisterPage = () => {
 
     try {
       await register({ name, email, role, password });
-      toast.success("Signup successful! Please login to continue");
+      // toast.success("Signup successful! Please login to continue");
       setTimeout(() => navigate("/login"), 1500);
 
       setName("");

@@ -33,11 +33,7 @@ const LoginPage = () => {
       setName(response.user.name); // updated fullname -> name
       setAuthEmail(response.user.email);
 
-      toast.success("Login successful!");
-
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 1500);
+      navigate("/dashboard");
 
       setEmail("");
       setPassword("");
