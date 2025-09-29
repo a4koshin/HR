@@ -11,6 +11,9 @@ import shiftRouter from "./routes/shiftRoute.js";
 import payrollRouter from "./routes/payrollRoute.js";
 import leaveRouter from "./routes/leaveRoute.js";
 import trainingRouter from "./routes/trainingRoute.js";
+import enumRoutes from "./routes/enumRoutes.js";
+
+
 // dotenv
 dotenv.config();
 const app = express();
@@ -42,6 +45,7 @@ app.use("/api/shifts", shiftRouter);
 app.use("/api/payrolls", payrollRouter);
 app.use("/api/leaves", leaveRouter);
 app.use("/api/trainings", trainingRouter);
+app.use("/api/enums", enumRoutes);
 
 // Databse config
 connectDB().then(() => {
