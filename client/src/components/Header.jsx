@@ -1,7 +1,9 @@
 import React from "react";
 import { Menu, Bell, User, Search, LogOut } from "lucide-react";
-
+import { useAuth } from "../context/AuthProvider"; 
 const Header = ({ onToggleSidebar, onLogout }) => {
+   const {name,role} = useAuth()
+
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
       <div className="flex items-center justify-between px-6 py-4">
@@ -34,9 +36,9 @@ const Header = ({ onToggleSidebar, onLogout }) => {
           <div className="flex items-center space-x-3">
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900">
-                Dr. Sarah Johnson
+               {name}
               </p>
-              <p className="text-xs text-gray-500">HR Administrator</p>
+              <p className="text-xs text-gray-500">{role} Administrator</p>
             </div>
             <div className="relative group">
               <button className="flex items-center space-x-1 p-2 rounded-lg hover:bg-gray-100">

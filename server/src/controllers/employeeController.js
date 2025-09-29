@@ -191,3 +191,16 @@ export const deleteEmployee = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+
+// get employee enums
+
+
+// controllers/enumController.js
+export const getEmployeeEnums = (req, res) => {
+  res.json({
+    contractType: ["Permanent", "Contract", "Internship"],
+    shiftType: ["Day", "Night", "Both"],
+    status: ["Active", "Inactive"],
+  });
+};

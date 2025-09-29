@@ -1,19 +1,22 @@
 import React from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthProvider";
 import ProtectedLayout from "../layouts/Layout";
-const PrivateRoute = ({ children }) => {
+
+const PrivateRoute = () => {
   const { isAuthenticated, loadingAuth } = useAuth();
 
   if (loadingAuth) {
-    return <div>Loading...</div>;
+    return <div>Loading...</div>; 
   }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" />;
   }
 
-  return <ProtectedLayout>{children}</ProtectedLayout>;
+  return <ProtectedLayout><Outlet /></ProtectedLayout>;
 };
 
+
 export default PrivateRoute;
+

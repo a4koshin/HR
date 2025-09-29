@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { menuItems } from "../constants/data";
+import { navigation } from "../constants/data";
 import { Activity } from "lucide-react";
 
 const Sidebar = ({ collapsed }) => {
@@ -27,7 +27,7 @@ const Sidebar = ({ collapsed }) => {
       </div>
 
       <nav className="mt-6">
-        {menuItems.map((item) => {
+        {navigation.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
 
@@ -42,10 +42,10 @@ const Sidebar = ({ collapsed }) => {
               } ${collapsed ? "relative" : ""}`}
             >
               <Icon className={`h-5 w-5 ${collapsed ? "" : "mr-3"}`} />
-              {!collapsed && <span className="font-medium">{item.label}</span>}
+              {!collapsed && <span className="font-medium">{item.name}</span>}
               {collapsed && (
                 <div className="absolute left-16 bg-gray-800 text-white px-2 py-1 rounded text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                  {item.label}
+                  {item.name}
                 </div>
               )}
             </Link>

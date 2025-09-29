@@ -14,22 +14,6 @@ const employeeSchema = new mongoose.Schema(
     phone: { type: String, required: true, unique: true, trim: true },
     address: { type: String, required: true, trim: true },
 
-    role: {
-      type: String,
-      enum: [
-        "Doctor",
-        "Nurse",
-        "Receptionist",
-        "Lab Staff",
-        "Pharmacist",
-        "Accountant",
-        "Cleaners",
-        "IT-staff",
-        "Security",
-      ],
-      required: true,
-    },
-
     // Department (relation)
     department: {
       type: mongoose.Schema.Types.ObjectId,
