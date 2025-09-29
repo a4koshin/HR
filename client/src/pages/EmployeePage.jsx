@@ -1,6 +1,11 @@
-// EmployeePage.js
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import {
+  getEmployees,
+  getDepartments,
+  createEmployee,
+  updateEmployee,
+  deleteEmployee,
+} from '../services/employeeService.';
 
 const EmployeePage = () => {
   const [employees, setEmployees] = useState([]);
@@ -27,24 +32,6 @@ const EmployeePage = () => {
     document: ''
   });
 
-  // API base URL - adjust according to your environment
-  const API_BASE_URL = 'http://localhost:3000/api';
-
-  // Axios instance with credentials
-  const api = axios.create({
-    baseURL: API_BASE_URL,
-    withCredentials: true,
-  });
-
-  // Add request interceptor to include auth token if needed
-  api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('authToken'); // Adjust based on your auth storage
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  });
-
   // Fetch employees and departments
   useEffect(() => {
     fetchEmployees();
@@ -54,10 +41,10 @@ const EmployeePage = () => {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/employees');
-      setEmployees(response.data.employees);
-    } catch (error) {
-      console.error('Error fetching employees:', error);
+      const employeesData = await getEmployees();
+      setEmployees(employeesData);
+    } catch (err) {
+      console.error('Error fetching employees:', err);
       setError('Failed to fetch employees');
     } finally {
       setLoading(false);
@@ -66,20 +53,17 @@ const EmployeePage = () => {
 
   const fetchDepartments = async () => {
     try {
-      const response = await api.get('/departments');
-      setDepartments(response.data.departments || []);
-    } catch (error) {
-      console.error('Error fetching departments:', error);
+      const departmentsData = await getDepartments();
+      setDepartments(departmentsData);
+    } catch (err) {
+      console.error('Error fetching departments:', err);
       setError('Failed to fetch departments');
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -90,24 +74,20 @@ const EmployeePage = () => {
 
     try {
       if (editingEmployee) {
-        // Update existing employee
-        const response = await api.put(`/employees/${editingEmployee._id}`, formData);
-        setEmployees(employees.map(emp => 
-          emp._id === editingEmployee._id ? response.data.employee : emp
-        ));
+        const updated = await updateEmployee(editingEmployee._id, formData);
+        setEmployees(employees.map(emp => emp._id === updated._id ? updated : emp));
         setSuccess('Employee updated successfully!');
       } else {
-        // Add new employee
-        const response = await api.post('/employees', formData);
-        setEmployees([...employees, response.data.employee]);
+        const created = await createEmployee(formData);
+        setEmployees([...employees, created]);
         setSuccess('Employee created successfully!');
       }
-      
+
       resetForm();
       setIsModalOpen(false);
-    } catch (error) {
-      console.error('Error saving employee:', error);
-      setError(error.response?.data?.message || 'Failed to save employee');
+    } catch (err) {
+      console.error('Error saving employee:', err);
+      setError(err.response?.data?.message || 'Failed to save employee');
     } finally {
       setLoading(false);
     }
@@ -134,18 +114,16 @@ const EmployeePage = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this employee?')) {
-      return;
-    }
+    if (!window.confirm('Are you sure you want to delete this employee?')) return;
 
     try {
       setLoading(true);
-      await api.delete(`/employees/${id}`);
+      await deleteEmployee(id);
       setEmployees(employees.filter(emp => emp._id !== id));
       setSuccess('Employee deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting employee:', error);
-      setError(error.response?.data?.message || 'Failed to delete employee');
+    } catch (err) {
+      console.error('Error deleting employee:', err);
+      setError(err.response?.data?.message || 'Failed to delete employee');
     } finally {
       setLoading(false);
     }
@@ -183,14 +161,7 @@ const EmployeePage = () => {
   };
 
   // Role options based on your schema
-  const roleOptions = [
-    "Doctor", "Nurse", "Receptionist", "Lab Staff", "Pharmacist", 
-    "Accountant", "Cleaners", "IT-staff", "Security"
-  ];
-
-  const contractTypeOptions = ["Permanent", "Contract", "Internship"];
-  const shiftTypeOptions = ["Day", "Night", "Both"];
-  const statusOptions = ["Active", "Inactive"];
+ 
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
