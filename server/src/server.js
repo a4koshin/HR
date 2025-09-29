@@ -15,11 +15,23 @@ import trainingRouter from "./routes/trainingRoute.js";
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 3001;
+const allowedOrigins = ["http://localhost:5173", "https://hrrm.vercel.app"];
+
+
 
 // middleware
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(cors({
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
+}));
 
 //ROutes
 app.use("/api/auth", userRouter);
