@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 
 export const login = async (email, password) => {
   try {
-    const response = await axiosInstance.post("/api/auth/login", {
+    const response = await axiosInstance.post("/auth/login", {
       email,
       password,
     });
@@ -15,6 +15,7 @@ export const login = async (email, password) => {
 
     toast.success("Login successful");
     return response.data;
+    console.log(response.data)
   } catch (err) {
     console.error("Login failed:", err);
     toast.error("Login failed. Please check your credentials.");
