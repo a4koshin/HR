@@ -26,16 +26,6 @@ const AuthProvider = ({ children }) => {
     setLoadingAuth(false); // done checking
   }, []);
 
-  const logOut = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setName("");
-    setEmail("");
-    setRole("");
-    setIsAuthenticated(false);
-    navigate("/login");
-  };
-
   return (
     <AuthContext.Provider
       value={{
@@ -47,7 +37,8 @@ const AuthProvider = ({ children }) => {
         setRole,
         isAuthenticated,
         setIsAuthenticated,
-        logOut,
+
+        navigate,
         loadingAuth,
         setLoadingAuth,
       }}

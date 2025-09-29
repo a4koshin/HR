@@ -7,7 +7,7 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import EmployeePage from "./pages/EmployeePage";
-import AttendancePage from "./pages/attendancePage";
+import AttendancePage from "./pages/AttendancePage";
 import PayrollPage from "./pages/PayrollPage";
 import RecruitmentPage from "./pages/RecruitmentPage";
 import TrainingPage from "./pages/TrainingPage";

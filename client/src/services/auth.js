@@ -15,7 +15,6 @@ export const login = async (email, password) => {
 
     toast.success("Login successful");
     return response.data;
-    console.log(response.data)
   } catch (err) {
     console.error("Login failed:", err);
     toast.error("Login failed. Please check your credentials.");

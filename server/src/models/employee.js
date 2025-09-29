@@ -33,12 +33,13 @@ const employeeSchema = new mongoose.Schema(
     shiftType: { type: String, enum: ["Day", "Night", "Both"], required: true },
     status: { type: String, enum: ["Active", "Inactive"], default: "Active" },
 
-    // Misc contract file, certificate
-    document: { type: String },
+    // // Misc contract file, certificate
+    // document: { type: String },
   },
   { timestamps: true }
 );
 
-const Employee =  mongoose.models.Employee || mongoose.model("Employee", employeeSchema);
+const Employee =
+  mongoose.models.Employee || mongoose.model("Employee", employeeSchema);
 
 export default Employee;

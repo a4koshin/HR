@@ -9,7 +9,6 @@ export const createEmployee = async (req, res) => {
       email,
       phone,
       address,
-      role,
       department,
       position,
       hireDate,
@@ -17,19 +16,10 @@ export const createEmployee = async (req, res) => {
       salary,
       shiftType,
       status,
-      document,
     } = req.body;
 
     // Required fields check
-    if (
-      !fullname ||
-      !email ||
-      !phone ||
-      !address ||
-      !role ||
-      !department ||
-      !position
-    ) {
+    if (!fullname || !email || !phone || !address || !department || !position) {
       return res.status(400).json({
         success: false,
         message: "All required fields must be provided",
@@ -61,7 +51,6 @@ export const createEmployee = async (req, res) => {
       email,
       phone,
       address,
-      role,
       department,
       position,
       hireDate,
@@ -69,10 +58,14 @@ export const createEmployee = async (req, res) => {
       salary,
       shiftType,
       status,
-      document,
     });
 
-    res.status(201).json({ success: true, employee });
+    // Populate department before sending response
+    const populatedEmployee = await Employee.findById(employee._id).populate(
+      "department",
+      "name status"
+    );
+    res.status(201).json({ success: true, employee: populatedEmployee });
   } catch (error) {
     console.error("Error in createEmployee:", error);
     res
@@ -192,11 +185,7 @@ export const deleteEmployee = async (req, res) => {
   }
 };
 
-
-// get employee enums
-
-
-// controllers/enumController.js
+// enum
 export const getEmployeeEnums = (req, res) => {
   res.json({
     contractType: ["Permanent", "Contract", "Internship"],

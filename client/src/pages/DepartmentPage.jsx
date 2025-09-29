@@ -1,28 +1,28 @@
 // src/pages/DepartmentPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   getDepartments,
   createDepartment,
   updateDepartment,
   deleteDepartment,
-} from '../services/departmentService';
-import { Building, Plus, Edit, Trash2 } from 'lucide-react';
+} from "../services/departmentService";
+import { Building, Plus, Edit, Trash2 } from "lucide-react";
 
 const DepartmentPage = () => {
   const [departments, setDepartments] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    status: 'Active',
-    manager: '',
-    contactEmail: '',
-    contactPhone: ''
+    name: "",
+    description: "",
+    status: "Active",
+    manager: "",
+    contactEmail: "",
+    contactPhone: "",
   });
 
   // Fetch all departments
@@ -36,8 +36,8 @@ const DepartmentPage = () => {
       const data = await getDepartments();
       setDepartments(data.departments || data);
     } catch (err) {
-      console.error('Error fetching departments:', err);
-      setError('Failed to fetch departments');
+      console.error("Error fetching departments:", err);
+      setError("Failed to fetch departments");
     } finally {
       setLoading(false);
     }
@@ -51,8 +51,8 @@ const DepartmentPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     try {
       if (editingDepartment) {
@@ -60,17 +60,17 @@ const DepartmentPage = () => {
         setDepartments(
           departments.map((d) => (d._id === updated._id ? updated : d))
         );
-        setSuccess('Department updated successfully!');
+        setSuccess("Department updated successfully!");
       } else {
         const created = await createDepartment(formData);
         setDepartments([...departments, created]);
-        setSuccess('Department created successfully!');
+        setSuccess("Department created successfully!");
       }
       resetForm();
       setIsModalOpen(false);
     } catch (err) {
-      console.error('Error saving department:', err);
-      setError(err.response?.data?.message || 'Failed to save department');
+      console.error("Error saving department:", err);
+      setError(err.response?.data?.message || "Failed to save department");
     } finally {
       setLoading(false);
     }
@@ -80,17 +80,21 @@ const DepartmentPage = () => {
     setEditingDepartment(department);
     setFormData({
       name: department.name,
-      description: department.description || '',
+      description: department.description || "",
       status: department.status,
-      manager: department.manager || '',
-      contactEmail: department.contactEmail || '',
-      contactPhone: department.contactPhone || ''
+      manager: department.manager || "",
+      contactEmail: department.contactEmail || "",
+      contactPhone: department.contactPhone || "",
     });
     setIsModalOpen(true);
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this department? This action cannot be undone.')) {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this department? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
@@ -98,14 +102,20 @@ const DepartmentPage = () => {
       setLoading(true);
       await deleteDepartment(id);
       setDepartments(departments.filter((d) => d._id !== id));
-      setSuccess('Department deleted successfully!');
+      setSuccess("Department deleted successfully!");
     } catch (err) {
-      console.error('Error deleting department:', err);
-      const errorMessage = err.response?.data?.message || 'Failed to delete department';
-      
+      console.error("Error deleting department:", err);
+      const errorMessage =
+        err.response?.data?.message || "Failed to delete department";
+
       // Check if it's a foreign key constraint error
-      if (errorMessage.includes('employees') || errorMessage.includes('associated')) {
-        setError('Cannot delete department. There are employees assigned to this department. Please reassign them first.');
+      if (
+        errorMessage.includes("employees") ||
+        errorMessage.includes("associated")
+      ) {
+        setError(
+          "Cannot delete department. There are employees assigned to this department. Please reassign them first."
+        );
       } else {
         setError(errorMessage);
       }
@@ -116,16 +126,16 @@ const DepartmentPage = () => {
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      description: '',
-      status: 'Active',
-      manager: '',
-      contactEmail: '',
-      contactPhone: ''
+      name: "",
+      description: "",
+      status: "Active",
+      manager: "",
+      contactEmail: "",
+      contactPhone: "",
     });
     setEditingDepartment(null);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
   };
 
   const openAddModal = () => {
@@ -139,7 +149,7 @@ const DepartmentPage = () => {
   };
 
   const getStatusBadge = (status) => {
-    if (status === 'Active') {
+    if (status === "Active") {
       return "px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800";
     } else {
       return "px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800";
@@ -152,20 +162,23 @@ const DepartmentPage = () => {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between gap-3">
-              <div>
-              <h1 className="text-3xl font-bold text-gray-900">Department Management</h1>
-              <p className="text-gray-600 mt-2">Manage organizational departments and teams</p>
-              </div>
-              
-              <button
-            onClick={openAddModal}
-            disabled={loading}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-semibold transition duration-200"
-          >
-            <Plus className="h-5 w-5" />
-            {loading ? 'Loading...' : 'Add New Department'}
-          </button>
-            
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Department Management
+              </h1>
+              <p className="text-gray-600 mt-2">
+                Manage organizational departments and teams
+              </p>
+            </div>
+
+            <button
+              onClick={openAddModal}
+              disabled={loading}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-semibold transition duration-200"
+            >
+              <Plus className="h-5 w-5" />
+              {loading ? "Loading..." : "Add New Department"}
+            </button>
           </div>
         </div>
 
@@ -182,9 +195,7 @@ const DepartmentPage = () => {
         )}
 
         {/* Add Department Button */}
-        <div className="mb-6">
-          
-        </div>
+        <div className="mb-6"></div>
 
         {/* Departments Table */}
         {loading && departments.length === 0 ? (
@@ -201,7 +212,7 @@ const DepartmentPage = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Department
                     </th>
-                   
+
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
@@ -228,14 +239,16 @@ const DepartmentPage = () => {
                           )}
                         </div>
                       </td>
-                    
+
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={getStatusBadge(department.status)}>
                           {department.status}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {department.createdAt ? new Date(department.createdAt).toLocaleDateString() : 'N/A'}
+                        {department.createdAt
+                          ? new Date(department.createdAt).toLocaleDateString()
+                          : "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
@@ -265,15 +278,12 @@ const DepartmentPage = () => {
         {!loading && departments.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-400 text-6xl mb-4">🏢</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No departments found</h3>
-            <p className="text-gray-500 mb-4">Get started by creating your first department.</p>
-            <button
-              onClick={openAddModal}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold"
-            >
-              <Plus className="h-4 w-4" />
-              Add Department
-            </button>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No departments found
+            </h3>
+            <p className="text-gray-500 mb-4">
+              Get started by creating your first department.
+            </p>
           </div>
         )}
       </div>
@@ -286,10 +296,10 @@ const DepartmentPage = () => {
               <div className="flex items-center gap-3 mb-4">
                 <Building className="h-6 w-6 text-blue-600" />
                 <h2 className="text-xl font-bold">
-                  {editingDepartment ? 'Edit Department' : 'Add New Department'}
+                  {editingDepartment ? "Edit Department" : "Add New Department"}
                 </h2>
               </div>
-              
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -336,7 +346,11 @@ const DepartmentPage = () => {
                     disabled={loading}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400 font-medium"
                   >
-                    {loading ? 'Saving...' : (editingDepartment ? 'Update Department' : 'Add Department')}
+                    {loading
+                      ? "Saving..."
+                      : editingDepartment
+                      ? "Update Department"
+                      : "Add Department"}
                   </button>
                 </div>
               </form>

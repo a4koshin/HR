@@ -1,17 +1,17 @@
-import api from './axiosInstance'; 
+import api from "./axiosInstance";
 
 export const getEmployees = async () => {
-  const res = await api.get('/employees'); 
+  const res = await api.get("/employees");
   return res.data.employees;
 };
 
 export const getDepartments = async () => {
-  const res = await api.get('/departments');
+  const res = await api.get("/departments");
   return res.data.departments || [];
 };
 
 export const createEmployee = async (employeeData) => {
-  const res = await api.post('/employees', employeeData);
+  const res = await api.post("/employees", employeeData);
   return res.data.employee;
 };
 
@@ -22,4 +22,9 @@ export const updateEmployee = async (id, employeeData) => {
 
 export const deleteEmployee = async (id) => {
   await api.delete(`/employees/${id}`);
+};
+
+export const getEmployeeEnums = async () => {
+  const res = await api.get("/employees/enums");
+  return res.data;
 };

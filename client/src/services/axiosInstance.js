@@ -1,7 +1,7 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE_URL = import.meta.env.PROD 
-  ? import.meta.env.VITE_RENDER_URL   // production
+const API_BASE_URL = import.meta.env.PROD
+  ? import.meta.env.VITE_RENDER_URL // production
   : import.meta.env.VITE_BACKEND_URL; // development
 
 if (!API_BASE_URL) {
@@ -14,7 +14,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem("authToken");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });

@@ -1,10 +1,11 @@
 import express from "express";
 import {
   createAttendance,
-  getAttendance,
+  getAttendances,
   getAttendanceById,
   updateAttendance,
   deleteAttendance,
+  markAttendance,
 } from "../controllers/attendanceController.js";
 
 import { protectHR, adminOnly } from "../middlewares/authMiddleware.js";
@@ -16,10 +17,10 @@ attendanceRouter.use(protectHR);
 
 // HR/Admin can create, view, update
 attendanceRouter.post("/", createAttendance);
-attendanceRouter.get("/", getAttendance);
+attendanceRouter.get("/", getAttendances);
+attendanceRouter.post("/mark", markAttendance);
 attendanceRouter.get("/:id", getAttendanceById);
 attendanceRouter.put("/:id", updateAttendance);
-
 // Only Admin can delete
 attendanceRouter.delete("/:id", adminOnly, deleteAttendance);
 

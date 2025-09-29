@@ -1,15 +1,14 @@
-// src/services/departmentService.js
-import api from './axiosInstance';
+import api from "./axiosInstance";
 
 // Get all departments
 export const getDepartments = async () => {
-  const res = await api.get('/departments');
+  const res = await api.get("/departments");
   return res.data.departments || [];
 };
 
 // Create department
 export const createDepartment = async (departmentData) => {
-  const res = await api.post('/departments', departmentData);
+  const res = await api.post("/departments", departmentData);
   return res.data.department;
 };
 
