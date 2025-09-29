@@ -164,12 +164,21 @@ const EmployeePage = () => {
  
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Employee Management</h1>
-          <p className="text-gray-600 mt-2">Manage your hospital staff efficiently</p>
+        <div className="mb-8 flex items-center justify-between">
+        <div>
+        <h1 className="text-3xl font-bold text-gray-900">Employee Management</h1>
+        <p className="text-gray-600 mt-2">Manage your hospital staff efficiently</p>
+        </div>
+          <button
+            onClick={openAddModal}
+            disabled={loading}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-semibold transition duration-200"
+          >
+            {loading ? 'Loading...' : '+ Add New Employee'}
+          </button>
         </div>
 
         {/* Notifications */}
@@ -184,17 +193,7 @@ const EmployeePage = () => {
           </div>
         )}
 
-        {/* Add Employee Button */}
-        <div className="mb-6">
-          <button
-            onClick={openAddModal}
-            disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-semibold transition duration-200"
-          >
-            {loading ? 'Loading...' : '+ Add New Employee'}
-          </button>
-        </div>
-
+      
         {/* Employees Table */}
         {loading && employees.length === 0 ? (
           <div className="text-center py-12">
