@@ -30,3 +30,8 @@ export const markBulkAttendance = async (bulkData) => {
   const response = await api.post("/attendance/mark", bulkData);
   return response.data;
 };
+
+export const getAttendanceEnums = async () => {
+  const res = await api.get("/attendance/enums");
+  return res.data;
+};

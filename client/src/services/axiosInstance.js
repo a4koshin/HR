@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_BASE_URL = import.meta.env.PROD
-  ? import.meta.env.VITE_RENDER_URL // production
+  ? import.meta.env.VITE_API_URL // production
   : import.meta.env.VITE_BACKEND_URL; // development
 
 if (!API_BASE_URL) {

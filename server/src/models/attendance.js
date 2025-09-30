@@ -1,5 +1,7 @@
-// models/attendance.js
 import mongoose from "mongoose";
+
+// Utility function to normalize date (always midnight)
+const normalizeDate = (d) => new Date(new Date(d).setHours(0, 0, 0, 0));
 
 const attendanceSchema = new mongoose.Schema(
   {
@@ -11,6 +13,7 @@ const attendanceSchema = new mongoose.Schema(
     date: {
       type: Date,
       required: true,
+      set: normalizeDate,
     },
     checkIn: {
       type: Date,
@@ -28,46 +31,20 @@ const attendanceSchema = new mongoose.Schema(
       enum: ["Present", "Absent", "Late", "Half-day"],
       default: "Absent",
     },
+    workedHours: {
+      type: Number, // you can let HR/Admin enter this manually
+      default: 0,
+    },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// Virtual field → workedHours
-attendanceSchema.virtual("workedHours").get(function () {
-  if (this.checkIn && this.checkOut) {
-    const diffMs = this.checkOut - this.checkIn;
-    const diffHours = diffMs / (1000 * 60 * 60);
-    return Math.round(diffHours * 100) / 100;
-  }
-  return 0;
-});
-
-// Middleware to automatically set status based on checkIn/checkOut
-attendanceSchema.pre("save", function (next) {
-  if (this.checkIn && this.checkOut) {
-    this.status = "Present";
-
-    // Calculate if it's half-day (less than 4 hours)
-    const workedHours = (this.checkOut - this.checkIn) / (1000 * 60 * 60);
-    if (workedHours < 4) {
-      this.status = "Half-day";
-    }
-
-    // You can add late calculation logic here based on shift timing
-  } else if (this.checkIn && !this.checkOut) {
-    this.status = "Present";
-  } else {
-    this.status = "Absent";
-  }
-  next();
-});
+// Remove virtuals and middleware — everything is entered manually
 
 attendanceSchema.set("toJSON", { virtuals: true });
 attendanceSchema.set("toObject", { virtuals: true });
 
-// Compound index to prevent duplicate attendance records
+// Compound index (no duplicate per employee/date/shift)
 attendanceSchema.index({ employee: 1, date: 1, shift: 1 }, { unique: true });
 
 export default mongoose.model("Attendance", attendanceSchema);

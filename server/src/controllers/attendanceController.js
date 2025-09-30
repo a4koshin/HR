@@ -1,6 +1,24 @@
-// controllers/attendanceController.js
 import Attendance from "../models/attendance.js";
 import Shift from "../models/shift.js";
+
+// Utility to normalize date
+const normalizeDate = (d) => new Date(new Date(d).setHours(0, 0, 0, 0));
+
+// Utility to calculate worked hours (handles overnight shifts)
+const calculateWorkedHours = (checkIn, checkOut) => {
+  if (!checkIn || !checkOut) return 0;
+
+  let inTime = new Date(checkIn);
+  let outTime = new Date(checkOut);
+
+  // Overnight shift: add 1 day to outTime if before inTime
+  if (outTime < inTime) {
+    outTime.setDate(outTime.getDate() + 1);
+  }
+
+  const diffMs = outTime - inTime;
+  return parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2)); // hours with 2 decimals
+};
 
 // Get all attendances
 export const getAttendances = async (req, res) => {
@@ -42,9 +60,8 @@ export const getAttendanceById = async (req, res) => {
 // Create attendance
 export const createAttendance = async (req, res) => {
   try {
-    const { employee, date, checkIn, checkOut, shift } = req.body;
+    const { employee, date, checkIn, checkOut, shift, status } = req.body;
 
-    // Validate required fields
     if (!employee || !date || !shift) {
       return res.status(400).json({
         success: false,
@@ -52,10 +69,9 @@ export const createAttendance = async (req, res) => {
       });
     }
 
-    // Check if attendance already exists for this employee, date, and shift
     const existingAttendance = await Attendance.findOne({
       employee,
-      date: new Date(date),
+      date: normalizeDate(date),
       shift,
     });
 
@@ -69,15 +85,21 @@ export const createAttendance = async (req, res) => {
 
     const attendanceData = {
       employee,
-      date: new Date(date),
+      date: normalizeDate(date),
       shift,
+      status: status || "Absent",
+      checkIn: checkIn ? new Date(checkIn) : null,
+      checkOut: checkOut ? new Date(checkOut) : null,
     };
 
-    // Only add checkIn/checkOut if provided
-    if (checkIn) attendanceData.checkIn = new Date(checkIn);
-    if (checkOut) attendanceData.checkOut = new Date(checkOut);
+    // Calculate worked hours
+    attendanceData.workedHours = calculateWorkedHours(
+      attendanceData.checkIn,
+      attendanceData.checkOut
+    );
 
-    const attendance = await Attendance.create(attendanceData);
+    const attendance = new Attendance(attendanceData);
+    await attendance.save();
 
     const populatedAttendance = await Attendance.findById(attendance._id)
       .populate("employee", "fullname email position department")
@@ -103,45 +125,39 @@ export const createAttendance = async (req, res) => {
 // Update attendance
 export const updateAttendance = async (req, res) => {
   try {
-    const { checkIn, checkOut, ...otherData } = req.body;
-
-    const updateData = { ...otherData };
-
-    if (req.body.date) {
-      updateData.date = new Date(req.body.date);
-    }
-    if (checkIn) {
-      updateData.checkIn = new Date(checkIn);
-    } else {
-      updateData.checkIn = null;
-    }
-    if (checkOut) {
-      updateData.checkOut = new Date(checkOut);
-    } else {
-      updateData.checkOut = null;
-    }
-
-    const attendance = await Attendance.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      {
-        new: true,
-        runValidators: true,
-      }
-    )
-      .populate("employee", "fullname email position department")
-      .populate("shift", "name startTime endTime");
-
+    const attendance = await Attendance.findById(req.params.id);
     if (!attendance) {
       return res
         .status(404)
         .json({ success: false, message: "Attendance record not found" });
     }
 
+    const { date, checkIn, checkOut, shift, status } = req.body;
+
+    if (date) attendance.date = normalizeDate(date);
+    if (checkIn !== undefined)
+      attendance.checkIn = checkIn ? new Date(checkIn) : null;
+    if (checkOut !== undefined)
+      attendance.checkOut = checkOut ? new Date(checkOut) : null;
+    if (shift) attendance.shift = shift;
+    if (status) attendance.status = status;
+
+    // Recalculate worked hours
+    attendance.workedHours = calculateWorkedHours(
+      attendance.checkIn,
+      attendance.checkOut
+    );
+
+    await attendance.save();
+
+    const populatedAttendance = await Attendance.findById(attendance._id)
+      .populate("employee", "fullname email position department")
+      .populate("shift", "name startTime endTime");
+
     res.status(200).json({
       success: true,
       message: "Attendance record updated successfully",
-      data: attendance,
+      data: populatedAttendance,
     });
   } catch (error) {
     if (error.code === 11000) {
@@ -174,12 +190,12 @@ export const deleteAttendance = async (req, res) => {
   }
 };
 
-// Mark attendance (bulk operation)
+// Bulk mark attendance
 export const markAttendance = async (req, res) => {
   try {
     const { date, shift, attendances } = req.body;
 
-    if (!date || !shift || !attendances || !Array.isArray(attendances)) {
+    if (!date || !shift || !Array.isArray(attendances)) {
       return res.status(400).json({
         success: false,
         message: "Date, shift, and attendances array are required",
@@ -191,47 +207,57 @@ export const markAttendance = async (req, res) => {
 
     for (const att of attendances) {
       try {
-        const attendanceData = {
+        let attendance = await Attendance.findOne({
           employee: att.employeeId,
-          date: new Date(date),
-          shift: shift,
-          status: att.status || "Absent",
-        };
-
-        if (att.checkIn) attendanceData.checkIn = new Date(att.checkIn);
-        if (att.checkOut) attendanceData.checkOut = new Date(att.checkOut);
-
-        // Use upsert to create or update
-        const attendance = await Attendance.findOneAndUpdate(
-          {
-            employee: att.employeeId,
-            date: new Date(date),
-            shift: shift,
-          },
-          attendanceData,
-          {
-            new: true,
-            upsert: true,
-            runValidators: true,
-          }
-        ).populate("employee", "fullname email position department");
-
-        results.push(attendance);
-      } catch (error) {
-        errors.push({
-          employeeId: att.employeeId,
-          error: error.message,
+          date: normalizeDate(date),
+          shift,
         });
+
+        if (!attendance) {
+          attendance = new Attendance({
+            employee: att.employeeId,
+            date: normalizeDate(date),
+            shift,
+          });
+        }
+
+        if (att.checkIn) attendance.checkIn = new Date(att.checkIn);
+        if (att.checkOut) attendance.checkOut = new Date(att.checkOut);
+        if (att.status) attendance.status = att.status; // manual input
+
+        // Recalculate worked hours
+        attendance.workedHours = calculateWorkedHours(
+          attendance.checkIn,
+          attendance.checkOut
+        );
+
+        await attendance.save();
+
+        const populated = await Attendance.findById(attendance._id).populate(
+          "employee",
+          "fullname email position department"
+        );
+
+        results.push(populated);
+      } catch (error) {
+        errors.push({ employeeId: att.employeeId, error: error.message });
       }
     }
 
     res.status(200).json({
       success: true,
-      message: `Attendance marked for ${results.length} employees`,
+      message: `Attendance processed for ${results.length} employees`,
       data: results,
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
+};
+
+// Get attendance enums
+export const getAttendanceEnums = (req, res) => {
+  res.status(200).json({
+    status: ["Present", "Absent"],
+  });
 };

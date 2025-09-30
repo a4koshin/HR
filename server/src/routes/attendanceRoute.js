@@ -2,6 +2,7 @@ import express from "express";
 import {
   createAttendance,
   getAttendances,
+  getAttendanceEnums,
   getAttendanceById,
   updateAttendance,
   deleteAttendance,
@@ -18,6 +19,7 @@ attendanceRouter.use(protectHR);
 // HR/Admin can create, view, update
 attendanceRouter.post("/", createAttendance);
 attendanceRouter.get("/", getAttendances);
+attendanceRouter.get("/enums", getAttendanceEnums);
 attendanceRouter.post("/mark", markAttendance);
 attendanceRouter.get("/:id", getAttendanceById);
 attendanceRouter.put("/:id", updateAttendance);
