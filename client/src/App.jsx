@@ -13,6 +13,8 @@ import RecruitmentPage from "./pages/RecruitmentPage";
 import TrainingPage from "./pages/TrainingPage";
 import DocumentsPage from "./pages/DocumentsPage";
 import DepartmentPage from "./pages/DepartmentPage";
+import ShiftsPage from "./pages/ShiftsPage";
+import LeavePage from "./pages/LeavePage";
 
 const App = () => {
   return (
@@ -29,11 +31,13 @@ const App = () => {
         <Route element={<PrivateRoute />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/employees" element={<EmployeePage />} />
+          <Route path="/shifts" element={<ShiftsPage />} />
           <Route path="/departments" element={<DepartmentPage />} />
           <Route path="/attendance" element={<AttendancePage />} />
           <Route path="/payroll" element={<PayrollPage />} />
           <Route path="/recruitment" element={<RecruitmentPage />} />
           <Route path="/training" element={<TrainingPage />} />
+          <Route path="/leave" element={<LeavePage />} />
           <Route path="/documents" element={<DocumentsPage />} />
         </Route>
       </Routes>

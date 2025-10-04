@@ -30,7 +30,7 @@ const employeeSchema = new mongoose.Schema(
       required: true,
     },
     salary: { type: Number, required: true },
-    shiftType: { type: String, enum: ["Day", "Night", "Both"], required: true },
+    shiftType: { type: String, enum: ["Day", "Night"], required: true },
     status: { type: String, enum: ["Active", "Inactive"], default: "Active" },
 
     // // Misc contract file, certificate

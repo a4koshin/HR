@@ -21,13 +21,13 @@ const payrollSchema = new mongoose.Schema(
     paySlipUrl: { type: String },
     paidStatus: {
       type: String,
-      enum: ["Paid", "Unpaid", "Pending"],
+      enum: ["Paid", "Unpaid"],
       default: "Unpaid",
     },
     paymentDate: { type: Date },
     paymentMethod: {
       type: String,
-      enum: ["Bank Transfer", "Cash", "Cheque"],
+      enum: ["Bank Transfer", "Cash"],
       default: "Bank Transfer",
     },
   },

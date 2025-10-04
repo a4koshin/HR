@@ -1,21 +1,22 @@
-// src/pages/DepartmentPage.jsx
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import {
-  getDepartments,
-  createDepartment,
-  updateDepartment,
-  deleteDepartment,
-} from "../services/departmentService";
-import { Building, Plus, Edit, Trash2 } from "lucide-react";
+  fetchDepartments,
+  createDepartmentAsync,
+  updateDepartmentAsync,
+  deleteDepartmentAsync,
+} from "../slices/departmentSlice";
+import { Building, Plus } from "lucide-react";
+import { TailSpin } from "react-loader-spinner";
 
 const DepartmentPage = () => {
-  const [departments, setDepartments] = useState([]);
+  const dispatch = useDispatch();
+  const { departments, fetchLoading, actionLoading, error } = useSelector(
+    (state) => state.department
+  );
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -25,23 +26,9 @@ const DepartmentPage = () => {
     contactPhone: "",
   });
 
-  // Fetch all departments
   useEffect(() => {
-    fetchDepartments();
-  }, []);
-
-  const fetchDepartments = async () => {
-    try {
-      setLoading(true);
-      const data = await getDepartments();
-      setDepartments(data.departments || data);
-    } catch (err) {
-      console.error("Error fetching departments:", err);
-      setError("Failed to fetch departments");
-    } finally {
-      setLoading(false);
-    }
-  };
+    dispatch(fetchDepartments());
+  }, [dispatch]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -50,29 +37,17 @@ const DepartmentPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-    setSuccess("");
-
     try {
       if (editingDepartment) {
-        const updated = await updateDepartment(editingDepartment._id, formData);
-        setDepartments(
-          departments.map((d) => (d._id === updated._id ? updated : d))
-        );
-        setSuccess("Department updated successfully!");
+        await dispatch(
+          updateDepartmentAsync({ id: editingDepartment._id, data: formData })
+        ).unwrap();
       } else {
-        const created = await createDepartment(formData);
-        setDepartments([...departments, created]);
-        setSuccess("Department created successfully!");
+        await dispatch(createDepartmentAsync(formData)).unwrap();
       }
-      resetForm();
-      setIsModalOpen(false);
+      closeModal();
     } catch (err) {
       console.error("Error saving department:", err);
-      setError(err.response?.data?.message || "Failed to save department");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -90,37 +65,13 @@ const DepartmentPage = () => {
   };
 
   const handleDelete = async (id) => {
-    if (
-      !window.confirm(
-        "Are you sure you want to delete this department? This action cannot be undone."
-      )
-    ) {
+    if (!window.confirm("Are you sure you want to delete this department?"))
       return;
-    }
-
     try {
-      setLoading(true);
-      await deleteDepartment(id);
-      setDepartments(departments.filter((d) => d._id !== id));
-      setSuccess("Department deleted successfully!");
+      await dispatch(deleteDepartmentAsync(id)).unwrap();
     } catch (err) {
       console.error("Error deleting department:", err);
-      const errorMessage =
-        err.response?.data?.message || "Failed to delete department";
-
-      // Check if it's a foreign key constraint error
-      if (
-        errorMessage.includes("employees") ||
-        errorMessage.includes("associated")
-      ) {
-        setError(
-          "Cannot delete department. There are employees assigned to this department. Please reassign them first."
-        );
-      } else {
-        setError(errorMessage);
-      }
-    } finally {
-      setLoading(false);
+      alert(err);
     }
   };
 
@@ -134,8 +85,6 @@ const DepartmentPage = () => {
       contactPhone: "",
     });
     setEditingDepartment(null);
-    setError("");
-    setSuccess("");
   };
 
   const openAddModal = () => {
@@ -148,38 +97,39 @@ const DepartmentPage = () => {
     resetForm();
   };
 
-  const getStatusBadge = (status) => {
-    if (status === "Active") {
-      return "px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800";
-    } else {
-      return "px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800";
-    }
-  };
+  const getStatusBadge = (status) =>
+    status === "Active"
+      ? "px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
+      : "px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800";
 
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Department Management
-              </h1>
-              <p className="text-gray-600 mt-2">
-                Manage organizational departments and teams
-              </p>
-            </div>
-
-            <button
-              onClick={openAddModal}
-              disabled={loading}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-semibold transition duration-200"
-            >
-              <Plus className="h-5 w-5" />
-              {loading ? "Loading..." : "Add New Department"}
-            </button>
+        <div className="mb-8 flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Department Management
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Manage organizational departments and teams
+            </p>
           </div>
+          <button
+            onClick={openAddModal}
+            disabled={actionLoading}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-semibold transition duration-200"
+          >
+            <Plus className="h-5 w-5" />
+            {actionLoading ? (
+              <div className="flex items-center gap-2">
+                <TailSpin height={20} width={20} color="#FFFFFF" />
+                Loading...
+              </div>
+            ) : (
+              "Add New Department"
+            )}
+          </button>
         </div>
 
         {/* Notifications */}
@@ -188,20 +138,29 @@ const DepartmentPage = () => {
             {error}
           </div>
         )}
-        {success && (
-          <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
-            {success}
-          </div>
-        )}
-
-        {/* Add Department Button */}
-        <div className="mb-6"></div>
 
         {/* Departments Table */}
-        {loading && departments.length === 0 ? (
+        {fetchLoading ? (
+          <div className="text-center py-12 text-gray-500 bg-white rounded-lg shadow">
+            <div className="flex justify-center mb-4">
+              <TailSpin
+                height={40}
+                width={40}
+                color="#2563EB"
+                ariaLabel="loading"
+              />
+            </div>
+            Loading departments...
+          </div>
+        ) : departments.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">⏳</div>
-            <p className="text-gray-500">Loading departments...</p>
+            <div className="text-gray-400 text-6xl mb-4">🏢</div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No departments found
+            </h3>
+            <p className="text-gray-500 mb-4">
+              Get started by creating your first department.
+            </p>
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -212,7 +171,6 @@ const DepartmentPage = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Department
                     </th>
-
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
@@ -239,7 +197,6 @@ const DepartmentPage = () => {
                           )}
                         </div>
                       </td>
-
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={getStatusBadge(department.status)}>
                           {department.status}
@@ -253,16 +210,22 @@ const DepartmentPage = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
                           onClick={() => handleEdit(department)}
-                          disabled={loading}
-                          className="text-indigo-600 hover:text-indigo-900 mr-4 disabled:text-gray-400"
+                          disabled={actionLoading}
+                          className="text-indigo-600 hover:text-indigo-900 mr-4 disabled:text-gray-400 flex items-center gap-1"
                         >
+                          {actionLoading && (
+                            <TailSpin height={16} width={16} color="#4F46E5" />
+                          )}
                           Edit
                         </button>
                         <button
                           onClick={() => handleDelete(department._id)}
-                          disabled={loading}
-                          className="text-red-600 hover:text-red-900 disabled:text-gray-400"
+                          disabled={actionLoading}
+                          className="text-red-600 hover:text-red-900 disabled:text-gray-400 flex items-center gap-1"
                         >
+                          {actionLoading && (
+                            <TailSpin height={16} width={16} color="#DC2626" />
+                          )}
                           Delete
                         </button>
                       </td>
@@ -271,19 +234,6 @@ const DepartmentPage = () => {
                 </tbody>
               </table>
             </div>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!loading && departments.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">🏢</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No departments found
-            </h3>
-            <p className="text-gray-500 mb-4">
-              Get started by creating your first department.
-            </p>
           </div>
         )}
       </div>
@@ -336,21 +286,26 @@ const DepartmentPage = () => {
                   <button
                     type="button"
                     onClick={closeModal}
-                    disabled={loading}
+                    disabled={actionLoading}
                     className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium disabled:text-gray-400"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    disabled={loading}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400 font-medium"
+                    disabled={actionLoading}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400 font-medium"
                   >
-                    {loading
-                      ? "Saving..."
-                      : editingDepartment
-                      ? "Update Department"
-                      : "Add Department"}
+                    {actionLoading ? (
+                      <>
+                        <TailSpin height={20} width={20} color="#FFFFFF" />
+                        {editingDepartment ? "Updating..." : "Saving..."}
+                      </>
+                    ) : editingDepartment ? (
+                      "Update Department"
+                    ) : (
+                      "Add Department"
+                    )}
                   </button>
                 </div>
               </form>

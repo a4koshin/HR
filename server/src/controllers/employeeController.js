@@ -189,7 +189,7 @@ export const deleteEmployee = async (req, res) => {
 export const getEmployeeEnums = (req, res) => {
   res.json({
     contractType: ["Permanent", "Contract", "Internship"],
-    shiftType: ["Day", "Night", "Both"],
+    shiftType: ["Day", "Night"],
     status: ["Active", "Inactive"],
   });
 };

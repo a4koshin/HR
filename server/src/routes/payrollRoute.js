@@ -2,6 +2,7 @@ import express from "express";
 import {
   createPayroll,
   getPayrolls,
+  getPayrollEnums,
   getPayrollById,
   updatePayroll,
   deletePayroll,
@@ -15,16 +16,14 @@ const payrollRouter = express.Router();
 
 payrollRouter.use(protectHR);
 
-// HR/Admin 
+// HR/Admin
 payrollRouter.get("/", getPayrolls);
+payrollRouter.get("/enums", getPayrollEnums);
 payrollRouter.get("/:id", getPayrollById);
-
-
 
 // Only Admin
 payrollRouter.post("/", adminOnly, createPayroll);
 payrollRouter.put("/:id", adminOnly, updatePayroll);
 payrollRouter.delete("/:id", adminOnly, deletePayroll);
-
 
 export default payrollRouter;

@@ -31,3 +31,8 @@ export const getEmployees = async () => {
   const response = await api.get("/employees");
   return response.data.employees || [];
 };
+
+export const getPayrollEnums = async () => {
+  const res = await api.get("/payrolls/enums");
+  return res.data;
+};

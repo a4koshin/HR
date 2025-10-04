@@ -58,6 +58,7 @@ export const getAttendanceById = async (req, res) => {
 };
 
 // Create attendance
+// Create attendance
 export const createAttendance = async (req, res) => {
   try {
     const { employee, date, checkIn, checkOut, shift, status } = req.body;
@@ -69,9 +70,18 @@ export const createAttendance = async (req, res) => {
       });
     }
 
+    // Normalize the date safely
+    const normalizedDate = new Date(date);
+    if (isNaN(normalizedDate)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid date format",
+      });
+    }
+
     const existingAttendance = await Attendance.findOne({
       employee,
-      date: normalizeDate(date),
+      date: normalizedDate.toISOString().split("T")[0], // compare by YYYY-MM-DD
       shift,
     });
 
@@ -85,7 +95,7 @@ export const createAttendance = async (req, res) => {
 
     const attendanceData = {
       employee,
-      date: normalizeDate(date),
+      date: normalizedDate,
       shift,
       status: status || "Absent",
       checkIn: checkIn ? new Date(checkIn) : null,
@@ -98,9 +108,11 @@ export const createAttendance = async (req, res) => {
       attendanceData.checkOut
     );
 
+    // Save
     const attendance = new Attendance(attendanceData);
     await attendance.save();
 
+    // Re-fetch with populate so frontend gets full object
     const populatedAttendance = await Attendance.findById(attendance._id)
       .populate("employee", "fullname email position department")
       .populate("shift", "name startTime endTime");

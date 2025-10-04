@@ -146,3 +146,10 @@ export const deletePayroll = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const getPayrollEnums = (req, res) => {
+  res.status(200).json({
+    paidStatus: ["Paid", "Unpaid"],
+    paymentMethod: ["Bank Transfer", "Cash"],
+  });
+};

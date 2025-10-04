@@ -1,20 +1,27 @@
 import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
-  getAttendances,
-  createAttendance,
-  updateAttendance,
-  getAttendanceEnums,
-  deleteAttendance,
-} from "../services/attendanceService";
-import { getEmployees } from "../services/employeeService";
-import { getShifts } from "../services/shiftService";
+  fetchAttendances,
+  fetchEmployees,
+  fetchShifts,
+  fetchEnums,
+  addAttendance,
+  editAttendance,
+  removeAttendance,
+  clearMessages,
+} from "../slices/attendanceSlice";
+
+import { TailSpin } from "react-loader-spinner";
 
 const AttendancePage = () => {
-  const [attendances, setAttendances] = useState([]);
-  const [employees, setEmployees] = useState([]);
-  const [shifts, setShifts] = useState([]);
+  const dispatch = useDispatch();
+
+  // Redux state
+  const { attendances, employees, shifts, enums, loading, error, success } =
+    useSelector((state) => state.attendance);
+
+  // Local UI state
   const [filter, setFilter] = useState({ employee: "", date: "", shift: "" });
-  const [enums, setEnums] = useState({ status: [] });
   const [formData, setFormData] = useState({
     employee: "",
     date: new Date().toISOString().split("T")[0],
@@ -25,9 +32,6 @@ const AttendancePage = () => {
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAttendance, setEditingAttendance] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   // --- Utility Functions ---
   const calculateWorkedHours = (checkIn, checkOut, date) => {
@@ -74,8 +78,8 @@ const AttendancePage = () => {
 
   const getStatusBadge = (attendance) => {
     const status =
-      attendance.status ||
-      (attendance.checkIn && attendance.checkOut ? "Present" : "Absent");
+      attendance?.status ||
+      (attendance?.checkIn && attendance?.checkOut ? "Present" : "Absent");
 
     const badgeStyles = {
       Present: "bg-green-100 text-green-800",
@@ -95,94 +99,13 @@ const AttendancePage = () => {
     );
   };
 
-  // --- Fetch Data ---
+  // --- Fetch on Mount ---
   useEffect(() => {
-    fetchAttendances();
-    fetchEmployees();
-    fetchShifts();
-    fetchEnums();
-  }, []);
-
-  const fetchAttendances = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const data = await getAttendances();
-
-      const normalized = data.map((att) => {
-        // --- Normalize employee ---
-        let employeeObj = {};
-        if (att.employee) {
-          if (typeof att.employee === "string") {
-            employeeObj = employees.find((emp) => emp._id === att.employee) || {
-              _id: att.employee,
-              name: "Unknown Employee",
-            };
-          } else {
-            employeeObj =
-              employees.find((emp) => emp._id === att.employee._id) ||
-              att.employee;
-          }
-        }
-
-        // --- Normalize shift ---
-        let shiftObj = {};
-        if (att.shift) {
-          if (typeof att.shift === "string") {
-            shiftObj = shifts.find((s) => s._id === att.shift) || {
-              _id: att.shift,
-              name: "Unknown Shift",
-            };
-          } else {
-            shiftObj = shifts.find((s) => s._id === att.shift._id) || att.shift;
-          }
-        }
-
-        return {
-          ...att,
-          employee: employeeObj,
-          shift: shiftObj,
-        };
-      });
-
-      setAttendances(normalized);
-    } catch (err) {
-      console.error("Error fetching attendances:", err);
-      setError("Failed to fetch attendance records");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchEmployees = async () => {
-    try {
-      const data = await getEmployees();
-      setEmployees(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Error fetching employees:", err);
-      setEmployees([]);
-    }
-  };
-
-  const fetchShifts = async () => {
-    try {
-      const data = await getShifts();
-      setShifts(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Error fetching shifts:", err);
-      setShifts([]);
-    }
-  };
-
-  const fetchEnums = async () => {
-    try {
-      const data = await getAttendanceEnums();
-      setEnums({ status: Array.isArray(data?.status) ? data.status : [] });
-    } catch (err) {
-      console.error("Error fetching enums:", err);
-      setEnums({ status: [] });
-    }
-  };
+    dispatch(fetchAttendances());
+    dispatch(fetchEmployees());
+    dispatch(fetchShifts());
+    dispatch(fetchEnums());
+  }, [dispatch]);
 
   // --- Form Handling ---
   const handleInputChange = (e) => {
@@ -195,61 +118,58 @@ const AttendancePage = () => {
     setFilter((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-    setSuccess("");
 
-    try {
-      const workedHours = calculateWorkedHours(
-        formData.checkIn,
-        formData.checkOut,
-        formData.date
-      );
+    const workedHours = calculateWorkedHours(
+      formData.checkIn,
+      formData.checkOut,
+      formData.date
+    );
 
-      const submissionData = {
-        employee: formData.employee,
-        date: formData.date,
-        shift: formData.shift,
-        checkIn: formData.checkIn
-          ? `${formData.date}T${formData.checkIn}:00.000Z`
-          : null,
-        checkOut: formData.checkOut
-          ? `${formData.date}T${formData.checkOut}:00.000Z`
-          : null,
-        status: formData.status || "Absent",
-        workedHours,
-      };
+    // Prepare data for backend
+    const submissionData = {
+      employee: formData.employee,
+      date: formData.date,
+      shift: formData.shift,
+      checkIn: formData.checkIn
+        ? `${formData.date}T${formData.checkIn}:00.000Z`
+        : null,
+      checkOut: formData.checkOut
+        ? `${formData.date}T${formData.checkOut}:00.000Z`
+        : null,
+      status: formData.status || "Absent",
+      workedHours,
+    };
 
-      let apiResult;
-      if (editingAttendance) {
-        apiResult = await updateAttendance(
-          editingAttendance._id,
-          submissionData
-        );
-      } else {
-        apiResult = await createAttendance(submissionData);
-      }
-
-      const saved = apiResult?.data || apiResult;
-
-      // Instead of re-normalizing here, just refetch so everything stays consistent
-      await fetchAttendances();
-
-      setSuccess(
-        editingAttendance
-          ? "Attendance record updated successfully!"
-          : "Attendance record created successfully!"
-      );
-
-      resetForm();
-      setIsModalOpen(false);
-    } catch (err) {
-      console.error("Error saving attendance:", err);
-      setError(err.response?.data?.message || "Failed to save attendance");
-    } finally {
-      setLoading(false);
+    if (editingAttendance) {
+      // Edit existing attendance
+      dispatch(
+        editAttendance({
+          id: editingAttendance._id,
+          attendance: submissionData,
+        })
+      )
+        .unwrap()
+        .then(() => {
+          resetForm();
+          setEditingAttendance(null);
+          setIsModalOpen(false);
+        })
+        .catch((err) => {
+          console.error("Update error:", err);
+        });
+    } else {
+      // Create new attendance
+      dispatch(addAttendance(submissionData))
+        .unwrap()
+        .then(() => {
+          resetForm();
+          setIsModalOpen(false);
+        })
+        .catch((err) => {
+          console.error("Create error:", err);
+        });
     }
   };
 
@@ -261,10 +181,10 @@ const AttendancePage = () => {
         ? new Date(attendance.date).toISOString().split("T")[0]
         : new Date().toISOString().split("T")[0],
       checkIn: attendance.checkIn
-        ? new Date(attendance.checkIn).toISOString().substr(11, 5) // ✅ fixed
+        ? new Date(attendance.checkIn).toISOString().substr(11, 5)
         : "",
       checkOut: attendance.checkOut
-        ? new Date(attendance.checkOut).toISOString().substr(11, 5) // ✅ fixed
+        ? new Date(attendance.checkOut).toISOString().substr(11, 5)
         : "",
       shift: attendance.shift?._id || attendance.shift || "",
       status: attendance.status || "",
@@ -272,22 +192,12 @@ const AttendancePage = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = (id) => {
     if (
       !window.confirm("Are you sure you want to delete this attendance record?")
     )
       return;
-    try {
-      setLoading(true);
-      await deleteAttendance(id);
-      setAttendances((prev) => prev.filter((att) => att._id !== id));
-      setSuccess("Attendance record deleted successfully!");
-    } catch (err) {
-      console.error("Error deleting attendance:", err);
-      setError("Failed to delete attendance record");
-    } finally {
-      setLoading(false);
-    }
+    dispatch(removeAttendance(id));
   };
 
   const resetForm = () => {
@@ -310,37 +220,45 @@ const AttendancePage = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     resetForm();
+    dispatch(clearMessages());
   };
 
   // --- Filtering & Stats ---
+  const safeDate = (date) => {
+    if (!date) return null;
+    const d = new Date(date);
+    return isNaN(d) ? null : d.toISOString().split("T")[0];
+  };
+
   const filteredAttendances = Array.isArray(attendances)
     ? attendances.filter((att) => {
         const empMatch =
           !filter.employee ||
           att.employee?._id === filter.employee ||
           att.employee === filter.employee;
-        const dateMatch =
-          !filter.date ||
-          (att.date &&
-            new Date(att.date).toISOString().split("T")[0] === filter.date);
+
+        const dateMatch = !filter.date || safeDate(att.date) === filter.date;
+
         const shiftMatch =
           !filter.shift ||
           att.shift?._id === filter.shift ||
           att.shift === filter.shift;
+
         return empMatch && dateMatch && shiftMatch;
       })
     : [];
 
   const totalHours = filteredAttendances.reduce(
-    (sum, att) => sum + (att.workedHours || 0),
+    (sum, att) => sum + (att?.workedHours ?? 0),
     0
   );
 
   const presentCount = filteredAttendances.filter(
-    (att) => att.status === "Present"
+    (att) => att?.status === "Present"
   ).length;
+
   const absentCount = filteredAttendances.filter(
-    (att) => att.status === "Absent"
+    (att) => att?.status === "Absent"
   ).length;
 
   return (
@@ -359,9 +277,16 @@ const AttendancePage = () => {
           <button
             onClick={openAddModal}
             disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-semibold transition duration-200"
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-semibold transition duration-200 flex items-center justify-center gap-2"
           >
-            {loading ? "Loading..." : "+ Add Attendance Record"}
+            {loading ? (
+              <>
+                <TailSpin height={20} width={20} color="#FFFFFF" />
+                Loading...
+              </>
+            ) : (
+              "+ Add Attendance Record"
+            )}
           </button>
         </div>
 
@@ -376,12 +301,6 @@ const AttendancePage = () => {
             {success}
           </div>
         )}
-
-        {/* Debug Info - Remove in production
-        <div className="mb-4 p-2 bg-yellow-100 text-xs">
-          Debug: {attendances.length} total records,{" "}
-          {filteredAttendances.length} filtered records
-        </div> */}
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
@@ -462,97 +381,132 @@ const AttendancePage = () => {
 
         {/* Attendance Table */}
         <div className="overflow-x-auto bg-white rounded-lg shadow">
-          {loading && (
-            <div className="p-4 text-center">Loading attendance records...</div>
-          )}
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Employee
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Shift
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Check In
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Check Out
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Worked Hours
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredAttendances.map((att) => (
-                <tr key={att._id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {att.employee?.name ||
-                        att.employee?.fullname ||
-                        "Unknown Employee"}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {att.employee?.position || "-"}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {formatDate(att.date)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {att.shift?.name || "-"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {formatTime(att.checkIn)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {formatTime(att.checkOut)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {att.workedHours || 0}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {getStatusBadge(att)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() => handleEdit(att)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(att._id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {filteredAttendances.length === 0 && !loading && (
+          {loading && filteredAttendances.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              <div className="flex justify-center mb-4">
+                <TailSpin
+                  height={40}
+                  width={40}
+                  color="#2563EB"
+                  ariaLabel="loading"
+                />
+              </div>
+              Loading attendance records...
+            </div>
+          ) : (
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
-                  <td
-                    colSpan="8"
-                    className="px-6 py-4 text-center text-gray-500"
-                  >
-                    No attendance records found.
-                  </td>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Employee
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Shift
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Check In
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Check Out
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Worked Hours
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Actions
+                  </th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredAttendances
+                  .filter((att) => att) // remove any undefined/null entries
+                  .map((att) => {
+                    const employee = att?.employee || {}; // fallback if employee missing
+                    const shift = att?.shift || {};
+
+                    return (
+                      <tr key={att._id || Math.random()}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">
+                            {employee.fullname ||
+                              employee.name ||
+                              "Unknown Employee"}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {employee.position || "-"}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {att.date ? formatDate(att.date) : "-"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {shift.name || "-"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {formatTime(att.checkIn)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {formatTime(att.checkOut)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {att?.workedHours ?? 0}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {getStatusBadge(att)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button
+                            onClick={() => handleEdit(att)}
+                            disabled={loading}
+                            className="text-blue-600 hover:text-blue-900 mr-4 disabled:text-gray-400 flex items-center gap-1"
+                          >
+                            {loading && (
+                              <TailSpin
+                                height={16}
+                                width={16}
+                                color="#2563EB"
+                              />
+                            )}
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(att._id)}
+                            disabled={loading}
+                            className="text-red-600 hover:text-red-900 disabled:text-gray-400 flex items-center gap-1"
+                          >
+                            {loading && (
+                              <TailSpin
+                                height={16}
+                                width={16}
+                                color="#DC2626"
+                              />
+                            )}
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                {filteredAttendances.length === 0 && !loading && (
+                  <tr>
+                    <td
+                      colSpan="8"
+                      className="px-6 py-4 text-center text-gray-500"
+                    >
+                      No attendance records found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 
@@ -678,13 +632,18 @@ const AttendancePage = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400 font-medium"
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400 font-medium"
                   >
-                    {loading
-                      ? "Saving..."
-                      : editingAttendance
-                      ? "Update Record"
-                      : "Add Record"}
+                    {loading ? (
+                      <>
+                        <TailSpin height={20} width={20} color="#FFFFFF" />
+                        {editingAttendance ? "Updating..." : "Saving..."}
+                      </>
+                    ) : editingAttendance ? (
+                      "Update Record"
+                    ) : (
+                      "Add Record"
+                    )}
                   </button>
                 </div>
               </form>
