@@ -11,6 +11,8 @@ import shiftRouter from "./routes/shiftRoute.js";
 import payrollRouter from "./routes/payrollRoute.js";
 import leaveRouter from "./routes/leaveRoute.js";
 import trainingRouter from "./routes/trainingRoute.js";
+import recruitmentRouter from "./routes/recruitmentRoute.js"
+import { seedAdmin } from "./seeds/seed.js";
 // dotenv
 dotenv.config();
 const app = express();
@@ -44,6 +46,7 @@ app.use("/api/shifts", shiftRouter);
 app.use("/api/payrolls", payrollRouter);
 app.use("/api/leaves", leaveRouter);
 app.use("/api/trainings", trainingRouter);
+app.use("/api/recruitment", recruitmentRouter);
 
 // Databse config
 connectDB().then(() => {
@@ -51,3 +54,6 @@ connectDB().then(() => {
     console.log(`App runs on port ${port}`);
   });
 });
+
+// Seed initial admin user
+seedAdmin();

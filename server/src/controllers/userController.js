@@ -2,60 +2,43 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import userModel from "../models/user.js";
 
+// helper function to generate JWT
+function generateToken(user) {
+  return jwt.sign(
+    {
+      userId: user._id,
+      role: user.role,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
+  );
+}
+
 // ---------------- Sign Up ----------------
 export const register = async (req, res) => {
-  const { name, email, role, password } = req.body;
-  if (!name || !email || !role || !password)
-    return res
-      .status(400)
-      .json({ success: false, message: "All fields are required " });
-
-  if (typeof password !== "string")
-    return res
-      .status(400)
-      .json({ success: false, message: "Password must be String" });
-
-  if (password.length < 8)
-    return res.status(400).json({
-      success: false,
-      message: "Password must be 8 characters or more!",
-    });
+  const { name, email, password } = req.body;
 
   try {
-    // check existing user
-    const isExistingUser = await userModel.findOne({ email });
-    if (isExistingUser) {
-      return res.json({
-        success: false,
-        message: "User already exists, please log in",
-      });
+    // check if user exists
+    const isExistUser = await userModel.findOne({ email });
+    if (isExistUser) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User already exists" });
     }
 
-    // hash password
-    const hashPass = await bcrypt.hash(password, 10);
+    const hashpass = await bcrypt.hash(password, 10);
 
-    // save user
-    const user = await new userModel({
+    const user = await userModel.create({
       name,
       email,
-      role,
-      password: hashPass,
-    });
-    await user.save();
-
-    // generate token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1d",
-    });
-
-    res.cookie("Token", token, {
-      httpOnly: true,
-      maxAge: 1 * 24 * 60 * 60 * 1000,
+      password: hashpass,
+      role: "User", 
     });
 
     return res.status(201).json({
       success: true,
-      message: "You have registered successfully 👋🏽",
+      message: "User registered successfully",
       user: {
         id: user._id,
         name: user.name,
@@ -64,10 +47,10 @@ export const register = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log("Error in signUp:", error);
+    console.error("Error in signUp:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal Server Error from register controller",
+      message: "Internal Server Error from the register controller",
     });
   }
 };
@@ -75,61 +58,27 @@ export const register = async (req, res) => {
 // ---------------- Sign In ----------------
 export const login = async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password)
-    return res
-      .status(400)
-      .json({ success: false, message: "All fields are required" });
-
-  if (typeof password !== "string")
-    return res
-      .status(400)
-      .json({ success: false, message: "Password must be String" });
-
-  if (password.length < 8)
-    return res.status(400).json({
-      success: false,
-      message: "Password must be 8 characters or more",
-    });
 
   try {
     const user = await userModel.findOne({ email });
     if (!user)
-      return res
-        .status(404)
-        .json({ success: false, message: "User Not Found!!!" });
+      return res.status(400).json({ success: false, message: "Invalid email or password" });
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid)
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid credentials" });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch)
+      return res.status(400).json({ success: false, message: "Invalid email or password" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1d",
-    });
+    const token = generateToken(user);
 
-    res.cookie("Token", token, {
-      httpOnly: true,
-      maxAge: 1 * 24 * 60 * 60 * 1000,
-    });
-
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      message: "You have successfully logged-in 👋🏽",
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      message: "Logged in successfully",
+      token, // send token in response body
+      user: { id: user._id, name: user.name, email: user.email, role: user.role },
     });
-  } catch (error) {
-    console.log("Error in signIn:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error from the login controller",
-    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
@@ -146,6 +95,39 @@ export const logout = async (req, res) => {
     });
   }
 };
+
+
+export const updateUserRole = async (req, res) => {
+  try {
+    const { role } = req.body;
+    const validRoles = ["User", "Admin"];
+
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ success: false, message: "Invalid role" });
+    }
+
+    if (role === "Admin") {
+      const adminCount = await userModel.countDocuments({ role: "Admin" });
+      if (adminCount >= 2) {
+        return res.status(400).json({ success: false, message: "Max 2 Admins allowed" });
+      }
+    }
+
+    const user = await userModel.findByIdAndUpdate(
+      req.params.id,
+      { role },
+      { new: true }
+    ).select("-password");
+
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    res.status(200).json({ success: true, message: `User role updated to ${role}`, user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
 
 // ---------------- Update Own Profile ----------------
 export const updateProfile = async (req, res) => {
