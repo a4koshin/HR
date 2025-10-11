@@ -1,15 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { TailSpin } from "react-loader-spinner";
-import {
-  fetchLeaves,
-  createLeaveAsync,
-  updateLeaveStatusAsync,
-  deleteLeaveAsync,
-  clearMessages,
-} from "../slices/leaveSlice";
-import { fetchEmployees } from "../slices/employeeSlice";
-import { fetchShifts } from "../slices/shiftSlice";
+
 
 const LeavePage = () => {
   const dispatch = useDispatch();
@@ -248,7 +240,7 @@ const LeavePage = () => {
   ).length;
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">

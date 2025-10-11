@@ -6,15 +6,15 @@ import DashboardPage from "./pages/DashboardPage";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import EmployeePage from "./pages/EmployeePage";
-import AttendancePage from "./pages/AttendancePage";
-import PayrollPage from "./pages/PayrollPage";
-import RecruitmentPage from "./pages/RecruitmentPage";
-import TrainingPage from "./pages/TrainingPage";
-import DocumentsPage from "./pages/DocumentsPage";
-import DepartmentPage from "./pages/DepartmentPage";
-import ShiftsPage from "./pages/ShiftsPage";
-import LeavePage from "./pages/LeavePage";
+import EmployeePage from "./pages/employee/EmployeePage";
+import AttendancePage from "./pages/attendance/attendancePage";
+import PayrollPage from "./pages/payroll/PayrollPage";
+import RecruitmentPage from "./pages/Recruitment/RecruitmentPage";
+import TrainingPage from "./pages/training/TrainingPage";
+import DocumentsPage from "./pages/document/DocumentsPage";
+import DepartmentPage from "./pages/department/DepartmentPage";
+import ShiftsPage from "./pages/shift/ShiftsPage";
+import LeavePage from "./pages/leave/LeavePage";
 
 const App = () => {
   return (

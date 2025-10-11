@@ -6,16 +6,16 @@ import {
   updateTraining,
   deleteTraining,
 } from "../controllers/trainingController.js";
-import { protectHR, adminOnly } from "../middlewares/authMiddleware.js";
+import { protectHR } from "../middlewares/authMiddleware.js";
 
 const trainingRouter = express.Router();
 
 trainingRouter.get("/", protectHR, getTrainings);
 
 
-trainingRouter.post("/", protectHR, adminOnly, createTraining);
+trainingRouter.post("/", protectHR, createTraining);
 trainingRouter.get("/:id", protectHR, getTraining);
-trainingRouter.put("/:id", protectHR, adminOnly, updateTraining);
-trainingRouter.delete("/:id", protectHR, adminOnly, deleteTraining);
+trainingRouter.put("/:id", protectHR, updateTraining);
+trainingRouter.delete("/:id", protectHR, deleteTraining);
 
 export default trainingRouter;

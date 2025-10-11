@@ -9,7 +9,7 @@ import {
   getShiftAttendanceReport,
 } from "../controllers/shiftController.js";
 
-import { protectHR, adminOnly } from "../middlewares/authMiddleware.js";
+import { protectHR,  } from "../middlewares/authMiddleware.js";
 
 const shiftRouter = express.Router();
 
@@ -24,6 +24,6 @@ shiftRouter.put("/:id", updateShift);
 shiftRouter.get("/:id/attendance-report", getShiftAttendanceReport);
 
 // Only Admin → can delete
-shiftRouter.delete("/:id", adminOnly, deleteShift);
+shiftRouter.delete("/:id",  deleteShift);
 
 export default shiftRouter;

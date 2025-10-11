@@ -12,7 +12,6 @@ import payrollRouter from "./routes/payrollRoute.js";
 import leaveRouter from "./routes/leaveRoute.js";
 import trainingRouter from "./routes/trainingRoute.js";
 import recruitmentRouter from "./routes/recruitmentRoute.js"
-import { seedAdmin } from "./seeds/seed.js";
 // dotenv
 dotenv.config();
 const app = express();
@@ -29,7 +28,7 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true); // allow Postman or server-to-server
+      if (!origin) return callback(null, true); 
       if (allowedOrigins.includes(origin)) return callback(null, true);
       callback(new Error("Not allowed by CORS"));
     },
@@ -54,6 +53,3 @@ connectDB().then(() => {
     console.log(`App runs on port ${port}`);
   });
 });
-
-// Seed initial admin user
-seedAdmin();

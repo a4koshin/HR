@@ -7,7 +7,6 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 const RegisterPage = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -17,7 +16,7 @@ const RegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!name || !email || !password || !confirmPassword || !role) {
+    if (!name || !email || !password || !confirmPassword ) {
       return toast.error("Please fill all fields");
     }
 
@@ -30,10 +29,9 @@ const RegisterPage = () => {
     }
 
     try {
-      await register({ name, email, role, password });
+      await register({ name, email, password });
       // toast.success("Signup successful! Please login to continue");
       setTimeout(() => navigate("/login"), 1500);
-
       setName("");
       setEmail("");
       setPassword("");
@@ -73,18 +71,7 @@ const RegisterPage = () => {
             onChange={(e) => setEmail(e.target.value)}
             className="px-4 py-2 bg-gray-100 border border-gray-200 focus:border-blue-500 focus:outline-none rounded-md transition"
           />
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="px-4 py-2 bg-gray-100 border border-gray-200 focus:border-blue-500 focus:outline-none rounded-md transition"
-            required
-          >
-            <option value="" disabled>
-              Select Role
-            </option>
-            <option value="HR">HR</option>
-            <option value="Admin">Admin</option>
-          </select>
+       
 
           <div className="relative">
             <input

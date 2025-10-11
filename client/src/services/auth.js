@@ -1,9 +1,9 @@
-import axiosInstance from "./axiosInstance";
+import api from "./axiosInstance";
 import toast from "react-hot-toast";
 
 export const login = async (email, password) => {
   try {
-    const response = await axiosInstance.post("/auth/login", {
+    const response = await api.post("/auth/login", {
       email,
       password,
     });
@@ -22,12 +22,11 @@ export const login = async (email, password) => {
   }
 };
 
-export const register = async ({ name, email, role, password }) => {
+export const register = async ({ name, email, password }) => {
   try {
-    const response = await axiosInstance.post("/auth/register", {
+    const response = await api.post("/auth/register", {
       name,
       email,
-      role,
       password,
     });
 

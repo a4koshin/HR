@@ -8,47 +8,49 @@ import toast from "react-hot-toast";
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  // include setRole here 👇
-  const { setIsAuthenticated, setName, setEmail: setAuthEmail, setRole } =
-    useAuth();
+  const [loginProvider, { data, isError, error, isLoading }] =
+    useLoginProviderMutation();
+  useEffect(() => {
+    if (data?.token) {
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          token: data.token,
+          id: data.user.id,
+        })
+      );
+      navigate("/");
+      window.location.reload();
+    }
+  }, [data]);
+
+  useEffect(() => {
+    const showAlert = (message, icon = "error") => {
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon,
+        title: message,
+        showConfirmButton: false,
+        timer: 3000,
+        padding: "10px 20px",
+      });
+    };
+
+    if (isError) showAlert(error?.data?.msg);
+
+    if (data) showAlert(data?.msg, "success");
+  }, [isError, error, data]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
-
     try {
-      const response = await login(email.trim(), password);
-
-      if (!response || !response.token || !response.user) {
-        toast.error("Invalid email or password.");
-        setLoading(false);
-        return;
-      }
-
-      // Save to localStorage
-      localStorage.setItem("token", response.token);
-      localStorage.setItem("user", JSON.stringify(response.user));
-
-      // Update context
-      setIsAuthenticated(true);
-      setName(response.user.fullname || response.user.name);
-      setAuthEmail(response.user.email);
-      setRole(response.user.role); // ✅ FIXED
-
-      navigate("/dashboard");
-
-      // Reset form fields
-      setEmail("");
-      setPassword("");
-    } catch (err) {
-      console.error("Login error:", err);
-      toast.error("Login failed. Please check your credentials.");
-    } finally {
-      setLoading(false);
+      await loginProvider({ username: email, password }).unwrap();
+    } catch (error) {
+      console.error("Login failed:", error);
     }
   };
 
@@ -103,7 +105,10 @@ const LoginPage = () => {
           <a href="#" className="text-sm text-blue-600 hover:underline">
             Forgot password?
           </a>
-          <Link to="/register" className="text-sm text-blue-600 hover:underline">
+          <Link
+            to="/register"
+            className="text-sm text-blue-600 hover:underline"
+          >
             Sign Up
           </Link>
         </div>

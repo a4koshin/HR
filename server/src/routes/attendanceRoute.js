@@ -9,7 +9,7 @@ import {
   markAttendance,
 } from "../controllers/attendanceController.js";
 
-import { protectHR, adminOnly } from "../middlewares/authMiddleware.js";
+import { protectHR } from "../middlewares/authMiddleware.js";
 
 const attendanceRouter = express.Router();
 
@@ -24,6 +24,6 @@ attendanceRouter.post("/mark", markAttendance);
 attendanceRouter.get("/:id", getAttendanceById);
 attendanceRouter.put("/:id", updateAttendance);
 // Only Admin can delete
-attendanceRouter.delete("/:id", adminOnly, deleteAttendance);
+attendanceRouter.delete("/:id", deleteAttendance);
 
 export default attendanceRouter;

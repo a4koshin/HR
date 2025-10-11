@@ -1,13 +1,13 @@
 import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthProvider";
-import ProtectedLayout from "../layouts/Layout";
+import ProtectedLayout from "../layouts/Layout";``
 
 const PrivateRoute = () => {
   const { isAuthenticated, loadingAuth } = useAuth();
 
   if (loadingAuth) {
-    return <div>Loading...</div>; 
+    return <div></div>; 
   }
 
   if (!isAuthenticated) {

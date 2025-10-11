@@ -7,7 +7,6 @@ export const useAuth = () => useContext(AuthContext);
 const AuthProvider = ({ children }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loadingAuth, setLoadingAuth] = useState(true); // start loading
   const navigate = useNavigate();
@@ -20,7 +19,6 @@ const AuthProvider = ({ children }) => {
     if (user && token) {
       setName(user.fullname || user.name);
       setEmail(user.email);
-      setRole(user.role);
       setIsAuthenticated(true);
     }
     setLoadingAuth(false); // done checking
@@ -33,8 +31,6 @@ const AuthProvider = ({ children }) => {
         setName,
         email,
         setEmail,
-        role,
-        setRole,
         isAuthenticated,
         setIsAuthenticated,
 

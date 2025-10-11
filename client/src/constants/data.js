@@ -6,7 +6,8 @@ import {
   UserPlus,
   GraduationCap,
   FileText,
-  Repeat,
+  ClipboardCheck,
+  UserMinus,
   Settings,
   Activity,
   Building,
@@ -37,13 +38,13 @@ export const navigation = [
   {
     id: 3,
     name: "Shifts",
-    icon: Repeat,
+    icon: Clock,
     path: "/shifts",
   },
   {
     id: 4,
     name: "Attendance",
-    icon: Clock,
+    icon: ClipboardCheck,
     path: "/attendance",
   },
   {
@@ -67,7 +68,7 @@ export const navigation = [
   {
     id: 8,
     name: "Leave",
-    icon: GraduationCap,
+    icon: UserMinus,
     path: "/leave",
   },
   {

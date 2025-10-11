@@ -5,17 +5,17 @@ import { useAuth } from "../context/AuthProvider";
 import { useNavigate } from "react-router-dom";
 
 const Layout = ({ children }) => {
-  const { setName, setEmail, setRole, setIsAuthenticated } = useAuth();
+  const { setName, setEmail, setIsAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  const [collapsed, setCollapsed] = useState(false); // state for sidebar
+  const [collapsed, setCollapsed] = useState(false); 
+  
 
   const logOut = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setName("");
     setEmail("");
-    setRole("");
     setIsAuthenticated(false);
     navigate("/login");
   };

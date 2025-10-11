@@ -2,15 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { TailSpin } from "react-loader-spinner";
-import {
-  fetchShifts,
-  addShift,
-  editShift,
-  removeShift,
-  clearError,
-  clearSuccess,
-} from "../slices/shiftSlice";
-import { getEmployees } from "../services/employeeService";
+
 
 const ShiftPage = () => {
   const dispatch = useDispatch();
@@ -196,7 +188,7 @@ const ShiftPage = () => {
       : 0;
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">

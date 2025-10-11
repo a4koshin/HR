@@ -2,15 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createSelector } from "@reduxjs/toolkit";
 import { TailSpin } from "react-loader-spinner";
-import {
-  fetchPayrolls,
-  addPayroll,
-  editPayroll,
-  removePayroll,
-  clearMessages,
-} from "../slices/payrollSlice";
-import { fetchPayrollEnums } from "../slices/payrollEnumsSlice";
-import { fetchEmployees } from "../slices/employeeSlice";
+
 
 const PayrollPage = () => {
   const dispatch = useDispatch();
@@ -208,7 +200,7 @@ const PayrollPage = () => {
 
   // --- JSX ---
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">

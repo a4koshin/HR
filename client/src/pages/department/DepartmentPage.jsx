@@ -1,11 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import {
-  fetchDepartments,
-  createDepartmentAsync,
-  updateDepartmentAsync,
-  deleteDepartmentAsync,
-} from "../slices/departmentSlice";
+
 import { Building, Plus } from "lucide-react";
 import { TailSpin } from "react-loader-spinner";
 

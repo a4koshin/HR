@@ -8,7 +8,7 @@ import {
   deletePayroll,
 } from "../controllers/payrollController.js";
 
-import { protectHR, adminOnly } from "../middlewares/authMiddleware.js";
+import { protectHR } from "../middlewares/authMiddleware.js";
 
 const payrollRouter = express.Router();
 
@@ -22,8 +22,8 @@ payrollRouter.get("/enums", getPayrollEnums);
 payrollRouter.get("/:id", getPayrollById);
 
 // Only Admin
-payrollRouter.post("/", adminOnly, createPayroll);
-payrollRouter.put("/:id", adminOnly, updatePayroll);
-payrollRouter.delete("/:id", adminOnly, deletePayroll);
+payrollRouter.post("/", createPayroll);
+payrollRouter.put("/:id", updatePayroll);
+payrollRouter.delete("/:id", deletePayroll);
 
 export default payrollRouter;

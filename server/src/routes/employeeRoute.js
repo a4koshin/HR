@@ -8,7 +8,6 @@ import {
   getEmployeeEnums,
 } from "../controllers/employeeController.js";
 import { protectHR } from "../middlewares/authMiddleware.js";
-import { adminOnly } from "../middlewares/authMiddleware.js";
 
 const employeeRouter = express.Router();
 
@@ -22,6 +21,6 @@ employeeRouter.get("/:id", getEmployee);
 employeeRouter.put("/:id", updateEmployee);
 
 // Admin Only can it
-employeeRouter.delete("/:id", adminOnly, deleteEmployee);
+employeeRouter.delete("/:id", deleteEmployee);
 
 export default employeeRouter;

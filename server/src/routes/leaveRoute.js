@@ -7,7 +7,7 @@ import {
   deleteLeave,
 } from "../controllers/leaveController.js";
 
-import { protectHR, adminOnly } from "../middlewares/authMiddleware.js";
+import { protectHR } from "../middlewares/authMiddleware.js";
 import { validateLeaveAsync } from "../validation/leaveAsyncValidation.js";
 
 const leaveRouter = express.Router();
@@ -18,7 +18,7 @@ leaveRouter.get("/", protectHR, getLeaves);                        // get all le
 leaveRouter.get("/:id", protectHR, getLeaveById);                  // get leave by ID
 
 // Admin-only routes
-leaveRouter.patch("/:id/status", protectHR, adminOnly, updateLeaveStatus); // approve/reject
-leaveRouter.delete("/:id", protectHR, adminOnly, deleteLeave);             // delete leave
+leaveRouter.patch("/:id/status", protectHR, updateLeaveStatus); // approve/reject
+leaveRouter.delete("/:id", protectHR, deleteLeave);             // delete leave
 
 export default leaveRouter;

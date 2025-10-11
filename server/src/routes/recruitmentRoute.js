@@ -8,7 +8,7 @@ import {
   deleteRecruitment,
   hireApplicant,
 } from "../controllers/recruitmentController.js";
-import { protectHR, adminOnly } from "../middlewares/authMiddleware.js";
+import { protectHR,  } from "../middlewares/authMiddleware.js";
 
 const recruitmentRouter = express.Router();
 
@@ -20,6 +20,6 @@ recruitmentRouter.put("/:id", protectHR, updateRecruitment);
 recruitmentRouter.delete("/:id", protectHR, deleteRecruitment);
 
 // Hire applicant (Admin only)
-recruitmentRouter.post("/:id/hire", protectHR, adminOnly, hireApplicant);
+recruitmentRouter.post("/:id/hire", protectHR, hireApplicant);
 
 export default recruitmentRouter;

@@ -6,7 +6,7 @@ import {
   updateDepartment,
   deleteDepartment,
 } from "../controllers/departmentController.js";
-import { protectHR, adminOnly } from "../middlewares/authMiddleware.js";
+import { protectHR } from "../middlewares/authMiddleware.js";
 
 const departmentRouter = express.Router();
 
@@ -21,6 +21,6 @@ departmentRouter.put("/:id", updateDepartment);
 
 // Only Admin can delete department
 
-departmentRouter.delete("/:id", adminOnly, deleteDepartment);
+departmentRouter.delete("/:id", deleteDepartment);
 
 export default departmentRouter;
