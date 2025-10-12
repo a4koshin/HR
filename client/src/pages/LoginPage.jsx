@@ -4,6 +4,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import toast from "react-hot-toast";
 import { useLoginProviderMutation } from "../store/auth/authApi";
 import { useAuth } from "../context/AuthProvider";
+import { TailSpin } from "react-loader-spinner";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -127,11 +128,15 @@ const LoginPage = () => {
         <button
           type="submit"
           disabled={isLoading}
-          className={`bg-blue-600 px-4 py-2 text-white rounded-md w-full font-semibold mt-4 transition ${
+          className={`flex items-center justify-center bg-blue-600 px-4 py-2 text-white rounded-md w-full font-semibold mt-4 transition ${
             isLoading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700"
           }`}
         >
-          {isLoading ? "Logging in..." : "Login"}
+          {isLoading ? (
+            <TailSpin height={20} width={20} color="#FFFFFF" />
+          ) : (
+            "Login"
+          )}
         </button>
       </form>
     </div>

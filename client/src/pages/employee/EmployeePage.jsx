@@ -1,16 +1,16 @@
 import React, { useState } from "react";
-import { TailSpin } from "react-loader-spinner";
 import { useGetallFunctionQuery } from "../../store/DynamicApi";
+import { TailSpin } from "react-loader-spinner";
+
 import EmpModel from "./EmpModel";
 
 const EmployeePage = () => {
-  const { 
-    data: employeeData = [], 
-    isLoading, 
+  const {
+    data: employeeData = [],
+    isLoading,
     error,
-    refetch 
+    refetch,
   } = useGetallFunctionQuery({ url: "/employees" });
-
 
   // console.log(employeeData)
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -169,8 +169,8 @@ const EmployeePage = () => {
         )}
       </div>
 
-      <EmpModel 
-        isOpen={isModalOpen} 
+      <EmpModel
+        isOpen={isModalOpen}
         onClose={closeModal}
         onSave={handleEmployeeSaved}
         employee={editingEmployee}
