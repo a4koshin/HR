@@ -1,56 +1,61 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { login } from "../services/auth";
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
-import { useAuth } from "../context/AuthProvider";
 import toast from "react-hot-toast";
+import { useLoginProviderMutation } from "../store/auth/authApi";
+import { useAuth } from "../context/AuthProvider";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { setIsAuthenticated, setName, setEmail: setAuthEmail } = useAuth();
 
   const [loginProvider, { data, isError, error, isLoading }] =
     useLoginProviderMutation();
+
+  // Handle login success
   useEffect(() => {
     if (data?.token) {
+      // Save user and token in localStorage
       localStorage.setItem(
         "user",
         JSON.stringify({
           token: data.token,
           id: data.user.id,
+          fullname: data.user.fullname,
+          email: data.user.email,
         })
       );
-      navigate("/");
-      window.location.reload();
+      localStorage.setItem("token", data.token);
+
+      // Update AuthContext
+      setIsAuthenticated(true);
+      setName(data.user.fullname);
+      setAuthEmail(data.user.email);
+
+      toast.success("Logged in successfully!");
+      navigate("/dashboard"); // navigate without reload
     }
   }, [data]);
 
+  // Handle login errors
   useEffect(() => {
-    const showAlert = (message, icon = "error") => {
-      Swal.fire({
-        toast: true,
-        position: "top-end",
-        icon,
-        title: message,
-        showConfirmButton: false,
-        timer: 3000,
-        padding: "10px 20px",
-      });
-    };
-
-    if (isError) showAlert(error?.data?.msg);
-
-    if (data) showAlert(data?.msg, "success");
-  }, [isError, error, data]);
+    if (isError) {
+      let message = "Something went wrong";
+      if (error?.data?.message) message = error.data.message;
+      else if (error?.error) message = error.error; // network errors
+      toast.error(message);
+    }
+  }, [isError, error]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      await loginProvider({ username: email, password }).unwrap();
-    } catch (error) {
-      console.error("Login failed:", error);
+      await loginProvider({ email, password }).unwrap();
+    } catch (err) {
+      console.error("Login failed:", err);
     }
   };
 
@@ -101,6 +106,12 @@ const LoginPage = () => {
           </div>
         </div>
 
+        {isError && (
+          <p className="bg-red-200 px-2 py-2 rounded-md text-red-500 text-sm text-center">
+            {error?.data?.message || error?.error || "Something went wrong"}
+          </p>
+        )}
+
         <div className="flex justify-between items-center mt-2">
           <a href="#" className="text-sm text-blue-600 hover:underline">
             Forgot password?
@@ -115,12 +126,12 @@ const LoginPage = () => {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={isLoading}
           className={`bg-blue-600 px-4 py-2 text-white rounded-md w-full font-semibold mt-4 transition ${
-            loading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700"
+            isLoading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700"
           }`}
         >
-          {loading ? "Logging in..." : "Login"}
+          {isLoading ? "Logging in..." : "Login"}
         </button>
       </form>
     </div>

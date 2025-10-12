@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import {API} from "./api";
+import { API } from "./api";
 
 const user = JSON.parse(localStorage.getItem("user"));
 
@@ -36,6 +36,22 @@ export const daynamicApi = createApi({
         };
       },
       providesTags: ["customers"],
+    }),
+
+    getAll: builder.query({
+      query: ({ id, url }) => {
+        return {
+          url: `${url}?id=${id}`, // Adjust the URL path according to your API route
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${user?.token}`,
+          },
+        };
+      },
+      providesTags: (result, error, { pid }) => [
+        { type: "notes", id: pid },
+        { type: "notes", id: "LIST" },
+      ],
     }),
 
     updateFunction: builder.mutation({
@@ -132,6 +148,7 @@ export const daynamicApi = createApi({
 export const {
   useCreateFuctionMutation,
   useUpdateFunctionMutation,
+  useGetAllQuery,
   useGetByIdFunctionQuery,
   useGetallFunctionQuery,
   useGetAllPatientsQuery,

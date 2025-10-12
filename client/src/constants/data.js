@@ -77,4 +77,10 @@ export const navigation = [
     icon: FileText,
     path: "/documents",
   },
+  {
+    id: 10,
+    name: "Users",
+    icon: UserPlus,
+    path: "/users",
+  },
 ];

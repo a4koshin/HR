@@ -9,20 +9,20 @@ export const authApi = createApi({
   tagTypes: ["provider", "users"],
   endpoints: (builder) => ({
     loginProvider: builder.mutation({
-      query: (body) => {
-        return {
-          url: "/user/login",
-          method: "POST",
-          body,
-          contentType: "application/json",
-        };
-      },
+      query: (body) => ({
+        url: "/auth/login",
+        method: "POST",
+        body,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }),
     }),
 
     registerProvider: builder.mutation({
       query: ({ formData }) => {
         return {
-          url: "/users/register",
+          url: "/auth/register",
           method: "POST",
           body: formData,
           headers: {

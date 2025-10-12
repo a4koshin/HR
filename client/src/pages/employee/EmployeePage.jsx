@@ -1,30 +1,45 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { TailSpin } from "react-loader-spinner";
+import { useGetallFunctionQuery } from "../../store/DynamicApi";
 import EmpModel from "./EmpModel";
 
-
 const EmployeePage = () => {
+  const { 
+    data: employeeData = [], 
+    isLoading, 
+    error,
+    refetch 
+  } = useGetallFunctionQuery({ url: "/employees" });
+
+
+  // console.log(employeeData)
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState(null);
 
+  const openAddModal = () => {
+    setEditingEmployee(null);
+    setIsModalOpen(true);
+  };
 
+  const openEditModal = (employee) => {
+    setEditingEmployee(employee);
+    setIsModalOpen(true);
+  };
 
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingEmployee(null);
+  };
+
+  const handleEmployeeSaved = () => {
+    closeModal();
+    refetch(); // Refresh the list after save
+  };
+
+  const employees = employeeData.data || employeeData || [];
 
   return (
     <div className="min-h-screen">
-
-
-      {loading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
-          <TailSpin
-            height={80}
-            width={80}
-            color="#2563EB"
-            ariaLabel="loading"
-          />
-        </div>
-      )}
-
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 flex items-center justify-between">
           <div>
@@ -37,13 +52,12 @@ const EmployeePage = () => {
           </div>
           <button
             onClick={openAddModal}
-            disabled={empLoading}
+            disabled={isLoading}
             className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-semibold transition duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
           >
-            {empLoading ? (
+            {isLoading ? (
               <>
                 <TailSpin height={20} width={20} color="#FFFFFF" />
-                Loading...
               </>
             ) : (
               "+ Add New Employee"
@@ -51,24 +65,13 @@ const EmployeePage = () => {
           </button>
         </div>
 
-        {empError && (
+        {error && (
           <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-            {empError}
-          </div>
-        )}
-        {successMsg && (
-          <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
-            {successMsg}
-            <button
-              onClick={() => setSuccessMsg("")}
-              className="float-right text-green-700 hover:text-green-900"
-            >
-              ×
-            </button>
+            Error loading employees
           </div>
         )}
 
-        {empLoading && employees.length === 0 ? (
+        {isLoading && employees.length === 0 ? (
           <div className="text-center py-12 text-gray-500 bg-white rounded-lg shadow">
             <div className="flex justify-center mb-4">
               <TailSpin
@@ -145,7 +148,7 @@ const EmployeePage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
-                          onClick={() => handleEdit(emp)}
+                          onClick={() => openEditModal(emp)}
                           className="text-blue-600 hover:text-blue-900 mr-4"
                         >
                           Edit
@@ -166,9 +169,12 @@ const EmployeePage = () => {
         )}
       </div>
 
-    <EmpModel
-    
-    />
+      <EmpModel 
+        isOpen={isModalOpen} 
+        onClose={closeModal}
+        onSave={handleEmployeeSaved}
+        employee={editingEmployee}
+      />
     </div>
   );
 };
