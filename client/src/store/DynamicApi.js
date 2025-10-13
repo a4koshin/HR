@@ -92,25 +92,24 @@ export const daynamicApi = createApi({
           },
         };
       },
-      providesTags: (result) =>
-        result
-          ? [
-              ...result
-                .map(({ id }) => [
-                  { type: "customers", id },
-                  { type: "invoices", id },
-                  { type: "colors", id },
-                ])
-                .flat(),
-              { type: "customers", id: "LIST" },
-              { type: "invoices", id: "LIST" },
-              { type: "colors", id: "LIST" },
-            ]
-          : [
-              { type: "customers", id: "LIST" },
-              { type: "invoices", id: "LIST" },
-              { type: "colors", id: "LIST" },
-            ],
+      providesTags: (result) => {
+        // console.log("Dynamic API result:", result); // Keep for debugging
+    
+        const items = Array.isArray(result?.employees) ? result.employees : [];
+    
+        return [
+          ...items
+            .map(({ _id }) => [
+              { type: "customers", id: _id },
+              { type: "invoices", id: _id },
+              { type: "colors", id: _id },
+            ])
+            .flat(),
+          { type: "customers", id: "LIST" },
+          { type: "invoices", id: "LIST" },
+          { type: "colors", id: "LIST" },
+        ];
+      },
     }),
     getallFunctionByOwner: builder.query({
       query({ url, id }) {

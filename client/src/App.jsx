@@ -3,9 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import PrivateRoute from "./routes/PrivateRoute";
 import DashboardPage from "./pages/DashboardPage";
-import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
 import EmployeePage from "./pages/employee/EmployeePage";
 import AttendancePage from "./pages/attendance/attendancePage";
 import PayrollPage from "./pages/payroll/PayrollPage";
@@ -19,14 +17,14 @@ import UserPage from "./pages/users/userPage";
 
 const App = () => {
   return (
-    <div>
+    <div className="bg-blue-500">
       <Toaster position="top-right" reverseOrder={false} />
 
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<HomePage />} />
+         
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+     
 
         {/* Protected routes */}
         <Route element={<PrivateRoute />}>

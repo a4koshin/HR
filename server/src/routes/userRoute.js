@@ -8,7 +8,7 @@ import {
 } from "../controllers/userController.js";
 import { protectHR } from "../middlewares/authMiddleware.js";
 import { validate } from "../middlewares/validate.js";
-import { registerSchema, loginSchema } from "../validation/userValidator.js";
+import { registerSchema, loginSchema } from "../validation/userJoi.js";
 
 const userRouter = express.Router();
 

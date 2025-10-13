@@ -31,7 +31,7 @@ const Layout = ({ children }) => {
           onToggleSidebar={() => setCollapsed(!collapsed)} // toggle collapse
           onLogout={logOut}
         />
-        <main className="flex-1 p-4 md:p-6 overflow-y-auto bg-gray-100">
+        <main className="flex-1 overflow-y-auto bg-gray-100">
           {children}
         </main>
       </div>
