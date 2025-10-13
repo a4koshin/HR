@@ -6,8 +6,18 @@ import {
   useGetallFunctionQuery,
 } from "../../store/DynamicApi";
 
-// Import icons
-import { FiX, FiUser, FiMail, FiPhone, FiMapPin, FiBriefcase, FiCalendar, FiDollarSign, FiClock, FiCheckCircle } from "react-icons/fi";
+import {
+  FiX,
+  FiUser,
+  FiMail,
+  FiPhone,
+  FiMapPin,
+  FiBriefcase,
+  FiCalendar,
+  FiDollarSign,
+  FiClock,
+  FiCheckCircle,
+} from "react-icons/fi";
 import { HiOutlineOfficeBuilding } from "react-icons/hi";
 
 const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
@@ -153,19 +163,21 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl border border-gray-200">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 rounded-t-2xl">
+        <div className="p-6 rounded-t-2xl">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-bold text-white">
+              <h2 className="text-2xl font-bold text-blue-700">
                 {isEditing ? "Edit Employee" : "Add New Employee"}
               </h2>
-              <p className="text-blue-100 mt-1">
-                {isEditing ? "Update employee information" : "Add a new team member to your hospital"}
+              <p className="text-blue-800 mt-1">
+                {isEditing
+                  ? "Update employee information"
+                  : "Add a new team member to your hospital"}
               </p>
             </div>
             <button
               onClick={onClose}
-              className="text-white hover:bg-blue-500 p-2 rounded-xl transition duration-200"
+              className="text-blue-700 hover:bg-blue-100 hover:text-blue-500 p-2 rounded-xl transition duration-200"
             >
               <FiX className="w-6 h-6" />
             </button>
@@ -186,21 +198,25 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
                 <FiUser className="w-5 h-5" />
               </div>
               <div className="flex flex-col">
-                <span className={`text-sm font-medium ${currentStep >= 1 ? "text-blue-600" : "text-gray-500"}`}>
+                <span
+                  className={`text-sm font-medium ${
+                    currentStep >= 1 ? "text-blue-600" : "text-gray-500"
+                  }`}
+                >
                   Personal Info
                 </span>
                 <span className="text-xs text-gray-400">Step 1</span>
               </div>
             </div>
-            
+
             <div className="flex-1 h-1 bg-gray-200 mx-4">
-              <div 
+              <div
                 className={`h-full bg-blue-600 transition-all duration-300 ${
                   currentStep >= 2 ? "w-full" : "w-0"
                 }`}
               ></div>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <div
                 className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
@@ -212,7 +228,11 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
                 <FiBriefcase className="w-5 h-5" />
               </div>
               <div className="flex flex-col">
-                <span className={`text-sm font-medium ${currentStep >= 2 ? "text-blue-600" : "text-gray-500"}`}>
+                <span
+                  className={`text-sm font-medium ${
+                    currentStep >= 2 ? "text-blue-600" : "text-gray-500"
+                  }`}
+                >
                   Employment
                 </span>
                 <span className="text-xs text-gray-400">Step 2</span>

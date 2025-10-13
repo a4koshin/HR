@@ -11,7 +11,7 @@ import shiftRouter from "./routes/shiftRoute.js";
 import payrollRouter from "./routes/payrollRoute.js";
 import leaveRouter from "./routes/leaveRoute.js";
 import trainingRouter from "./routes/trainingRoute.js";
-import recruitmentRouter from "./routes/recruitmentRoute.js"
+import recruitmentRouter from "./routes/recruitmentRoute.js";
 // dotenv
 dotenv.config();
 const app = express();
@@ -28,7 +28,7 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true); 
+      if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
       callback(new Error("Not allowed by CORS"));
     },

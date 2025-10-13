@@ -1,11 +1,16 @@
 import React, { useState } from "react";
 import { TailSpin } from "react-loader-spinner";
 import EmpModel from "./EmpModel";
+import { useGetallFunctionQuery } from "../../store/DynamicApi";
 import {
-  useGetallFunctionQuery,
-} from "../../store/DynamicApi";
-
-import { FiEdit2, FiTrash2, FiPlus, FiUser, FiMail, FiPhone, FiDollarSign } from "react-icons/fi";
+  FiEdit2,
+  FiTrash2,
+  FiPlus,
+  FiUser,
+  FiMail,
+  FiPhone,
+  FiDollarSign,
+} from "react-icons/fi";
 import { HiOutlineOfficeBuilding, HiStatusOnline } from "react-icons/hi";
 
 const EmployeePage = () => {
@@ -36,7 +41,7 @@ const EmployeePage = () => {
 
   const handleEmployeeSaved = () => {
     closeModal();
-    refetch(); 
+    refetch();
   };
 
   const employees = employeeData?.employees || [];
@@ -77,21 +82,25 @@ const EmployeePage = () => {
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Employees</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{employees.length}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Total Employees
+                </p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {employees.length}
+                </p>
               </div>
               <div className="p-3 bg-blue-100 rounded-xl">
                 <FiUser className="text-2xl text-blue-600" />
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Active</p>
                 <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {employees.filter(emp => emp.status === "Active").length}
+                  {employees.filter((emp) => emp.status === "Active").length}
                 </p>
               </div>
               <div className="p-3 bg-green-100 rounded-xl">
@@ -116,13 +125,18 @@ const EmployeePage = () => {
         {isLoading && employees.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
             <div className="flex justify-center mb-4">
-              <TailSpin height={50} width={50} color="#2563EB" ariaLabel="loading" />
+              <TailSpin
+                height={50}
+                width={50}
+                color="#2563EB"
+                ariaLabel="loading"
+              />
             </div>
             <p className="text-gray-600 text-lg">Loading employees...</p>
           </div>
         ) : (
           // Employee Table
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+          <div className="bg-blue-800 rounded-2xl shadow-lg overflow-hidden border border-gray-100">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -149,8 +163,8 @@ const EmployeePage = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {employees.map((emp) => (
-                    <tr 
-                      key={emp._id} 
+                    <tr
+                      key={emp._id}
                       className="hover:bg-gray-50 transition-all duration-200 group cursor-pointer"
                     >
                       <td className="px-8 py-5">
@@ -178,7 +192,9 @@ const EmployeePage = () => {
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        <span className="text-gray-900 font-medium">{emp.position}</span>
+                        <span className="text-gray-900 font-medium">
+                          {emp.position}
+                        </span>
                       </td>
                       <td className="px-6 py-5">
                         <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200">
@@ -188,19 +204,25 @@ const EmployeePage = () => {
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-2 text-gray-900 font-semibold">
-                          <FiDollarSign className="w-4 h-4 text-green-600" />
-                          ${emp.salary?.toLocaleString()}
+                          <FiDollarSign className="w-4 h-4 text-green-600" />$
+                          {emp.salary?.toLocaleString()}
                         </div>
                       </td>
                       <td className="px-6 py-5">
                         <span
                           className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold ${
-                            emp.status === "Active" 
-                              ? "bg-green-50 text-green-700 border border-green-200" 
+                            emp.status === "Active"
+                              ? "bg-green-50 text-green-700 border border-green-200"
                               : "bg-red-50 text-red-700 border border-red-200"
                           }`}
                         >
-                          <div className={`w-2 h-2 rounded-full ${emp.status === "Active" ? "bg-green-500" : "bg-red-500"}`}></div>
+                          <div
+                            className={`w-2 h-2 rounded-full ${
+                              emp.status === "Active"
+                                ? "bg-green-500"
+                                : "bg-red-500"
+                            }`}
+                          ></div>
                           {emp.status}
                         </span>
                       </td>
@@ -220,7 +242,6 @@ const EmployeePage = () => {
                           >
                             <FiTrash2 className="w-5 h-5" />
                           </button>
-                         
                         </div>
                       </td>
                     </tr>
@@ -235,8 +256,12 @@ const EmployeePage = () => {
                 <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                   <FiUser className="w-12 h-12 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No employees found</h3>
-                <p className="text-gray-600 mb-6">Get started by adding your first employee</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  No employees found
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Get started by adding your first employee
+                </p>
                 <button
                   onClick={openAddModal}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition duration-200"

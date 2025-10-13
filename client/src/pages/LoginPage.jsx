@@ -68,15 +68,20 @@ const LoginPage = () => {
           <div className="mb-8">
             <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mb-6">
               <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
             <h2 className="text-3xl font-bold mb-4">Welcome Back</h2>
             <p className="text-blue-100 text-lg leading-relaxed">
-              Access your HR dashboard to manage employees, track performance, and streamline your hospital's workforce operations.
+              Access your HR dashboard to manage employees, track performance,
+              and streamline your hospital's workforce operations.
             </p>
           </div>
-          
+
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
@@ -103,8 +108,16 @@ const LoginPage = () => {
         <div className="p-8 lg:p-12 flex flex-col justify-center">
           <div className="text-center lg:text-left mb-8">
             <div className="lg:hidden w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto lg:mx-0 mb-4">
-              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+              <svg
+                className="w-6 h-6 text-white"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
             <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -162,14 +175,21 @@ const LoginPage = () => {
                   tabIndex={-1}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <FiEyeOff className="h-5 w-5" /> : <FiEye className="h-5 w-5" />}
+                  {showPassword ? (
+                    <FiEyeOff className="h-5 w-5" />
+                  ) : (
+                    <FiEye className="h-5 w-5" />
+                  )}
                 </button>
               </div>
             </div>
 
             {/* Forgot Password */}
             <div className="flex justify-end">
-              <a href="#" className="text-sm text-blue-600 hover:text-blue-700 font-medium transition duration-200">
+              <a
+                href="#"
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium transition duration-200"
+              >
                 Forgot password?
               </a>
             </div>
@@ -180,7 +200,9 @@ const LoginPage = () => {
                 <div className="w-2 h-8 bg-red-500 rounded-full"></div>
                 <div>
                   <p className="text-red-700 font-medium text-sm">
-                    {error?.data?.message || error?.error || "Something went wrong"}
+                    {error?.data?.message ||
+                      error?.error ||
+                      "Something went wrong"}
                   </p>
                 </div>
               </div>
@@ -190,14 +212,13 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-400 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:shadow-lg flex items-center justify-center gap-3 ${
+              className={`w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-blue-400 disabled:to-blue-400 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:shadow-lg flex items-center justify-center gap-3 ${
                 isLoading ? "cursor-not-allowed" : ""
               }`}
             >
               {isLoading ? (
                 <>
                   <TailSpin height={20} width={20} color="#FFFFFF" />
-                  Signing In...
                 </>
               ) : (
                 <>
@@ -211,7 +232,10 @@ const LoginPage = () => {
             <div className="text-center pt-4">
               <p className="text-gray-600 text-sm">
                 Need help?{" "}
-                <a href="#" className="text-blue-600 hover:text-blue-700 font-medium transition duration-200">
+                <a
+                  href="#"
+                  className="text-blue-600 hover:text-blue-700 font-medium transition duration-200"
+                >
                   Contact support
                 </a>
               </p>

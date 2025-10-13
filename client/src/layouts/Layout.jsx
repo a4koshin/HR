@@ -8,8 +8,7 @@ const Layout = ({ children }) => {
   const { setName, setEmail, setIsAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  const [collapsed, setCollapsed] = useState(false); 
-  
+  const [collapsed, setCollapsed] = useState(false);
 
   const logOut = () => {
     localStorage.removeItem("token");
@@ -28,12 +27,10 @@ const Layout = ({ children }) => {
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header
-          onToggleSidebar={() => setCollapsed(!collapsed)} // toggle collapse
+          onToggleSidebar={() => setCollapsed(!collapsed)}
           onLogout={logOut}
         />
-        <main className="flex-1 overflow-y-auto bg-gray-100">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto bg-gray-100">{children}</main>
       </div>
     </div>
   );

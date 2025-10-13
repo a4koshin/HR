@@ -1,15 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { TailSpin } from "react-loader-spinner";
-import { FiCheckCircle,FiX } from "react-icons/fi"; 
-import { Building  } from "lucide-react"; 
-import { useCreateFuctionMutation, useUpdateFunctionMutation } from "../../store/DynamicApi";
+import { FiCheckCircle, FiX, FiUsers, FiActivity } from "react-icons/fi";
+import { Building, TrendingUp } from "lucide-react";
+import {
+  useCreateFuctionMutation,
+  useUpdateFunctionMutation,
+} from "../../store/DynamicApi";
 
 const DeptModel = ({ isOpen, onClose, onSave, department }) => {
-  const [createDepartment, { isLoading: isCreating }] = useCreateFuctionMutation();
-  const [updateDepartment, { isLoading: isUpdating }] = useUpdateFunctionMutation();
+  const [createDepartment, { isLoading: isCreating }] =
+    useCreateFuctionMutation();
+  const [updateDepartment, { isLoading: isUpdating }] =
+    useUpdateFunctionMutation();
   const [formData, setFormData] = useState({
     name: "",
     status: "Active",
+    description: "",
+    headCount: "",
   });
 
   const isEditing = !!department;
@@ -20,11 +27,15 @@ const DeptModel = ({ isOpen, onClose, onSave, department }) => {
       setFormData({
         name: department.name || "",
         status: department.status || "Active",
+        description: department.description || "",
+        headCount: department.headCount || "",
       });
     } else {
       setFormData({
         name: "",
         status: "Active",
+        description: "",
+        headCount: "",
       });
     }
   }, [department, isOpen]);
@@ -38,7 +49,11 @@ const DeptModel = ({ isOpen, onClose, onSave, department }) => {
     e.preventDefault();
     try {
       if (isEditing) {
-        await updateDepartment({ url: "departments", id: department._id, formData }).unwrap();
+        await updateDepartment({
+          url: "departments",
+          id: department._id,
+          formData,
+        }).unwrap();
       } else {
         await createDepartment({ url: "departments", formData }).unwrap();
       }
@@ -52,24 +67,40 @@ const DeptModel = ({ isOpen, onClose, onSave, department }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-xl border border-gray-200">
+      <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-xl border border-gray-200">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 rounded-t-2xl flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <Building className="h-6 w-6 text-white" />
-            <h2 className="text-xl font-bold text-white">
-              {isEditing ? "Edit Department" : "Add New Department"}
-            </h2>
+        <div className="p-6 rounded-t-2xl">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 p-2 rounded-xl">
+                <Building className="h-6 w-6 text-blue-700" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-blue-700">
+                  {isEditing ? "Edit Department" : "Create Department"}
+                </h2>
+                <p className="text-blue-700 text-sm">
+                  {isEditing
+                    ? "Update department information"
+                    : "Add a new department to your organization"}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-blue-700 hover:bg-blue-100 hover:text-blue-500 p-2 rounded-xl transition duration-200"
+            >
+              <FiX className="w-5 h-5" />
+            </button>
           </div>
-          <button onClick={onClose} className="text-white hover:bg-blue-500 p-2 rounded-xl transition duration-200">
-            <FiX className="w-6 h-6" />
-          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-6 space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Department Name *
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Department Name */}
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Building className="w-4 h-4 text-blue-600" />
+              Department Name
             </label>
             <input
               type="text"
@@ -77,45 +108,104 @@ const DeptModel = ({ isOpen, onClose, onSave, department }) => {
               value={formData.name}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-              placeholder="Enter department name"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+              placeholder="e.g., Human Resources, IT, Finance"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status *
+          {/* Description */}
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-blue-600" />
+              Description
             </label>
-            <select
-              name="status"
-              value={formData.status}
+            <textarea
+              name="description"
+              value={formData.description}
               onChange={handleInputChange}
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-            >
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
+              rows="3"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 resize-none"
+              placeholder="Brief description of the department's role and responsibilities..."
+            />
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Head Count */}
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <FiUsers className="w-4 h-4 text-blue-600" />
+                Head Count
+              </label>
+              <input
+                type="number"
+                name="headCount"
+                value={formData.headCount}
+                onChange={handleInputChange}
+                min="0"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                placeholder="Number of employees"
+              />
+            </div>
+
+            {/* Status */}
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <FiActivity className="w-4 h-4 text-blue-600" />
+                Status *
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+              >
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Status Preview */}
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-3 h-3 rounded-full ${
+                    formData.status === "Active" ? "bg-green-500" : "bg-red-500"
+                  }`}
+                ></div>
+                <span className="text-sm font-medium text-gray-700">
+                  This department will be {formData.status.toLowerCase()}
+                </span>
+              </div>
+              {formData.headCount && (
+                <div className="text-sm text-gray-500">
+                  {formData.headCount} employees
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-between pt-6 border-t border-gray-200">
             <button
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium disabled:text-gray-400"
+              className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium disabled:text-gray-400 transition duration-200"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={isLoading}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-blue-400 font-medium"
+              disabled={isLoading || !formData.name}
+              className="flex items-center gap-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-400 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:shadow-lg"
             >
               {isLoading ? (
                 <>
                   <TailSpin height={20} width={20} color="#FFFFFF" />
-                  {isEditing ? "Updating..." : "Saving..."}
+                  {isEditing ? "Updating..." : "Creating..."}
                 </>
               ) : isEditing ? (
                 <>
@@ -124,7 +214,7 @@ const DeptModel = ({ isOpen, onClose, onSave, department }) => {
                 </>
               ) : (
                 <>
-                  Add Department
+                  Create Department
                   <FiCheckCircle className="w-5 h-5" />
                 </>
               )}

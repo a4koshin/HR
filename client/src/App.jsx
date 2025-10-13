@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import PrivateRoute from "./routes/PrivateRoute";
 import DashboardPage from "./pages/DashboardPage";
@@ -22,9 +22,10 @@ const App = () => {
 
       <Routes>
         {/* Public routes */}
-         
+
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
         <Route path="/login" element={<LoginPage />} />
-     
 
         {/* Protected routes */}
         <Route element={<PrivateRoute />}>
@@ -39,7 +40,6 @@ const App = () => {
           <Route path="/leave" element={<LeavePage />} />
           <Route path="/documents" element={<DocumentsPage />} />
           <Route path="/users" element={<UserPage />} />
-
         </Route>
       </Routes>
     </div>
