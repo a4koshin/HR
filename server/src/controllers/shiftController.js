@@ -1,41 +1,47 @@
-// controllers/shiftController.js
 import Shift from "../models/shift.js";
 import Attendance from "../models/attendance.js";
 
-// Total hours calculations
+// ---------------- Helper Functions ----------------
+
+// Calculate total hours and minutes
 const CalculateHours = (startTime, endTime) => {
-  const diff = new Date(endTime) - new Date(startTime);
-  const hours = diff / (1000 * 60 * 60);
-  return Number(hours.toFixed(2));
+  const diffMs = new Date(endTime) - new Date(startTime);
+  const totalMinutes = Math.floor(diffMs / (1000 * 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}h ${minutes}m`;
+};
+
+// Format time range dynamically: "8:00 AM - 4:00 PM"
+const formatTimeRange = (startTime, endTime) => {
+  const options = { hour: "numeric", minute: "2-digit", hour12: true };
+  const start = new Date(startTime).toLocaleTimeString("en-US", options);
+  const end = new Date(endTime).toLocaleTimeString("en-US", options);
+  return `${start} - ${end}`;
 };
 
 // ---------------- Get All Shifts ----------------
 export const getShifts = async (req, res) => {
   try {
-    const shifts = await Shift.find().populate(
-      "assignedEmployees",
-      "fullname email position"
-    );
+    const shifts = await Shift.find();
 
-    // Calculate total hours for each shift and get attendance stats
     const shiftsWithStats = await Promise.all(
       shifts.map(async (shift) => {
         const shiftObj = shift.toObject();
 
-        // Get attendance records for this shift
-        const attendanceRecords = await Attendance.find({
-          shift: shift._id,
-        }).populate("employee", "fullname");
+        // Attendance records for stats
+        const attendanceRecords = await Attendance.find({ shift: shift._id }).populate(
+          "employee",
+          "fullname"
+        );
 
-        const totalEmployees = shift.assignedEmployees.length;
-        const presentCount = attendanceRecords.filter(
-          (att) => att.checkIn
-        ).length;
-        const attendanceRate =
-          totalEmployees > 0 ? (presentCount / totalEmployees) * 100 : 0;
+        const totalEmployees = attendanceRecords.length;
+        const presentCount = attendanceRecords.filter((att) => att.checkIn).length;
+        const attendanceRate = totalEmployees > 0 ? (presentCount / totalEmployees) * 100 : 0;
 
         return {
           ...shiftObj,
+          timeRange: formatTimeRange(shift.startTime, shift.endTime),
           totalHours: CalculateHours(shift.startTime, shift.endTime),
           attendanceStats: {
             totalEmployees,
@@ -47,12 +53,9 @@ export const getShifts = async (req, res) => {
       })
     );
 
-    res.status(200).json({
-      success: true,
-      count: shifts.length,
-      shifts: shiftsWithStats,
-    });
+    res.status(200).json({ success: true, count: shifts.length, shifts: shiftsWithStats });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -60,29 +63,15 @@ export const getShifts = async (req, res) => {
 // ---------------- Get Single Shift ----------------
 export const getShiftById = async (req, res) => {
   try {
-    const shift = await Shift.findById(req.params.id).populate(
-      "assignedEmployees",
-      "fullname email position department"
-    );
+    const shift = await Shift.findById(req.params.id);
 
-    if (!shift) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Shift not found" });
-    }
+    if (!shift) return res.status(404).json({ success: false, message: "Shift not found" });
 
-    // Get attendance records for this shift
-    const attendanceRecords = await Attendance.find({
-      shift: shift._id,
-    })
+    const attendanceRecords = await Attendance.find({ shift: shift._id })
       .populate("employee", "fullname position")
       .sort({ date: -1 });
 
-    // Calculate shift statistics
-    const totalHours = CalculateHours(shift.startTime, shift.endTime);
-    const totalEmployees = shift.assignedEmployees.length;
-
-    // Calculate today's attendance
+    const totalEmployees = attendanceRecords.length;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -90,31 +79,27 @@ export const getShiftById = async (req, res) => {
 
     const todayAttendance = await Attendance.find({
       shift: shift._id,
-      date: {
-        $gte: today,
-        $lt: tomorrow,
-      },
+      date: { $gte: today, $lt: tomorrow },
     });
 
     const presentToday = todayAttendance.filter((att) => att.checkIn).length;
 
     const shiftWithDetails = {
       ...shift.toObject(),
-      totalHours,
+      timeRange: formatTimeRange(shift.startTime, shift.endTime),
+      totalHours: CalculateHours(shift.startTime, shift.endTime),
       attendanceStats: {
         totalEmployees,
         presentToday,
         absentToday: totalEmployees - presentToday,
-        attendanceRate:
-          totalEmployees > 0
-            ? Math.round((presentToday / totalEmployees) * 100)
-            : 0,
-        recentAttendance: attendanceRecords.slice(0, 10), // Last 10 records
+        attendanceRate: totalEmployees > 0 ? Math.round((presentToday / totalEmployees) * 100) : 0,
+        recentAttendance: attendanceRecords.slice(0, 10),
       },
     };
 
     res.status(200).json({ success: true, shift: shiftWithDetails });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -122,36 +107,17 @@ export const getShiftById = async (req, res) => {
 // ---------------- Create Shift ----------------
 export const createShift = async (req, res) => {
   try {
-    const { name, startTime, endTime, assignedEmployees } = req.body;
+    const { name, startTime, endTime, status } = req.body;
 
-    // Validate time format and logic
     if (new Date(endTime) <= new Date(startTime)) {
-      return res.status(400).json({
-        success: false,
-        message: "End time must be after start time",
-      });
+      return res.status(400).json({ success: false, message: "End time must be after start time" });
     }
 
-    const shift = await Shift.create({
-      name,
-      startTime,
-      endTime,
-      assignedEmployees: assignedEmployees || [],
-    });
+    const shift = await Shift.create({ name, startTime, endTime, status: status || "Active" });
 
-    const populatedShift = await Shift.findById(shift._id).populate(
-      "assignedEmployees",
-      "fullname email position"
-    );
-
-    res.status(201).json({
-      success: true,
-      shift: {
-        ...populatedShift.toObject(),
-        totalHours: CalculateHours(shift.startTime, shift.endTime),
-      },
-    });
+    res.status(201).json({ success: true, shift });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -159,54 +125,34 @@ export const createShift = async (req, res) => {
 // ---------------- Update Shift ----------------
 export const updateShift = async (req, res) => {
   try {
-    const { startTime, endTime } = req.body;
+    const { name, startTime, endTime, status } = req.body;
 
-    // Validate time logic if both are provided
     if (startTime && endTime && new Date(endTime) <= new Date(startTime)) {
-      return res.status(400).json({
-        success: false,
-        message: "End time must be after start time",
-      });
+      return res.status(400).json({ success: false, message: "End time must be after start time" });
     }
 
-    const shift = await Shift.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    }).populate("assignedEmployees", "fullname email position");
+    const shift = await Shift.findByIdAndUpdate(
+      req.params.id,
+      { name, startTime, endTime, status },
+      { new: true, runValidators: true }
+    );
 
-    if (!shift) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Shift not found" });
-    }
+    if (!shift) return res.status(404).json({ success: false, message: "Shift not found" });
 
-    const updatedShift = {
-      ...shift.toObject(),
-      totalHours: CalculateHours(shift.startTime, shift.endTime),
-    };
-
-    res.status(200).json({ success: true, shift: updatedShift });
+    res.status(200).json({ success: true, shift });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ---------------- Delete Shift (Admin only) ----------------
+// ---------------- Delete Shift ----------------
 export const deleteShift = async (req, res) => {
   try {
     const shift = await Shift.findById(req.params.id);
+    if (!shift) return res.status(404).json({ success: false, message: "Shift not found" });
 
-    if (!shift) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Shift not found" });
-    }
-
-    // Check if there are attendance records linked to this shift
-    const attendanceCount = await Attendance.countDocuments({
-      shift: shift._id,
-    });
-
+    const attendanceCount = await Attendance.countDocuments({ shift: shift._id });
     if (attendanceCount > 0) {
       return res.status(400).json({
         success: false,
@@ -215,12 +161,9 @@ export const deleteShift = async (req, res) => {
     }
 
     await Shift.findByIdAndDelete(req.params.id);
-
-    res.status(200).json({
-      success: true,
-      message: "Shift deleted successfully",
-    });
+    res.status(200).json({ success: true, message: "Shift deleted successfully" });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -232,44 +175,23 @@ export const getShiftAttendanceReport = async (req, res) => {
     const { startDate, endDate } = req.query;
 
     const shift = await Shift.findById(id);
-    if (!shift) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Shift not found" });
-    }
+    if (!shift) return res.status(404).json({ success: false, message: "Shift not found" });
 
-    // Date range filter
     let dateFilter = {};
     if (startDate && endDate) {
-      dateFilter = {
-        date: {
-          $gte: new Date(startDate),
-          $lte: new Date(endDate),
-        },
-      };
+      dateFilter = { date: { $gte: new Date(startDate), $lte: new Date(endDate) } };
     }
 
-    const attendanceRecords = await Attendance.find({
-      shift: id,
-      ...dateFilter,
-    })
+    const attendanceRecords = await Attendance.find({ shift: id, ...dateFilter })
       .populate("employee", "fullname position department")
       .sort({ date: -1 });
 
-    // Calculate report statistics
     const totalRecords = attendanceRecords.length;
-    const completedShifts = attendanceRecords.filter(
-      (att) => att.checkIn && att.checkOut
-    ).length;
-    const inProgressShifts = attendanceRecords.filter(
-      (att) => att.checkIn && !att.checkOut
-    ).length;
+    const completedShifts = attendanceRecords.filter((att) => att.checkIn && att.checkOut).length;
+    const inProgressShifts = attendanceRecords.filter((att) => att.checkIn && !att.checkOut).length;
     const absentShifts = attendanceRecords.filter((att) => !att.checkIn).length;
 
-    const totalWorkedHours = attendanceRecords.reduce(
-      (sum, att) => sum + (att.workedHours || 0),
-      0
-    );
+    const totalWorkedHours = attendanceRecords.reduce((sum, att) => sum + (att.workedHours || 0), 0);
 
     res.status(200).json({
       success: true,
@@ -287,10 +209,7 @@ export const getShiftAttendanceReport = async (req, res) => {
           inProgressShifts,
           absentShifts,
           totalWorkedHours: Math.round(totalWorkedHours * 100) / 100,
-          averageHours:
-            totalRecords > 0
-              ? Math.round((totalWorkedHours / totalRecords) * 100) / 100
-              : 0,
+          averageHours: totalRecords > 0 ? Math.round((totalWorkedHours / totalRecords) * 100) / 100 : 0,
         },
         attendanceRecords,
       },
