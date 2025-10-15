@@ -51,10 +51,6 @@ const ShiftModel = ({ isOpen, onClose, onSave, shift }) => {
       const startTime = new Date(`${today.toDateString()} ${formData.startTime}`);
       const endTime = new Date(`${today.toDateString()} ${formData.endTime}`);
 
-      if (endTime <= startTime) {
-        alert("End time must be after start time");
-        return;
-      }
 
       const payload = {
         name: formData.name,

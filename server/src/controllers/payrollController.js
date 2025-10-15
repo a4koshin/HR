@@ -51,7 +51,7 @@ export const getPayrolls = async (req, res) => {
   try {
     const payrolls = await Payroll.find().populate(
       "employee",
-      "fullname email role"
+      "fullname salary email role"
     );
     res.json({ success: true, payrolls });
   } catch (error) {

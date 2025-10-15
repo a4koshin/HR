@@ -37,7 +37,7 @@ const ShiftPage = () => {
     refetch();
   };
 
-  const shifts = shiftData.shifts || [];
+  const shifts = shiftData.shifts  || [];
   const totalShifts = shifts.length;
   const activeShifts = shifts.filter((s) => s.status === "Active").length;
 

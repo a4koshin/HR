@@ -252,7 +252,7 @@ const EmployeePage = () => {
 
             {/* Empty State */}
             {employees.length === 0 && !isLoading && (
-              <div className="text-center py-16">
+              <div className="bg-white text-center py-16">
                 <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                   <FiUser className="w-12 h-12 text-gray-400" />
                 </div>
