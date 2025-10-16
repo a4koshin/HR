@@ -20,12 +20,13 @@ const ShiftModel = ({ isOpen, onClose, onSave, shift }) => {
   const isLoading = isCreating || isUpdating;
   const isEditing = !!shift;
 
+  // ✅ Safer and simpler update when modal opens
   useEffect(() => {
     if (shift) {
       setFormData({
         name: shift.name || "",
-        startTime: shift.startTime ? shift.startTime.split("T")[1].slice(0, 5) : "",
-        endTime: shift.endTime ? shift.endTime.split("T")[1].slice(0, 5) : "",
+        startTime: shift.startTime || "",
+        endTime: shift.endTime || "",
         status: shift.status || "Active",
       });
     } else {
@@ -46,9 +47,10 @@ const ShiftModel = ({ isOpen, onClose, onSave, shift }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Convert time to full date-time
       const today = new Date();
-      const startTime = new Date(`${today.toDateString()} ${formData.startTime}`);
+      const startTime = new Date(
+        `${today.toDateString()} ${formData.startTime}`
+      );
       const endTime = new Date(`${today.toDateString()} ${formData.endTime}`);
 
       if (endTime <= startTime) {
@@ -64,7 +66,11 @@ const ShiftModel = ({ isOpen, onClose, onSave, shift }) => {
       };
 
       if (isEditing) {
-        await updateShift({ url: "shifts", id: shift._id, formData: payload }).unwrap();
+        await updateShift({
+          url: "shifts",
+          id: shift._id,
+          formData: payload,
+        }).unwrap();
       } else {
         await createShift({ url: "shifts", formData: payload }).unwrap();
       }
@@ -81,14 +87,15 @@ const ShiftModel = ({ isOpen, onClose, onSave, shift }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl max-w-2xl w-full shadow-xl border border-gray-200 overflow-y-auto">
-        {/* Header */}
         <div className="p-6 rounded-t-2xl flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold text-blue-700">
               {isEditing ? "Edit Shift" : "Add New Shift"}
             </h2>
             <p className="text-blue-800 mt-1">
-              {isEditing ? "Update shift schedule" : "Create a new work shift for your team"}
+              {isEditing
+                ? "Update shift schedule"
+                : "Create a new work shift for your team"}
             </p>
           </div>
           <button
@@ -99,7 +106,6 @@ const ShiftModel = ({ isOpen, onClose, onSave, shift }) => {
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-6">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">

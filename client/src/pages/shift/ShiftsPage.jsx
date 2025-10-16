@@ -6,7 +6,6 @@ import { FiEdit2, FiTrash2, FiPlus, FiClock } from "react-icons/fi";
 import { HiStatusOnline } from "react-icons/hi";
 
 const ShiftPage = () => {
-  // Fetch shifts
   const {
     data: shiftData = {},
     isLoading,
@@ -22,8 +21,29 @@ const ShiftPage = () => {
     setIsModalOpen(true);
   };
 
+  // ✅ Fixed: Parse timeRange or ISO strings before passing to modal
   const openEditModal = (shift) => {
-    setEditingShift(shift);
+    let startTime = "";
+    let endTime = "";
+
+    if (shift.timeRange && shift.timeRange.includes(" - ")) {
+      const [start, end] = shift.timeRange.split(" - ");
+      startTime = start.trim();
+      endTime = end.trim();
+    } else {
+      startTime = shift.startTime
+        ? new Date(shift.startTime).toISOString().substring(11, 16)
+        : "";
+      endTime = shift.endTime
+        ? new Date(shift.endTime).toISOString().substring(11, 16)
+        : "";
+    }
+
+    setEditingShift({
+      ...shift,
+      startTime,
+      endTime,
+    });
     setIsModalOpen(true);
   };
 
@@ -70,13 +90,17 @@ const ShiftPage = () => {
           </button>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Shifts</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{totalShifts}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Total Shifts
+                </p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {totalShifts}
+                </p>
               </div>
               <div className="p-3 bg-blue-100 rounded-xl">
                 <FiClock className="text-2xl text-blue-600" />
@@ -88,7 +112,9 @@ const ShiftPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Active</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{activeShifts}</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {activeShifts}
+                </p>
               </div>
               <div className="p-3 bg-green-100 rounded-xl">
                 <HiStatusOnline className="text-2xl text-green-600" />
@@ -108,36 +134,60 @@ const ShiftPage = () => {
           </div>
         )}
 
-        {/* Loading */}
-        {isLoading && shifts.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
-            <div className="flex justify-center mb-4">
-              <TailSpin height={50} width={50} color="#2563EB" ariaLabel="loading" />
-            </div>
-            <p className="text-gray-600 text-lg">Loading shifts...</p>
-          </div>
-        ) : (
+        {/* Table */}
+        {!isLoading && (
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-8 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider">Shift Name</th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider">Time</th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider">Duration</th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
+                    <th className="px-8 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Shift Name
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Time
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Duration
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200 text-center">
                   {shifts.map((shift) => (
-                    <tr key={shift._id} className="hover:bg-gray-50 transition-all duration-200 group cursor-pointer">
-                      <td className="px-8 py-5 text-gray-900 font-semibold">{shift.name}</td>
-                      <td className="px-6 py-5 text-gray-700">{shift.timeRange}</td>
-                      <td className="px-6 py-5 text-gray-700">{shift.totalHours}</td>
+                    <tr
+                      key={shift._id}
+                      className="hover:bg-gray-50 transition-all duration-200 group cursor-pointer"
+                    >
+                      <td className="px-8 py-5 text-gray-900 font-semibold">
+                        {shift.name}
+                      </td>
+                      <td className="px-6 py-5 text-gray-700">
+                        {shift.timeRange}
+                      </td>
+                      <td className="px-6 py-5 text-gray-700">
+                        {shift.totalHours}
+                      </td>
                       <td className="px-6 py-5">
-                        <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold ${shift.status === "Active" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
-                          <div className={`w-2 h-2 rounded-full ${shift.status === "Active" ? "bg-green-500" : "bg-red-500"}`} />
+                        <span
+                          className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold ${
+                            shift.status === "Active"
+                              ? "bg-green-50 text-green-700 border border-green-200"
+                              : "bg-red-50 text-red-700 border border-red-200"
+                          }`}
+                        >
+                          <div
+                            className={`w-2 h-2 rounded-full ${
+                              shift.status === "Active"
+                                ? "bg-green-500"
+                                : "bg-red-500"
+                            }`}
+                          />
                           {shift.status}
                         </span>
                       </td>
@@ -164,14 +214,23 @@ const ShiftPage = () => {
                 </tbody>
               </table>
 
-              {shifts.length === 0 && !isLoading && (
+              {shifts.length === 0 && (
                 <div className="text-center py-16">
                   <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                     <FiClock className="w-12 h-12 text-gray-400" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No shifts found</h3>
-                  <p className="text-gray-600 mb-6">Get started by adding your first shift</p>
-                  <button onClick={openAddModal} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition duration-200">Add First Shift</button>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    No shifts found
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Get started by adding your first shift
+                  </p>
+                  <button
+                    onClick={openAddModal}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition duration-200"
+                  >
+                    Add First Shift
+                  </button>
                 </div>
               )}
             </div>

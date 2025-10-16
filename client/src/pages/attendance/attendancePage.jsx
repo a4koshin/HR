@@ -1,13 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-
 
 import { TailSpin } from "react-loader-spinner";
 
 const AttendancePage = () => {
-
-    
-
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto">
@@ -258,7 +253,6 @@ const AttendancePage = () => {
       </div>
 
       {/* Add/Edit Attendance Modal */}
-
     </div>
   );
 };
