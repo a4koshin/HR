@@ -1,31 +1,42 @@
-// models/Recruitment.js
 import mongoose from "mongoose";
+import applicants from "./applicant.js";
+const { Schema } = mongoose;
 
-const applicantSchema = new mongoose.Schema(
+const recruitmentSchema = new Schema(
   {
-    name: { type: String, required: true, trim: true },
-    email: { type: String, required: true, lowercase: true, trim: true },
-    status: {
+    jobTitle: {
       type: String,
-      enum: ["applied", "interview", "hired", "rejected"],
-      default: "applied",
+      required: [true, "Job title is required"],
+      trim: true,
     },
-  },
-  { _id: false }
-);
-
-const recruitmentSchema = new mongoose.Schema(
-  {
-    jobTitle: { type: String, required: true, trim: true },
-    description: { type: String, required: true },
-    applicants: [applicantSchema],
+    description: {
+      type: String,
+      required: [true, "Job description is required"],
+      trim: true,
+    },
+    applicants: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Applicant",
+      },
+    ],
     hiredEmployeeId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Employee", // assuming Employee model exists
+      type: Schema.Types.ObjectId,
+      ref: "Employee",
       default: null,
     },
+    status: {
+      type: String,
+      enum: ["open", "closed", "hired"],
+      default: "open",
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    versionKey: false,
+  }
 );
 
-export default mongoose.model("Recruitment", recruitmentSchema);
+const recruitmentModel = mongoose.model("Recruitment", recruitmentSchema);
+export default recruitmentModel
+

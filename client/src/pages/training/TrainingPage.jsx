@@ -1,510 +1,378 @@
-import React, { useState, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import React, { useState } from "react";
 import { TailSpin } from "react-loader-spinner";
-
+import TrainingModel from "./TrainingModel";
+import { useGetallFunctionQuery } from "../../store/DynamicApi";
+import { FiEdit2, FiTrash2, FiPlus, FiUsers, FiCalendar, FiClock, FiTrendingUp, FiFilter, FiUserCheck } from "react-icons/fi";
 
 const TrainingPage = () => {
-  const dispatch = useDispatch();
-  const {
-    trainings = [],
-    loading = false,
-    error = null,
-    success = null,
-  } = useSelector((state) => state.training || {});
-  const { employees = [] } = useSelector((state) => state.employee || {});
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTraining, setEditingTraining] = useState(null);
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    trainer: "",
-    startDate: "",
-    endDate: "",
-    participants: [],
-    completionStatus: "Not Started",
-  });
+  const [filter, setFilter] = useState({ status: "" });
 
-  useEffect(() => {
-    dispatch(fetchTrainings());
-    dispatch(fetchEmployees());
-  }, [dispatch]);
+  const {
+    data: trainingData,
+    isLoading,
+    isError,
+    refetch,
+  } = useGetallFunctionQuery({ url: "/trainings" });
 
-  useEffect(() => {
-    if (error || success) {
-      const timer = setTimeout(() => {
-        dispatch(clearMessages());
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [error, success, dispatch]);
-
-  // Utility functions
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-    } catch {
-      return "Invalid Date";
-    }
+  const handleOpenModal = (training = null) => {
+    setEditingTraining(training);
+    setIsModalOpen(true);
   };
 
-  const getStatusBadge = (status) => {
-    const badgeStyles = {
-      Completed: "bg-green-100 text-green-800",
-      "In Progress": "bg-blue-100 text-blue-800",
-      "Not Started": "bg-gray-100 text-gray-800",
-    };
+  const handleCloseModal = () => {
+    setEditingTraining(null);
+    setIsModalOpen(false);
+  };
 
+  const handleFilterChange = (e) => {
+    setFilter({ ...filter, [e.target.name]: e.target.value });
+  };
+
+  const trainings = trainingData?.trainings || trainingData || [];
+
+  // Calculate stats
+  const totalTrainings = trainings.length;
+  const notStartedCount = trainings.filter(t => t.completionStatus === "Not Started").length;
+  const inProgressCount = trainings.filter(t => t.completionStatus === "In Progress").length;
+  const completedCount = trainings.filter(t => t.completionStatus === "Completed").length;
+  const totalParticipants = trainings.reduce((sum, training) => sum + (training.participants?.length || 0), 0);
+
+  // Filter trainings
+  const filteredTrainings = trainings.filter(training => {
+    return !filter.status || training.completionStatus === filter.status;
+  });
+
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      "Not Started": { bg: "bg-gray-50", text: "text-gray-700", border: "border-gray-200", label: "Not Started", icon: "⏳" },
+      "In Progress": { bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-200", label: "In Progress", icon: "🔄" },
+      "Completed": { bg: "bg-green-50", text: "text-green-700", border: "border-green-200", label: "Completed", icon: "✅" }
+    };
+    
+    const config = statusConfig[status] || statusConfig["Not Started"];
     return (
-      <span
-        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-          badgeStyles[status] || "bg-gray-100 text-gray-800"
-        }`}
-      >
-        {status}
+      <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${config.bg} ${config.text} ${config.border}`}>
+        {config.icon} {config.label}
       </span>
     );
   };
 
-  // Form handlers
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleParticipantSelection = (e) => {
-    const selectedOptions = Array.from(
-      e.target.selectedOptions,
-      (option) => option.value
-    );
-    setFormData((prev) => ({ ...prev, participants: selectedOptions }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (editingTraining) {
-        await dispatch(
-          updateTrainingAsync({ id: editingTraining._id, data: formData })
-        ).unwrap();
-      } else {
-        await dispatch(createTrainingAsync(formData)).unwrap();
-      }
-      closeModal();
-    } catch (err) {
-      console.error("Error saving training:", err);
-    }
-  };
-
-  const handleEdit = (training) => {
-    setEditingTraining(training);
-    setFormData({
-      title: training.title || "",
-      description: training.description || "",
-      trainer: training.trainer || "",
-      startDate: training.startDate
-        ? new Date(training.startDate).toISOString().split("T")[0]
-        : "",
-      endDate: training.endDate
-        ? new Date(training.endDate).toISOString().split("T")[0]
-        : "",
-      participants:
-        training.participants?.map((emp) =>
-          typeof emp === "string" ? emp : emp._id
-        ) || [],
-      completionStatus: training.completionStatus || "Not Started",
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
-    setIsModalOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this training?"))
-      return;
-    try {
-      await dispatch(deleteTrainingAsync(id)).unwrap();
-    } catch (err) {
-      console.error("Error deleting training:", err);
-    }
+  const getDuration = (startDate, endDate) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
   };
 
-  const resetForm = () => {
-    setFormData({
-      title: "",
-      description: "",
-      trainer: "",
-      startDate: "",
-      endDate: "",
-      participants: [],
-      completionStatus: "Not Started",
-    });
-    setEditingTraining(null);
+  const isUpcoming = (startDate) => {
+    return new Date(startDate) > new Date();
   };
 
-  const openAddModal = () => {
-    resetForm();
-    setIsModalOpen(true);
+  const isOngoing = (startDate, endDate) => {
+    const now = new Date();
+    return new Date(startDate) <= now && new Date(endDate) >= now;
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    resetForm();
-  };
-
-  // Calculate statistics with safe access
-  const totalTrainings = trainings?.length || 0;
-  const completedTrainings =
-    trainings?.filter((training) => training?.completionStatus === "Completed")
-      .length || 0;
-  const inProgressTrainings =
-    trainings?.filter(
-      (training) => training?.completionStatus === "In Progress"
-    ).length || 0;
-
-  return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Training Management
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Manage employee training programs and sessions
-            </p>
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FiUsers className="w-8 h-8 text-red-600" />
           </div>
-          <button
-            onClick={openAddModal}
-            disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-semibold transition duration-200 flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <>
-                <TailSpin height={20} width={20} color="#FFFFFF" />
-                Loading...
-              </>
-            ) : (
-              "+ Add Training"
-            )}
-          </button>
-        </div>
-
-        {/* Notifications */}
-        {error && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
-            {success}
-          </div>
-        )}
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <h3 className="text-xl font-semibold text-gray-700">
-              Total Trainings
-            </h3>
-            <p className="mt-2 text-2xl font-bold text-gray-900">
-              {totalTrainings}
-            </p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <h3 className="text-xl font-semibold text-gray-700">In Progress</h3>
-            <p className="mt-2 text-2xl font-bold text-blue-600">
-              {inProgressTrainings}
-            </p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <h3 className="text-xl font-semibold text-gray-700">Completed</h3>
-            <p className="mt-2 text-2xl font-bold text-green-600">
-              {completedTrainings}
-            </p>
-          </div>
-        </div>
-
-        {/* Trainings Table */}
-        <div className="overflow-x-auto bg-white rounded-lg shadow">
-          {loading && (trainings?.length === 0 || !trainings) ? (
-            <div className="text-center py-12 text-gray-500">
-              <div className="flex justify-center mb-4">
-                <TailSpin
-                  height={40}
-                  width={40}
-                  color="#2563EB"
-                  ariaLabel="loading"
-                />
-              </div>
-              Loading trainings...
-            </div>
-          ) : (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Training
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Trainer
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Schedule
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Participants
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {trainings?.map((training) => (
-                  <tr key={training._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {training.title}
-                      </div>
-                      {training.description && (
-                        <div className="text-sm text-gray-500 truncate max-w-xs">
-                          {training.description}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {training.trainer}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {formatDate(training.startDate)}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        to {formatDate(training.endDate)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {training.participants?.length || 0} employees
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {training.participants
-                          ?.slice(0, 2)
-                          .map((emp) =>
-                            typeof emp === "string" ? "Unknown" : emp.fullname
-                          )
-                          .join(", ")}
-                        {training.participants?.length > 2 && "..."}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(training.completionStatus)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleEdit(training)}
-                        disabled={loading}
-                        className="text-blue-600 hover:text-blue-900 mr-4 disabled:text-gray-400 flex items-center gap-1"
-                      >
-                        {loading && (
-                          <TailSpin height={16} width={16} color="#2563EB" />
-                        )}
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(training._id)}
-                        disabled={loading}
-                        className="text-red-600 hover:text-red-900 disabled:text-gray-400 flex items-center gap-1"
-                      >
-                        {loading && (
-                          <TailSpin height={16} width={16} color="#DC2626" />
-                        )}
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {(!trainings || trainings.length === 0) && !loading && (
-                  <tr>
-                    <td
-                      colSpan="6"
-                      className="px-6 py-4 text-center text-gray-500"
-                    >
-                      No training records found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          )}
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to load training programs</h3>
+          <p className="text-gray-600">Please try again later</p>
         </div>
       </div>
+    );
+  }
 
-      {/* Add/Edit Training Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-xl font-bold mb-4">
-                {editingTraining ? "Edit Training" : "Add New Training"}
-              </h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Training Title *
-                    </label>
-                    <input
-                      type="text"
-                      name="title"
-                      value={formData.title}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter training title"
-                    />
-                  </div>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-10">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div className="mb-6 sm:mb-0">
+              <h1 className="text-4xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Training Programs
+              </h1>
+              <p className="text-gray-600 mt-3 text-lg">
+                Organize employee training sessions, track progress, and develop your team
+              </p>
+            </div>
+            <button
+              onClick={() => handleOpenModal()}
+              disabled={isLoading}
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-400 text-white px-6 py-3.5 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-3 min-w-[180px]"
+            >
+              {isLoading ? (
+                <TailSpin height={20} width={20} color="#FFFFFF" />
+              ) : (
+                <>
+                  <FiPlus className="text-xl" />
+                  <span>Create Training</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Description
-                    </label>
-                    <textarea
-                      name="description"
-                      value={formData.description}
-                      onChange={handleInputChange}
-                      rows="3"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter training description"
-                    />
-                  </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Trainings</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{totalTrainings}</p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <FiUsers className="text-2xl text-blue-600" />
+              </div>
+            </div>
+          </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Trainer *
-                    </label>
-                    <input
-                      type="text"
-                      name="trainer"
-                      value={formData.trainer}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter trainer name"
-                    />
-                  </div>
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Not Started</p>
+                <p className="text-3xl font-bold text-gray-600 mt-2">{notStartedCount}</p>
+              </div>
+              <div className="p-3 bg-gray-100 rounded-xl">
+                <FiClock className="text-2xl text-gray-600" />
+              </div>
+            </div>
+          </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Start Date *
-                      </label>
-                      <input
-                        type="date"
-                        name="startDate"
-                        value={formData.startDate}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        End Date *
-                      </label>
-                      <input
-                        type="date"
-                        name="endDate"
-                        value={formData.endDate}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">In Progress</p>
+                <p className="text-3xl font-bold text-yellow-600 mt-2">{inProgressCount}</p>
+              </div>
+              <div className="p-3 bg-yellow-100 rounded-xl">
+                <FiTrendingUp className="text-2xl text-yellow-600" />
+              </div>
+            </div>
+          </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Participants
-                    </label>
-                    <select
-                      multiple
-                      name="participants"
-                      value={formData.participants}
-                      onChange={handleParticipantSelection}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-32"
-                    >
-                      {employees.map((emp) => (
-                        <option key={emp._id} value={emp._id}>
-                          {emp.fullname} - {emp.position} (
-                          {emp.department?.name || "N/A"})
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Hold Ctrl/Cmd to select multiple employees
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Completion Status
-                    </label>
-                    <select
-                      name="completionStatus"
-                      value={formData.completionStatus}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="Not Started">Not Started</option>
-                      <option value="In Progress">In Progress</option>
-                      <option value="Completed">Completed</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Buttons */}
-                <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    disabled={loading}
-                    className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium disabled:text-gray-400"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400 font-medium"
-                  >
-                    {loading ? (
-                      <>
-                        <TailSpin height={20} width={20} color="#FFFFFF" />
-                        {editingTraining ? "Updating..." : "Saving..."}
-                      </>
-                    ) : editingTraining ? (
-                      "Update Training"
-                    ) : (
-                      "Add Training"
-                    )}
-                  </button>
-                </div>
-              </form>
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Participants</p>
+                <p className="text-3xl font-bold text-purple-600 mt-2">{totalParticipants}</p>
+              </div>
+              <div className="p-3 bg-purple-100 rounded-xl">
+                <FiUserCheck className="text-2xl text-purple-600" />
+              </div>
             </div>
           </div>
         </div>
-      )}
+
+        {/* Filters */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <FiFilter className="w-5 h-5 text-blue-600" />
+            Filter Trainings
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <FiClock className="w-4 h-4 text-blue-600" />
+                Status
+              </label>
+              <select
+                name="status"
+                value={filter.status}
+                onChange={handleFilterChange}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+              >
+                <option value="">All Status</option>
+                <option value="Not Started">Not Started</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
+            <div className="flex justify-center mb-4">
+              <TailSpin height={50} width={50} color="#2563EB" ariaLabel="loading" />
+            </div>
+            <p className="text-gray-600 text-lg">Loading training programs...</p>
+          </div>
+        ) : (
+          /* Trainings Table */
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-8 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Training Details
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Schedule & Duration
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Participants
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredTrainings.map((training) => (
+                    <tr key={training._id} className="hover:bg-gray-50 transition-all duration-200 group">
+                      <td className="px-8 py-5">
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-shrink-0">
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg">
+                              <FiUsers className="w-6 h-6" />
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-lg font-semibold text-gray-900 truncate">
+                              {training.title}
+                            </p>
+                            <p className="text-gray-500 text-sm line-clamp-2 mt-1">
+                              {training.description}
+                            </p>
+                            <p className="text-sm text-gray-500 mt-2 flex items-center gap-1">
+                              <FiUserCheck className="w-4 h-4" />
+                              Trainer: {training.trainer}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm">
+                            <FiCalendar className="w-4 h-4 text-blue-600" />
+                            <span className="font-medium">{formatDate(training.startDate)}</span>
+                            <span className="text-gray-400">→</span>
+                            <span className="font-medium">{formatDate(training.endDate)}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <FiClock className="w-4 h-4" />
+                            {getDuration(training.startDate, training.endDate)}
+                          </div>
+                          {isUpcoming(training.startDate) && (
+                            <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                              ⏰ Upcoming
+                            </span>
+                          )}
+                          {isOngoing(training.startDate, training.endDate) && (
+                            <span className="inline-block px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                              🔄 Ongoing
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-gray-900 font-semibold">
+                            <FiUsers className="w-4 h-4 text-purple-600" />
+                            {training.participants?.length || 0} employees
+                          </div>
+                          {training.participants && training.participants.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {training.participants.slice(0, 3).map(participant => (
+                                <span 
+                                  key={participant._id} 
+                                  className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-lg"
+                                  title={participant.fullname}
+                                >
+                                  {participant.fullname?.split(' ')[0]}
+                                </span>
+                              ))}
+                              {training.participants.length > 3 && (
+                                <span className="text-xs text-gray-500">
+                                  +{training.participants.length - 3} more
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        {getStatusBadge(training.completionStatus)}
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleOpenModal(training)}
+                            className="p-2.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-xl transition-all duration-200 group-hover:scale-110"
+                            title="Edit Training"
+                          >
+                            <FiEdit2 className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => console.log("Delete training", training._id)}
+                            className="p-2.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200 group-hover:scale-110"
+                            title="Delete Training"
+                          >
+                            <FiTrash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Empty State */}
+            {filteredTrainings.length === 0 && !isLoading && (
+              <div className="text-center py-16">
+                <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                  <FiUsers className="w-12 h-12 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No training programs found</h3>
+                <p className="text-gray-600 mb-6">Get started by creating your first training program</p>
+                <button
+                  onClick={() => handleOpenModal()}
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2 mx-auto"
+                >
+                  <FiPlus className="text-lg" />
+                  Create First Training
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Training Modal */}
+        {isModalOpen && (
+          <TrainingModel
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+            training={editingTraining}
+            onSave={() => {
+              refetch();
+              handleCloseModal();
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 };

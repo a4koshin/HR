@@ -60,6 +60,12 @@ export const navigation = [
     path: "/recruitment",
   },
   {
+    id: 11,
+    name: "Applicants",
+    icon: Users,
+    path: "/applicants",
+  },
+  {
     id: 7,
     name: "Training",
     icon: GraduationCap,
@@ -83,4 +89,5 @@ export const navigation = [
     icon: UserPlus,
     path: "/users",
   },
+
 ];

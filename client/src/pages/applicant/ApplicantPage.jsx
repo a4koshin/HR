@@ -1,28 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { TailSpin } from "react-loader-spinner";
-import RecruitmentModel from "./RecruitmentModel";
+import ApplicantModel from "./ApplicantModel";
 import { useGetallFunctionQuery } from "../../store/DynamicApi";
-import { FiEdit2, FiTrash2, FiPlus, FiBriefcase, FiUsers, FiUserCheck, FiClock, FiTrendingUp, FiFilter, FiUserPlus } from "react-icons/fi";
+import { FiEdit2, FiTrash2, FiPlus, FiUser, FiMail, FiBriefcase, FiCalendar, FiTrendingUp, FiFilter } from "react-icons/fi";
 
-const RecruitmentPage = () => {
+const ApplicantPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingRecruitment, setEditingRecruitment] = useState(null);
-  const [filter, setFilter] = useState({ status: "" });
+  const [editingApplicant, setEditingApplicant] = useState(null);
+  const [filter, setFilter] = useState({ status: "", job: "" });
 
   const {
-    data: recruitmentData,
+    data: applicantsData,
     isLoading,
     isError,
     refetch,
-  } = useGetallFunctionQuery({ url: "/recruitment" });
+  } = useGetallFunctionQuery({ url: "/applicants" });
 
-  const handleOpenModal = (recruitment = null) => {
-    setEditingRecruitment(recruitment);
+  // Fetch jobs for filter dropdown
+  const { data: jobsData } = useGetallFunctionQuery({ url: "/recruitment" });
+
+  const handleOpenModal = (applicant = null) => {
+    setEditingApplicant(applicant);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
-    setEditingRecruitment(null);
+    setEditingApplicant(null);
     setIsModalOpen(false);
   };
 
@@ -30,42 +33,31 @@ const RecruitmentPage = () => {
     setFilter({ ...filter, [e.target.name]: e.target.value });
   };
 
-  const handleHireApplicant = async (jobId, applicantId) => {
-    if (!window.confirm("Are you sure you want to hire this applicant?")) return;
-    
-    try {
-      // This would call your hireApplicant API endpoint
-      console.log("Hiring applicant:", applicantId, "for job:", jobId);
-      // await hireApplicantFunction({ url: `/recruitment/${jobId}/hire`, formData: { applicantId } }).unwrap();
-      refetch();
-    } catch (error) {
-      console.error("Hire failed:", error);
-      alert("Failed to hire applicant");
-    }
-  };
-
-  const recruitments = recruitmentData?.recruitments || recruitmentData || [];
+  const applicants = applicantsData?.applicants || applicantsData || [];
+  const jobs = jobsData?.recruitments || jobsData || [];
 
   // Calculate stats
-  const totalJobs = recruitments.length;
-  const openJobs = recruitments.filter(job => job.status === "open").length;
-  const closedJobs = recruitments.filter(job => job.status === "closed").length;
-  const hiredJobs = recruitments.filter(job => job.status === "hired").length;
-  const totalApplicants = recruitments.reduce((sum, job) => sum + (job.applicants?.length || 0), 0);
+  const totalApplicants = applicants.length;
+  const appliedCount = applicants.filter(a => a.status === "applied").length;
+  const interviewCount = applicants.filter(a => a.status === "interview").length;
+  const hiredCount = applicants.filter(a => a.status === "hired").length;
 
-  // Filter jobs
-  const filteredRecruitments = recruitments.filter(job => {
-    return !filter.status || job.status === filter.status;
+  // Filter applicants
+  const filteredApplicants = applicants.filter(applicant => {
+    const statusMatch = !filter.status || applicant.status === filter.status;
+    const jobMatch = !filter.job || applicant.appliedJob?._id === filter.job;
+    return statusMatch && jobMatch;
   });
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      open: { bg: "bg-green-50", text: "text-green-700", border: "border-green-200", label: "Open", icon: "🟢" },
-      closed: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200", label: "Closed", icon: "🔴" },
-      hired: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", label: "Hired", icon: "✅" }
+      applied: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", label: "Applied", icon: "📥" },
+      interview: { bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-200", label: "Interview", icon: "📅" },
+      hired: { bg: "bg-green-50", text: "text-green-700", border: "border-green-200", label: "Hired", icon: "✅" },
+      rejected: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200", label: "Rejected", icon: "❌" }
     };
     
-    const config = statusConfig[status] || statusConfig.open;
+    const config = statusConfig[status] || statusConfig.applied;
     return (
       <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${config.bg} ${config.text} ${config.border}`}>
         {config.icon} {config.label}
@@ -86,9 +78,9 @@ const RecruitmentPage = () => {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FiBriefcase className="w-8 h-8 text-red-600" />
+            <FiUser className="w-8 h-8 text-red-600" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to load job positions</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to load applicants</h3>
           <p className="text-gray-600">Please try again later</p>
         </div>
       </div>
@@ -103,10 +95,10 @@ const RecruitmentPage = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div className="mb-6 sm:mb-0">
               <h1 className="text-4xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Job Positions
+                Applicant Tracking
               </h1>
               <p className="text-gray-600 mt-3 text-lg">
-                Manage job openings, track applicants, and hire talented candidates
+                Manage job applications, track candidate progress, and streamline hiring
               </p>
             </div>
             <button
@@ -119,7 +111,7 @@ const RecruitmentPage = () => {
               ) : (
                 <>
                   <FiPlus className="text-xl" />
-                  <span>Create Job</span>
+                  <span>Add Applicant</span>
                 </>
               )}
             </button>
@@ -131,11 +123,11 @@ const RecruitmentPage = () => {
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Jobs</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{totalJobs}</p>
+                <p className="text-sm font-medium text-gray-600">Total Applicants</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{totalApplicants}</p>
               </div>
               <div className="p-3 bg-blue-100 rounded-xl">
-                <FiBriefcase className="text-2xl text-blue-600" />
+                <FiUser className="text-2xl text-blue-600" />
               </div>
             </div>
           </div>
@@ -143,35 +135,35 @@ const RecruitmentPage = () => {
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Open Positions</p>
-                <p className="text-3xl font-bold text-green-600 mt-2">{openJobs}</p>
+                <p className="text-sm font-medium text-gray-600">New Applications</p>
+                <p className="text-3xl font-bold text-blue-600 mt-2">{appliedCount}</p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <FiMail className="text-2xl text-blue-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Interview Stage</p>
+                <p className="text-3xl font-bold text-yellow-600 mt-2">{interviewCount}</p>
+              </div>
+              <div className="p-3 bg-yellow-100 rounded-xl">
+                <FiCalendar className="text-2xl text-yellow-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Hired</p>
+                <p className="text-3xl font-bold text-green-600 mt-2">{hiredCount}</p>
               </div>
               <div className="p-3 bg-green-100 rounded-xl">
                 <FiTrendingUp className="text-2xl text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Applicants</p>
-                <p className="text-3xl font-bold text-purple-600 mt-2">{totalApplicants}</p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-xl">
-                <FiUsers className="text-2xl text-purple-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Successful Hires</p>
-                <p className="text-3xl font-bold text-blue-600 mt-2">{hiredJobs}</p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-xl">
-                <FiUserCheck className="text-2xl text-blue-600" />
               </div>
             </div>
           </div>
@@ -181,13 +173,13 @@ const RecruitmentPage = () => {
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <FiFilter className="w-5 h-5 text-blue-600" />
-            Filter Jobs
+            Filter Applicants
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <FiClock className="w-4 h-4 text-blue-600" />
-                Job Status
+                <FiUser className="w-4 h-4 text-blue-600" />
+                Status
               </label>
               <select
                 name="status"
@@ -196,9 +188,29 @@ const RecruitmentPage = () => {
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
               >
                 <option value="">All Status</option>
-                <option value="open">Open</option>
-                <option value="closed">Closed</option>
+                <option value="applied">Applied</option>
+                <option value="interview">Interview</option>
                 <option value="hired">Hired</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <FiBriefcase className="w-4 h-4 text-blue-600" />
+                Job Position
+              </label>
+              <select
+                name="job"
+                value={filter.job}
+                onChange={handleFilterChange}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+              >
+                <option value="">All Jobs</option>
+                {jobs.map(job => (
+                  <option key={job._id} value={job._id}>
+                    {job.title || job.jobTitle}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -210,23 +222,23 @@ const RecruitmentPage = () => {
             <div className="flex justify-center mb-4">
               <TailSpin height={50} width={50} color="#2563EB" ariaLabel="loading" />
             </div>
-            <p className="text-gray-600 text-lg">Loading job positions...</p>
+            <p className="text-gray-600 text-lg">Loading applicants...</p>
           </div>
         ) : (
-          /* Jobs Table */
+          /* Applicants Table */
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-8 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                      Job Details
+                      Applicant Details
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                      Applicants
+                      Applied For
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                      Created Date
+                      Application Date
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
                       Status
@@ -237,76 +249,60 @@ const RecruitmentPage = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredRecruitments.map((job) => (
-                    <tr key={job._id} className="hover:bg-gray-50 transition-all duration-200 group">
+                  {filteredApplicants.map((applicant) => (
+                    <tr key={applicant._id} className="hover:bg-gray-50 transition-all duration-200 group">
                       <td className="px-8 py-5">
                         <div className="flex items-center space-x-4">
                           <div className="flex-shrink-0">
                             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg">
-                              <FiBriefcase className="w-6 h-6" />
+                              {applicant.name?.charAt(0) || "A"}
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-lg font-semibold text-gray-900 truncate">
-                              {job.jobTitle}
+                              {applicant.name}
                             </p>
-                            <p className="text-gray-500 text-sm line-clamp-2 mt-1">
-                              {job.description}
+                            <p className="text-gray-500 text-sm truncate flex items-center gap-1 mt-1">
+                              <FiMail className="w-4 h-4" />
+                              {applicant.email}
                             </p>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-5">
                         <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-gray-900 font-semibold">
-                            <FiUsers className="w-4 h-4 text-purple-600" />
-                            {job.applicants?.length || 0} applicants
-                          </div>
-                          {job.applicants && job.applicants.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {job.applicants.slice(0, 3).map(applicant => (
-                                <div key={applicant._id} className="flex items-center gap-1">
-                                  <button
-                                    onClick={() => handleHireApplicant(job._id, applicant._id)}
-                                    className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-lg hover:bg-green-200 transition duration-200 flex items-center gap-1"
-                                    title="Hire this applicant"
-                                  >
-                                    <FiUserPlus className="w-3 h-3" />
-                                    Hire
-                                  </button>
-                                </div>
-                              ))}
-                              {job.applicants.length > 3 && (
-                                <span className="text-xs text-gray-500">
-                                  +{job.applicants.length - 3} more
-                                </span>
-                              )}
-                            </div>
+                          <p className="text-gray-900 font-medium">
+                            {applicant.appliedJob?.title || applicant.appliedJob?.jobTitle || "N/A"}
+                          </p>
+                          {applicant.appliedJob?.department && (
+                            <p className="text-sm text-gray-500">
+                              {applicant.appliedJob.department}
+                            </p>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <FiClock className="w-4 h-4 text-gray-400" />
-                          {formatDate(job.createdAt)}
+                          <FiCalendar className="w-4 h-4 text-gray-400" />
+                          {formatDate(applicant.createdAt)}
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        {getStatusBadge(job.status)}
+                        {getStatusBadge(applicant.status)}
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => handleOpenModal(job)}
+                            onClick={() => handleOpenModal(applicant)}
                             className="p-2.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-xl transition-all duration-200 group-hover:scale-110"
-                            title="Edit Job"
+                            title="Edit Applicant"
                           >
                             <FiEdit2 className="w-5 h-5" />
                           </button>
                           <button
-                            onClick={() => console.log("Delete job", job._id)}
+                            onClick={() => console.log("Delete applicant", applicant._id)}
                             className="p-2.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200 group-hover:scale-110"
-                            title="Delete Job"
+                            title="Delete Applicant"
                           >
                             <FiTrash2 className="w-5 h-5" />
                           </button>
@@ -319,35 +315,36 @@ const RecruitmentPage = () => {
             </div>
 
             {/* Empty State */}
-            {filteredRecruitments.length === 0 && !isLoading && (
+            {filteredApplicants.length === 0 && !isLoading && (
               <div className="text-center py-16">
                 <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                  <FiBriefcase className="w-12 h-12 text-gray-400" />
+                  <FiUser className="w-12 h-12 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No job positions found</h3>
-                <p className="text-gray-600 mb-6">Get started by creating your first job opening</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No applicants found</h3>
+                <p className="text-gray-600 mb-6">Get started by adding your first applicant</p>
                 <button
                   onClick={() => handleOpenModal()}
                   className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2 mx-auto"
                 >
                   <FiPlus className="text-lg" />
-                  Create First Job
+                  Add First Applicant
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {/* Recruitment Modal */}
+        {/* Applicant Modal */}
         {isModalOpen && (
-          <RecruitmentModel
+          <ApplicantModel
             isOpen={isModalOpen}
             onClose={handleCloseModal}
-            recruitment={editingRecruitment}
+            applicant={editingApplicant}
             onSave={() => {
               refetch();
               handleCloseModal();
             }}
+            jobs={jobs}
           />
         )}
       </div>
@@ -355,4 +352,4 @@ const RecruitmentPage = () => {
   );
 };
 
-export default RecruitmentPage;
+export default ApplicantPage;

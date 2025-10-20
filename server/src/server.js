@@ -12,6 +12,7 @@ import payrollRouter from "./routes/payrollRoute.js";
 import leaveRouter from "./routes/leaveRoute.js";
 import trainingRouter from "./routes/trainingRoute.js";
 import recruitmentRouter from "./routes/recruitmentRoute.js";
+import applicantRouter from "./routes/applicantRoute.js";
 // dotenv
 dotenv.config();
 const app = express();
@@ -46,6 +47,7 @@ app.use("/api/payrolls", payrollRouter);
 app.use("/api/leaves", leaveRouter);
 app.use("/api/trainings", trainingRouter);
 app.use("/api/recruitment", recruitmentRouter);
+app.use("/api/applicants", applicantRouter);
 
 // Databse config
 connectDB().then(() => {
