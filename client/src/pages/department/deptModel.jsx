@@ -113,40 +113,9 @@ const DeptModel = ({ isOpen, onClose, onSave, department }) => {
             />
           </div>
 
-          {/* Description */}
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-blue-600" />
-              Description
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              rows="3"
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 resize-none"
-              placeholder="Brief description of the department's role and responsibilities..."
-            />
-          </div>
+       
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Head Count */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <FiUsers className="w-4 h-4 text-blue-600" />
-                Head Count
-              </label>
-              <input
-                type="number"
-                name="headCount"
-                value={formData.headCount}
-                onChange={handleInputChange}
-                min="0"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                placeholder="Number of employees"
-              />
-            </div>
-
+  
             {/* Status */}
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
@@ -164,28 +133,8 @@ const DeptModel = ({ isOpen, onClose, onSave, department }) => {
                 <option value="Inactive">Inactive</option>
               </select>
             </div>
-          </div>
 
-          {/* Status Preview */}
-          <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-3 h-3 rounded-full ${
-                    formData.status === "Active" ? "bg-green-500" : "bg-red-500"
-                  }`}
-                ></div>
-                <span className="text-sm font-medium text-gray-700">
-                  This department will be {formData.status.toLowerCase()}
-                </span>
-              </div>
-              {formData.headCount && (
-                <div className="text-sm text-gray-500">
-                  {formData.headCount} employees
-                </div>
-              )}
-            </div>
-          </div>
+        
 
           {/* Action Buttons */}
           <div className="flex justify-between pt-6 border-t border-gray-200">

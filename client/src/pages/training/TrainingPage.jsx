@@ -100,7 +100,7 @@ const TrainingPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-8xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-10">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -253,9 +253,7 @@ const TrainingPage = () => {
                             <p className="text-lg font-semibold text-gray-900 truncate">
                               {training.title}
                             </p>
-                            <p className="text-gray-500 text-sm line-clamp-2 mt-1">
-                              {training.description}
-                            </p>
+                           
                             <p className="text-sm text-gray-500 mt-2 flex items-center gap-1">
                               <FiUserCheck className="w-4 h-4" />
                               Trainer: {training.trainer}
@@ -275,16 +273,7 @@ const TrainingPage = () => {
                             <FiClock className="w-4 h-4" />
                             {getDuration(training.startDate, training.endDate)}
                           </div>
-                          {isUpcoming(training.startDate) && (
-                            <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                              ⏰ Upcoming
-                            </span>
-                          )}
-                          {isOngoing(training.startDate, training.endDate) && (
-                            <span className="inline-block px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                              🔄 Ongoing
-                            </span>
-                          )}
+                      
                         </div>
                       </td>
                       <td className="px-6 py-5">
@@ -295,15 +284,7 @@ const TrainingPage = () => {
                           </div>
                           {training.participants && training.participants.length > 0 && (
                             <div className="flex flex-wrap gap-1">
-                              {training.participants.slice(0, 3).map(participant => (
-                                <span 
-                                  key={participant._id} 
-                                  className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-lg"
-                                  title={participant.fullname}
-                                >
-                                  {participant.fullname?.split(' ')[0]}
-                                </span>
-                              ))}
+                           
                               {training.participants.length > 3 && (
                                 <span className="text-xs text-gray-500">
                                   +{training.participants.length - 3} more

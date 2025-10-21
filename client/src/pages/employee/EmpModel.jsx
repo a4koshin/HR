@@ -255,7 +255,7 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
                     name="fullname"
                     value={formData.fullname}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                     placeholder="Enter full name"
                     required
                   />
@@ -271,7 +271,7 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                     placeholder="Enter email address"
                     required
                   />
@@ -287,7 +287,7 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                     placeholder="Enter phone number"
                     required
                   />
@@ -303,7 +303,7 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
                     name="address"
                     value={formData.address}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                     placeholder="Enter address"
                     required
                   />
@@ -315,7 +315,7 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
                   type="button"
                   onClick={nextStep}
                   disabled={!isPersonalInfoValid()}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-400 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2"
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-400 text-white px-8 py-2 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2"
                 >
                   Continue
                   <FiCheckCircle className="w-5 h-5" />
@@ -336,7 +336,7 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
                     name="department"
                     value={formData.department}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                     required
                   >
                     <option value="">Select Department</option>
@@ -357,7 +357,7 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
                     name="position"
                     value={formData.position}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                     placeholder="Enter position"
                     required
                   />
@@ -372,7 +372,7 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
                     name="contractType"
                     value={formData.contractType}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                     required
                   >
                     <option value="">Select Contract Type</option>
@@ -394,7 +394,7 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
                     name="hireDate"
                     value={formData.hireDate}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                     required
                   />
                 </div>
@@ -409,7 +409,7 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
                     name="salary"
                     value={formData.salary}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                     placeholder="Enter salary"
                     required
                   />
@@ -424,7 +424,7 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
                     name="shiftType"
                     value={formData.shiftType}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                     required
                   >
                     <option value="">Select Shift Type</option>
@@ -446,7 +446,7 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
                   name="status"
                   value={formData.status}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                 >
                   {statusOptions.status.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -460,14 +460,14 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
                 <button
                   type="button"
                   onClick={prevStep}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-8 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2"
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-8 py-2 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2"
                 >
                   Back
                 </button>
                 <button
                   type="submit"
                   disabled={!isEmploymentInfoValid() || isLoading}
-                  className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-400 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2"
+                  className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-400 text-white px-8 py-2 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2"
                 >
                   {isLoading ? (
                     <>

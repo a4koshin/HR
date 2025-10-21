@@ -13,7 +13,7 @@ import DocumentsPage from "./pages/document/DocumentsPage";
 import DepartmentPage from "./pages/department/DepartmentPage";
 import ShiftsPage from "./pages/shift/ShiftsPage";
 import LeavePage from "./pages/leave/LeavePage";
-// import UserPage from "./pages/users/userPage";
+import UserPage from "./pages/users/UserPage";
 import ApplicantPage from "./pages/applicant/ApplicantPage";
 
 const App = () => {
@@ -41,7 +41,7 @@ const App = () => {
           <Route path="/training" element={<TrainingPage />} />
           <Route path="/leave" element={<LeavePage />} />
           <Route path="/documents" element={<DocumentsPage />} />
-          {/* <Route path="/users" element={<UserPage />} /> */}
+          <Route path="/users" element={<UserPage />} />
         </Route>
       </Routes>
     </div>
