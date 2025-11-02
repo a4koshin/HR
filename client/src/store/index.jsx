@@ -1,7 +1,7 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 // import themeConfigSlice from './themeConfigSlice';
 import {authApi} from './auth/authApi'
-import {daynamicApi} from './dynamicApi'
+import {daynamicApi} from './DynamicApi'
 
 
 export default configureStore({
