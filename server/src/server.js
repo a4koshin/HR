@@ -16,6 +16,8 @@ import applicantRouter from "./routes/applicantRoute.js";
 // dotenv
 dotenv.config();
 const app = express();
+
+
 const port = process.env.PORT || 3001;
 // Allow both localhost (dev) and Vercel frontend (prod)
 const allowedOrigins = [
