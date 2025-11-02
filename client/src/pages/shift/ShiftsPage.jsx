@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { TailSpin } from "react-loader-spinner";
-import ShiftModel from "./ShiftModel";
+import ShiftModel from "./shiftModel";
 import { useGetallFunctionQuery } from "../../store/DynamicApi";
 import { FiEdit2, FiTrash2, FiPlus, FiClock } from "react-icons/fi";
 import { HiStatusOnline } from "react-icons/hi";
