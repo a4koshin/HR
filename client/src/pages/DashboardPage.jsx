@@ -403,9 +403,6 @@ const MetricCard = ({ title, value, subtitle, icon, color, trend, compact = fals
   );
 };
 
-const tokens = localStorage.getItem("token") ;
-
-console.log(tokens , 'toeknf')
 
 // --- Stat Item Component for Progress Bars ---
 const StatItem = ({ label, value, total, color }) => {
