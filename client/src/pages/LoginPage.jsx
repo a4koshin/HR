@@ -37,7 +37,7 @@ const LoginPage = () => {
       setAuthEmail(data.user.email);
 
       toast.success("Logged in successfully!");
-      navigate("/dashboard"); // navigate without reload
+      window.location.reload(); // navigate without reload
     }
   }, [data]);
 

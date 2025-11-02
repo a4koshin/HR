@@ -227,4 +227,4 @@ const ApplicantModel = ({ isOpen, onClose, onSave, applicant, jobs }) => {
   );
 };
 
-export default ApplicantM;
+export default ApplicantModel;

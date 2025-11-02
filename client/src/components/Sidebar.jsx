@@ -8,7 +8,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
 
   return (
     <div
-      className={`bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl transition-all duration-300 flex flex-col ${
+      className={`bg-gray-200 shadow-2xl text-transition-all duration-300 flex flex-col ${
         collapsed ? "w-20" : "w-64"
       }`}
     >
@@ -40,7 +40,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
               className={`flex items-center px-4 py-3 mb-2 rounded-xl transition-all duration-200 group relative ${
                 isActive
                   ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg transform scale-105"
-                  : "text-gray-300 hover:bg-gray-750 hover:text-white hover:translate-x-1"
+                  : "text-blue-500 hover:bg-gray-750 hover:text-white hover:translate-x-1"
               } ${collapsed ? "justify-center" : ""}`}
             >
               {/* Active indicator */}
