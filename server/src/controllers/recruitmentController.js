@@ -1,7 +1,6 @@
-// controllers/recruitmentController.js
-import Recruitment from "../models/Recruitment.js";
-import Employee from "../models/Employee.js";
-import Applicant from "../models/Applicant.js";
+import Recruitment from "../models/recruitment.js";
+import Employee from "../models/employee.js";
+import Applicant from "../models/applicant.js";
 
 // ✅ Create new recruitment
 export const createRecruitment = async (req, res) => {
