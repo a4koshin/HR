@@ -37,7 +37,7 @@ const LoginPage = () => {
       setAuthEmail(data.user.email);
 
       toast.success("Logged in successfully!");
-      window.location.reload(); // navigate without reload
+      window.location.reload();
     }
   }, [data]);
 
@@ -106,7 +106,7 @@ const LoginPage = () => {
 
         {/* Right Side - Login Form */}
         <div className="p-8 lg:p-12 flex flex-col justify-center">
-          <div className="text-center lg:text-left mb-8">
+          <div className="text-center lg:text-left mb-10">
             <div className="lg:hidden w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto lg:mx-0 mb-4">
               <svg
                 className="w-6 h-6 text-white"
