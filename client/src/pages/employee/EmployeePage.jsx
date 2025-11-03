@@ -12,6 +12,7 @@ import {
   FiDollarSign,
 } from "react-icons/fi";
 import { HiOutlineOfficeBuilding, HiStatusOnline } from "react-icons/hi";
+import { Toaster } from "react-hot-toast";
 
 const EmployeePage = () => {
   const {

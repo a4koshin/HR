@@ -19,7 +19,7 @@ import {
   FiCheckCircle,
 } from "react-icons/fi";
 import { HiOutlineOfficeBuilding } from "react-icons/hi";
-
+import toast from "react-hot-toast";
 const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
   const [createEmployee, { isLoading: isCreating }] =
     useCreateFuctionMutation();
@@ -123,12 +123,14 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
           id: employee._id,
           formData: formData,
         }).unwrap();
+        toast.success("Employee updated successfully!");
       } else {
         // Create new employee
         await createEmployee({
           url: "employees",
           formData: formData,
         }).unwrap();
+        toast.success("Employee created successfully!");
       }
 
       onSave(); // Notify parent component
