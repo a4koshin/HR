@@ -71,23 +71,35 @@ export const getLeaveById = async (req, res) => {
 };
 
 /**
- * Approve or Reject leave (Admin/HR only)
+ * Update leave (General update for all fields except status)
  */
-export const updateLeaveStatus = async (req, res) => {
+export const updateLeave = async (req, res) => {
   try {
-    const { status, approvedBy } = req.body;
+    const { emp_id, type, startDate, endDate, reason, shift_id, duration } = req.body;
 
     const leave = await Leave.findById(req.params.id);
     if (!leave) return res.status(404).json({ success: false, message: "Leave not found" });
 
-    leave.status = status;
-    leave.approvedBy = approvedBy;
-    leave.approvedAt = new Date();
+    // Update basic fields (don't allow status update here - use status endpoint for that)
+    if (emp_id) leave.emp_id = emp_id;
+    if (type) leave.type = type;
+    if (startDate) leave.startDate = startDate;
+    if (endDate) leave.endDate = endDate;
+    if (reason !== undefined) leave.reason = reason;
+    if (shift_id !== undefined) leave.shift_id = shift_id;
+    if (duration) leave.duration = duration;
 
     const updatedLeave = await leave.save();
+    
+    // Populate the response
+    const populatedLeave = await Leave.findById(updatedLeave._id)
+      .populate("emp_id", "fullname email")
+      .populate("shift_id", "name startTime endTime")
+      .populate("attendanceLink");
 
-    res.json({ success: true, leave: updatedLeave });
+    res.json({ success: true, leave: populatedLeave });
   } catch (error) {
+    console.error("Update leave error:", error);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };

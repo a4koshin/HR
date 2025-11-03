@@ -1,735 +1,361 @@
-import React, { useState, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import React, { useState } from "react";
 import { TailSpin } from "react-loader-spinner";
-
+import LeaveModal from "../leave/leaveModel";
+import { useGetallFunctionQuery } from "../../store/DynamicApi";
+import {
+  FiEdit2,
+  FiTrash2,
+  FiPlus,
+  FiCalendar,
+  FiUser,
+  FiClock,
+  FiCheckCircle,
+  FiXCircle,
+} from "react-icons/fi";
 
 const LeavePage = () => {
-  const dispatch = useDispatch();
-  const { leaves, loading, error, success } = useSelector(
-    (state) => state.leave
-  );
-  const { employees } = useSelector((state) => state.employee);
-  const { shifts } = useSelector((state) => state.shifts);
+  // RTK Query hooks
+  const { 
+    data: leavesData = {}, 
+    isLoading: leavesLoading, 
+    isError: leavesError,
+    refetch: refetchLeaves 
+  } = useGetallFunctionQuery({ url: "/leaves" });
+  
+  const { data: employeesData = {} } = useGetallFunctionQuery({ url: "/employees" });
+  const { data: shiftsData = {} } = useGetallFunctionQuery({ url: "/shifts" });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [editingLeave, setEditingLeave] = useState(null);
-  const [selectedLeave, setSelectedLeave] = useState(null);
-  const [filter, setFilter] = useState({
-    status: "",
-    type: "",
-    employee: "",
-  });
-  const [formData, setFormData] = useState({
-    emp_id: "",
-    type: "Sick",
-    startDate: "",
-    endDate: "",
-    reason: "",
-    shift_id: "",
-    duration: "",
-  });
-  const [statusData, setStatusData] = useState({
-    status: "Approved",
-    approvedBy: "",
-  });
 
-  useEffect(() => {
-    dispatch(fetchLeaves());
-    dispatch(fetchEmployees());
-    dispatch(fetchShifts());
-  }, [dispatch]);
+  const leaves = leavesData.leaves || [];
+  const employees = employeesData.employees || [];
+  const shifts = shiftsData.shifts || [];
 
-  useEffect(() => {
-    if (error || success) {
-      const timer = setTimeout(() => {
-        dispatch(clearMessages());
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [error, success, dispatch]);
-
-  // Utility functions
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-    } catch {
-      return "Invalid Date";
-    }
+  // Open modal for adding or editing
+  const openModal = (leave = null) => {
+    setEditingLeave(leave);
+    setIsModalOpen(true);
   };
 
-  const calculateDuration = (startDate, endDate) => {
-    if (!startDate || !endDate) return 0;
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = Math.abs(end - start);
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end dates
+  const closeModal = () => {
+    setEditingLeave(null);
+    setIsModalOpen(false);
   };
 
+  // Status counts
+  const pendingLeaves = leaves.filter(leave => leave.status === "Pending").length;
+  const approvedLeaves = leaves.filter(leave => leave.status === "Approved").length;
+  const rejectedLeaves = leaves.filter(leave => leave.status === "Rejected").length;
+
+  // Status and type badges
   const getStatusBadge = (status) => {
-    const badgeStyles = {
-      Approved: "bg-green-100 text-green-800",
-      Pending: "bg-yellow-100 text-yellow-800",
-      Rejected: "bg-red-100 text-red-800",
+    const badgeStyles = { 
+      Approved: "bg-green-50 text-green-700 border border-green-200", 
+      Pending: "bg-yellow-50 text-yellow-700 border border-yellow-200", 
+      Rejected: "bg-red-50 text-red-700 border border-red-200" 
+    };
+    
+    const icons = {
+      Approved: <FiCheckCircle className="w-3 h-3" />,
+      Pending: <FiClock className="w-3 h-3" />,
+      Rejected: <FiXCircle className="w-3 h-3" />
     };
 
     return (
-      <span
-        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-          badgeStyles[status] || "bg-gray-100 text-gray-800"
-        }`}
-      >
+      <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold ${badgeStyles[status] || "bg-gray-50 text-gray-700 border border-gray-200"}`}>
+        {icons[status]}
         {status}
       </span>
     );
   };
 
   const getTypeBadge = (type) => {
-    const badgeStyles = {
-      Sick: "bg-blue-100 text-blue-800",
-      Vacation: "bg-purple-100 text-purple-800",
-      Unpaid: "bg-orange-100 text-orange-800",
-      Other: "bg-gray-100 text-gray-800",
+    const badgeStyles = { 
+      Sick: "bg-blue-50 text-blue-700 border border-blue-200", 
+      Vacation: "bg-purple-50 text-purple-700 border border-purple-200", 
+      Unpaid: "bg-orange-50 text-orange-700 border border-orange-200", 
+      Other: "bg-gray-50 text-gray-700 border border-gray-200" 
     };
-
+    
     return (
-      <span
-        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-          badgeStyles[type] || "bg-gray-100 text-gray-800"
-        }`}
-      >
+      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${badgeStyles[type] || "bg-gray-50 text-gray-700"}`}>
         {type}
       </span>
     );
   };
 
-  // Form handlers
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-
-    // Auto-calculate duration when dates change
-    if (name === "startDate" || name === "endDate") {
-      const startDate = name === "startDate" ? value : formData.startDate;
-      const endDate = name === "endDate" ? value : formData.endDate;
-      if (startDate && endDate) {
-        const duration = calculateDuration(startDate, endDate);
-        setFormData((prev) => ({ ...prev, duration: duration.toString() }));
-      }
-    }
-  };
-
-  const handleStatusChange = (e) => {
-    const { name, value } = e.target;
-    setStatusData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilter((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      // Calculate duration if not provided
-      const submissionData = {
-        ...formData,
-        duration:
-          formData.duration ||
-          calculateDuration(formData.startDate, formData.endDate),
-      };
-
-      await dispatch(createLeaveAsync(submissionData)).unwrap();
-      closeModal();
-    } catch (err) {
-      console.error("Error submitting leave:", err);
-    }
-  };
-
-  const handleStatusUpdate = async (e) => {
-    e.preventDefault();
-    try {
-      await dispatch(
-        updateLeaveStatusAsync({
-          id: selectedLeave._id,
-          ...statusData,
-        })
-      ).unwrap();
-      closeStatusModal();
-    } catch (err) {
-      console.error("Error updating leave status:", err);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (
-      !window.confirm("Are you sure you want to delete this leave application?")
-    )
-      return;
-    try {
-      await dispatch(deleteLeaveAsync(id)).unwrap();
-    } catch (err) {
-      console.error("Error deleting leave:", err);
-    }
-  };
-
-  const openStatusModal = (leave) => {
-    setSelectedLeave(leave);
-    setStatusData({
-      status: leave.status,
-      approvedBy: "", // This would typically be the current user's ID
-    });
-    setStatusModalOpen(true);
-  };
-
-  const resetForm = () => {
-    setFormData({
-      emp_id: "",
-      type: "Sick",
-      startDate: "",
-      endDate: "",
-      reason: "",
-      shift_id: "",
-      duration: "",
-    });
-    setEditingLeave(null);
-  };
-
-  const openAddModal = () => {
-    resetForm();
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    resetForm();
-  };
-
-  const closeStatusModal = () => {
-    setStatusModalOpen(false);
-    setSelectedLeave(null);
-    setStatusData({
-      status: "Approved",
-      approvedBy: "",
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", { 
+      year: "numeric", 
+      month: "short", 
+      day: "numeric" 
     });
   };
 
-  // Filter leaves
-  const filteredLeaves = leaves.filter((leave) => {
-    const statusMatch = !filter.status || leave.status === filter.status;
-    const typeMatch = !filter.type || leave.type === filter.type;
-    const employeeMatch =
-      !filter.employee || leave.emp_id?._id === filter.employee;
-    return statusMatch && typeMatch && employeeMatch;
-  });
-
-  // Calculate statistics
-  const totalLeaves = filteredLeaves.length;
-  const pendingLeaves = filteredLeaves.filter(
-    (leave) => leave.status === "Pending"
-  ).length;
-  const approvedLeaves = filteredLeaves.filter(
-    (leave) => leave.status === "Approved"
-  ).length;
+  const handleDelete = async (leaveId) => {
+    if (window.confirm("Are you sure you want to delete this leave application?")) {
+      // Implement delete functionality here
+      console.log("Delete leave:", leaveId);
+    }
+  };
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="max-w-8xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Leave Management
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Manage employee leave applications and approvals
-            </p>
-          </div>
-          <button
-            onClick={openAddModal}
-            disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-semibold transition duration-200 flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <>
+        <div className="mb-10">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div className="mb-6 sm:mb-0">
+              <h1 className="text-4xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Leave Management
+              </h1>
+              <p className="text-gray-600 mt-3 text-lg">
+                Manage employee leave applications and approvals efficiently
+              </p>
+            </div>
+            <button
+              onClick={() => openModal()}
+              disabled={leavesLoading}
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-blue-400 disabled:to-blue-400 text-white px-6 py-3.5 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-3 min-w-[180px]"
+            >
+              {leavesLoading ? (
                 <TailSpin height={20} width={20} color="#FFFFFF" />
-                Loading...
-              </>
-            ) : (
-              "+ Apply for Leave"
-            )}
-          </button>
-        </div>
-
-        {/* Notifications */}
-        {error && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
-            {success}
-          </div>
-        )}
-
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h3 className="text-lg font-semibold mb-4">Filters</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <select
-                name="status"
-                value={filter.status}
-                onChange={handleFilterChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Status</option>
-                <option value="Pending">Pending</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Leave Type
-              </label>
-              <select
-                name="type"
-                value={filter.type}
-                onChange={handleFilterChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Types</option>
-                <option value="Sick">Sick</option>
-                <option value="Vacation">Vacation</option>
-                <option value="Unpaid">Unpaid</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Employee
-              </label>
-              <select
-                name="employee"
-                value={filter.employee}
-                onChange={handleFilterChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Employees</option>
-                {employees.map((emp) => (
-                  <option key={emp._id} value={emp._id}>
-                    {emp.fullname} - {emp.email}
-                  </option>
-                ))}
-              </select>
-            </div>
+              ) : (
+                <>
+                  <FiPlus className="text-xl" />
+                  <span>Apply for Leave</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <h3 className="text-xl font-semibold text-gray-700">
-              Total Applications
-            </h3>
-            <p className="mt-2 text-2xl font-bold text-gray-900">
-              {totalLeaves}
-            </p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <h3 className="text-xl font-semibold text-gray-700">
-              Pending Approval
-            </h3>
-            <p className="mt-2 text-2xl font-bold text-yellow-600">
-              {pendingLeaves}
-            </p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <h3 className="text-xl font-semibold text-gray-700">Approved</h3>
-            <p className="mt-2 text-2xl font-bold text-green-600">
-              {approvedLeaves}
-            </p>
-          </div>
-        </div>
-
-        {/* Leaves Table */}
-        <div className="overflow-x-auto bg-white rounded-lg shadow">
-          {loading && filteredLeaves.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <div className="flex justify-center mb-4">
-                <TailSpin
-                  height={40}
-                  width={40}
-                  color="#2563EB"
-                  ariaLabel="loading"
-                />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Leaves</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {leaves.length}
+                </p>
               </div>
-              Loading leave applications...
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <FiCalendar className="text-2xl text-blue-600" />
+              </div>
             </div>
-          ) : (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Employee
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Leave Type
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Period
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Duration
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Applied On
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredLeaves.map((leave) => (
-                  <tr key={leave._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {leave.emp_id?.fullname || "Unknown Employee"}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {leave.emp_id?.email || "N/A"}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getTypeBadge(leave.type)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {formatDate(leave.startDate)}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        to {formatDate(leave.endDate)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {leave.duration ||
-                        calculateDuration(leave.startDate, leave.endDate)}{" "}
-                      days
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(leave.status)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatDate(leave.appliedAt)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex flex-col space-y-1">
-                        <button
-                          onClick={() => openStatusModal(leave)}
-                          disabled={loading}
-                          className="text-blue-600 hover:text-blue-900 text-left disabled:text-gray-400 flex items-center gap-1"
-                        >
-                          {loading && (
-                            <TailSpin height={16} width={16} color="#2563EB" />
-                          )}
-                          Update Status
-                        </button>
-                        <button
-                          onClick={() => handleDelete(leave._id)}
-                          disabled={loading}
-                          className="text-red-600 hover:text-red-900 text-left disabled:text-gray-400 flex items-center gap-1"
-                        >
-                          {loading && (
-                            <TailSpin height={16} width={16} color="#DC2626" />
-                          )}
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {filteredLeaves.length === 0 && !loading && (
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pending</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {pendingLeaves}
+                </p>
+              </div>
+              <div className="p-3 bg-yellow-100 rounded-xl">
+                <FiClock className="text-2xl text-yellow-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Approved</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {approvedLeaves}
+                </p>
+              </div>
+              <div className="p-3 bg-green-100 rounded-xl">
+                <FiCheckCircle className="text-2xl text-green-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Rejected</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {rejectedLeaves}
+                </p>
+              </div>
+              <div className="p-3 bg-red-100 rounded-xl">
+                <FiXCircle className="text-2xl text-red-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Error State */}
+        {leavesError && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center gap-3">
+            <div className="w-2 h-8 bg-red-500 rounded-full"></div>
+            <div>
+              <p className="font-medium">Error loading leaves</p>
+              <p className="text-sm">Please try again later</p>
+            </div>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {leavesLoading && leaves.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
+            <div className="flex justify-center mb-4">
+              <TailSpin
+                height={50}
+                width={50}
+                color="#2563EB"
+                ariaLabel="loading"
+              />
+            </div>
+            <p className="text-gray-600 text-lg">Loading leaves...</p>
+          </div>
+        ) : (
+          // Leaves Table
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
                   <tr>
-                    <td
-                      colSpan="7"
-                      className="px-6 py-4 text-center text-gray-500"
-                    >
-                      No leave applications found.
-                    </td>
+                    <th className="px-8 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Employee & Leave Details
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Period
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Duration
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Shift
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          )}
-        </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {leaves.map((leave) => (
+                    <tr
+                      key={leave._id}
+                      className="hover:bg-gray-50 transition-all duration-200 group cursor-pointer"
+                    >
+                      <td className="px-8 py-5">
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-shrink-0">
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+                              {leave.emp_id?.fullname?.charAt(0) || "U"}
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-lg font-semibold text-gray-900 truncate">
+                              {leave.emp_id?.fullname || "N/A"}
+                            </p>
+                            <div className="flex items-center gap-3 mt-1">
+                              <div className="flex items-center gap-1 text-gray-500 text-sm">
+                                {getTypeBadge(leave.type)}
+                              </div>
+                              {leave.reason && (
+                                <div className="text-gray-500 text-sm truncate max-w-xs">
+                                  {leave.reason}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex flex-col">
+                          <span className="text-gray-900 font-medium">
+                            {formatDate(leave.startDate)}
+                          </span>
+                          <span className="text-gray-500 text-sm">
+                            to {formatDate(leave.endDate)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <span className="text-gray-900 font-semibold">
+                          {leave.duration || "N/A"} day(s)
+                        </span>
+                      </td>
+                      <td className="px-6 py-5">
+                        <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                          <FiClock className="w-4 h-4" />
+                          {leave.shift_id?.name || "N/A"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5">
+                        {getStatusBadge(leave.status)}
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => openModal(leave)}
+                            className="p-2.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-xl transition-all duration-200 group-hover:scale-110"
+                            title="Edit Leave"
+                          >
+                            <FiEdit2 className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(leave._id)}
+                            className="p-2.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200 group-hover:scale-110"
+                            title="Delete Leave"
+                          >
+                            <FiTrash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Empty State */}
+            {leaves.length === 0 && !leavesLoading && (
+              <div className="bg-white text-center py-16">
+                <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                  <FiCalendar className="w-12 h-12 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  No leave applications found
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Get started by applying for your first leave
+                </p>
+                <button
+                  onClick={() => openModal()}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition duration-200"
+                >
+                  Apply for Leave
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Leave Modal */}
+        {isModalOpen && (
+            <LeaveModal
+            isOpen={isModalOpen}
+            onClose={closeModal}
+            leave={editingLeave}
+            employees={employees}
+            shifts={shifts}
+            refetchLeaves={refetchLeaves}
+          />
+        )}
       </div>
-
-      {/* Apply for Leave Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-xl font-bold mb-4">Apply for Leave</h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Employee *
-                    </label>
-                    <select
-                      name="emp_id"
-                      value={formData.emp_id}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select Employee</option>
-                      {employees.map((emp) => (
-                        <option key={emp._id} value={emp._id}>
-                          {emp.fullname} - {emp.email}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Leave Type *
-                    </label>
-                    <select
-                      name="type"
-                      value={formData.type}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="Sick">Sick Leave</option>
-                      <option value="Vacation">Vacation</option>
-                      <option value="Unpaid">Unpaid Leave</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Start Date *
-                      </label>
-                      <input
-                        type="date"
-                        name="startDate"
-                        value={formData.startDate}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        End Date *
-                      </label>
-                      <input
-                        type="date"
-                        name="endDate"
-                        value={formData.endDate}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Duration (days)
-                    </label>
-                    <input
-                      type="number"
-                      name="duration"
-                      value={formData.duration}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Auto-calculated"
-                      readOnly
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Shift (Optional)
-                    </label>
-                    <select
-                      name="shift_id"
-                      value={formData.shift_id}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select Shift (Optional)</option>
-                      {shifts.map((shift) => (
-                        <option key={shift._id} value={shift._id}>
-                          {shift.name} ({shift.startTime} - {shift.endTime})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Reason *
-                    </label>
-                    <textarea
-                      name="reason"
-                      value={formData.reason}
-                      onChange={handleInputChange}
-                      required
-                      rows="3"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter reason for leave"
-                    />
-                  </div>
-                </div>
-
-                {/* Buttons */}
-                <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    disabled={loading}
-                    className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium disabled:text-gray-400"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400 font-medium"
-                  >
-                    {loading ? (
-                      <>
-                        <TailSpin height={20} width={20} color="#FFFFFF" />
-                        Submitting...
-                      </>
-                    ) : (
-                      "Submit Application"
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Update Status Modal */}
-      {statusModalOpen && selectedLeave && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="p-6">
-              <h2 className="text-xl font-bold mb-4">Update Leave Status</h2>
-              <form onSubmit={handleStatusUpdate}>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Employee
-                    </label>
-                    <p className="text-sm text-gray-900">
-                      {selectedLeave.emp_id?.fullname || "Unknown Employee"}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Leave Type
-                    </label>
-                    <p className="text-sm text-gray-900">
-                      {selectedLeave.type}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Status *
-                    </label>
-                    <select
-                      name="status"
-                      value={statusData.status}
-                      onChange={handleStatusChange}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="Approved">Approved</option>
-                      <option value="Rejected">Rejected</option>
-                      <option value="Pending">Pending</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Approved By *
-                    </label>
-                    <select
-                      name="approvedBy"
-                      value={statusData.approvedBy}
-                      onChange={handleStatusChange}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select Approver</option>
-                      {employees.map((emp) => (
-                        <option key={emp._id} value={emp._id}>
-                          {emp.fullname} - {emp.position}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Buttons */}
-                <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={closeStatusModal}
-                    disabled={loading}
-                    className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium disabled:text-gray-400"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400 font-medium"
-                  >
-                    {loading ? (
-                      <>
-                        <TailSpin height={20} width={20} color="#FFFFFF" />
-                        Updating...
-                      </>
-                    ) : (
-                      "Update Status"
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
