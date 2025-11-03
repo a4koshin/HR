@@ -15,10 +15,11 @@ import ShiftsPage from "./pages/shift/ShiftsPage";
 import LeavePage from "./pages/leave/LeavePage";
 import UserPage from "./pages/users/UserPage";
 import ApplicantPage from "./pages/applicant/ApplicantPage";
-
+import ScrollToTop from "./components/ScrollToTop";
 const App = () => {
   return (
     <div className="bg-blue-500">
+      <ScrollToTop />
       <Toaster position="top-right" reverseOrder={false} />
 
       <Routes>
