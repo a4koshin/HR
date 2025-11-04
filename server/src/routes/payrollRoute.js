@@ -9,6 +9,9 @@ import {
 } from "../controllers/payrollController.js";
 
 import { protectHR } from "../middlewares/authMiddleware.js";
+import {validate} from "../middlewares/validate.js";
+import { payrollSchema } from "../validation/payrollJoi.js";
+
 
 const payrollRouter = express.Router();
 
@@ -16,13 +19,13 @@ const payrollRouter = express.Router();
 
 payrollRouter.use(protectHR);
 
-// HR/Admin
+
 payrollRouter.get("/", getPayrolls);
 payrollRouter.get("/enums", getPayrollEnums);
 payrollRouter.get("/:id", getPayrollById);
 
-// Only Admin
-payrollRouter.post("/", createPayroll);
+
+payrollRouter.post("/",validate(payrollSchema), createPayroll);
 payrollRouter.put("/:id", updatePayroll);
 payrollRouter.delete("/:id", deletePayroll);
 
