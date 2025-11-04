@@ -8,13 +8,13 @@ import {
 } from "../controllers/userController.js";
 import { protectHR } from "../middlewares/authMiddleware.js";
 import { validate } from "../middlewares/validate.js";
-import { userSchema, } from "../validation/userJoi.js";
+import { userSchema,loginSchema } from "../validation/userJoi.js";
 
 const userRouter = express.Router();
 
 // -------- AUTH ROUTES --------
 userRouter.post("/register", validate(userSchema), register);
-userRouter.post("/login", validate(userSchema), login);
+userRouter.post("/login", validate(loginSchema), login);
 userRouter.post("/logout", logout);
 
 // -------- PROFILE ROUTES --------
