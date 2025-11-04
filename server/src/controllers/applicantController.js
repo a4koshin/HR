@@ -1,22 +1,18 @@
 import Applicant from "../models/applicant.js";
 import Recruitment from "../models/recruitment.js";
 
-// ✅ Create Applicant and link to a Recruitment job
+// Create a new applicant and link to a recruitment job
 export const createApplicant = async (req, res) => {
   try {
     const { name, email, appliedJob } = req.body;
 
-    if (!name || !email || !appliedJob) {
-      return res
-        .status(400)
-        .json({ message: "Name, email, and appliedJob are required" });
+    // Check if the recruitment job exists
+    const job = await Recruitment.findById(appliedJob);
+    if (!job) {
+      return res.status(404).json({ message: "Recruitment job not found" });
     }
 
-    // Validate job existence
-    const job = await Recruitment.findById(appliedJob);
-    if (!job) return res.status(404).json({ message: "Recruitment not found" });
-
-    // Check for duplicate applicant (same email for same job)
+    // Prevent duplicate applications
     const existingApplicant = await Applicant.findOne({ email, appliedJob });
     if (existingApplicant) {
       return res.status(400).json({ message: "Applicant already applied for this job" });
@@ -24,7 +20,7 @@ export const createApplicant = async (req, res) => {
 
     const applicant = await Applicant.create({ name, email, appliedJob });
 
-    // Push applicant ID into job’s applicants array
+    // Link applicant to the recruitment job
     job.applicants.push(applicant._id);
     await job.save();
 
@@ -34,22 +30,26 @@ export const createApplicant = async (req, res) => {
   }
 };
 
-// ✅ Get all applicants
+// Get all applicants
 export const getApplicants = async (req, res) => {
   try {
-    const applicants = await Applicant.find()
-      .populate("appliedJob", "jobTitle description status");
+    const applicants = await Applicant.find().populate(
+      "appliedJob",
+      "jobTitle description status"
+    );
     res.status(200).json(applicants);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// ✅ Get applicant by ID
+// Get a single applicant by ID
 export const getApplicantById = async (req, res) => {
   try {
-    const applicant = await Applicant.findById(req.params.id)
-      .populate("appliedJob", "jobTitle status");
+    const applicant = await Applicant.findById(req.params.id).populate(
+      "appliedJob",
+      "jobTitle status"
+    );
     if (!applicant) {
       return res.status(404).json({ message: "Applicant not found" });
     }
@@ -59,7 +59,7 @@ export const getApplicantById = async (req, res) => {
   }
 };
 
-// ✅ Update applicant info
+// Update applicant information
 export const updateApplicant = async (req, res) => {
   try {
     const updatedApplicant = await Applicant.findByIdAndUpdate(
@@ -67,16 +67,18 @@ export const updateApplicant = async (req, res) => {
       req.body,
       { new: true, runValidators: true }
     );
+
     if (!updatedApplicant) {
       return res.status(404).json({ message: "Applicant not found" });
     }
+
     res.status(200).json(updatedApplicant);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// ✅ Delete applicant and unlink from job
+// Delete an applicant and unlink from recruitment job
 export const deleteApplicant = async (req, res) => {
   try {
     const applicant = await Applicant.findById(req.params.id);
@@ -84,7 +86,6 @@ export const deleteApplicant = async (req, res) => {
       return res.status(404).json({ message: "Applicant not found" });
     }
 
-    // Remove applicant from related recruitment’s array
     await Recruitment.findByIdAndUpdate(applicant.appliedJob, {
       $pull: { applicants: applicant._id },
     });
