@@ -2,87 +2,97 @@ import Recruitment from "../models/recruitment.js";
 import Employee from "../models/employee.js";
 import Applicant from "../models/applicant.js";
 
-// ✅ Create new recruitment
+// ---------------- Create Recruitment ----------------
 export const createRecruitment = async (req, res) => {
   try {
     const { jobTitle, description } = req.body;
 
     if (!jobTitle || !description) {
-      return res.status(400).json({ message: "Job title and description are required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Job title and description are required" });
     }
 
     const newJob = await Recruitment.create({ jobTitle, description });
-    res.status(201).json(newJob);
+    const populatedJob = await Recruitment.findById(newJob._id)
+      .populate("applicants", "name email status")
+      .populate("hiredEmployeeId", "fullname email role");
+
+    res.status(201).json({ success: true, job: populatedJob });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ✅ Get all recruitments (with applicants and hired employee)
+// ---------------- Get All Recruitments ----------------
 export const getRecruitments = async (req, res) => {
   try {
     const jobs = await Recruitment.find()
       .populate("applicants", "name email status")
-      .populate("hiredEmployeeId", "fullname email role");
-    res.json(jobs);
+      .populate("hiredEmployeeId", "fullname email role")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ success: true, count: jobs.length, jobs });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ✅ Get single recruitment by ID
+// ---------------- Get Recruitment by ID ----------------
 export const getRecruitmentById = async (req, res) => {
   try {
     const job = await Recruitment.findById(req.params.id)
       .populate("applicants", "name email status")
       .populate("hiredEmployeeId", "fullname email role");
 
-    if (!job) return res.status(404).json({ message: "Job not found" });
+    if (!job) return res.status(404).json({ success: false, message: "Job not found" });
 
-    res.json(job);
+    res.status(200).json({ success: true, job });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ✅ Update recruitment
+// ---------------- Update Recruitment ----------------
 export const updateRecruitment = async (req, res) => {
   try {
     const job = await Recruitment.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
-    });
+    })
+      .populate("applicants", "name email status")
+      .populate("hiredEmployeeId", "fullname email role");
 
-    if (!job) return res.status(404).json({ message: "Job not found" });
+    if (!job) return res.status(404).json({ success: false, message: "Job not found" });
 
-    res.json(job);
+    res.status(200).json({ success: true, job });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ success: false, message: error.message });
   }
 };
 
-// ✅ Delete recruitment
+// ---------------- Delete Recruitment ----------------
 export const deleteRecruitment = async (req, res) => {
   try {
     const job = await Recruitment.findByIdAndDelete(req.params.id);
-    if (!job) return res.status(404).json({ message: "Job not found" });
+    if (!job) return res.status(404).json({ success: false, message: "Job not found" });
 
-    res.json({ message: "Job deleted successfully" });
+    res.status(200).json({ success: true, message: "Job deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ✅ Hire applicant (convert applicant → employee)
+// ---------------- Hire Applicant ----------------
 export const hireApplicant = async (req, res) => {
   try {
     const { applicantId } = req.body;
-    const job = await Recruitment.findById(req.params.id).populate("applicants");
 
-    if (!job) return res.status(404).json({ message: "Job not found" });
+    const job = await Recruitment.findById(req.params.id).populate("applicants");
+    if (!job) return res.status(404).json({ success: false, message: "Job not found" });
 
     const applicant = await Applicant.findById(applicantId);
-    if (!applicant) return res.status(404).json({ message: "Applicant not found" });
+    if (!applicant) return res.status(404).json({ success: false, message: "Applicant not found" });
 
     // Create new employee
     const employee = await Employee.create({
@@ -100,8 +110,17 @@ export const hireApplicant = async (req, res) => {
     applicant.status = "hired";
     await applicant.save();
 
-    res.json({ message: "Applicant hired successfully", employee });
+    const populatedJob = await Recruitment.findById(job._id)
+      .populate("applicants", "name email status")
+      .populate("hiredEmployeeId", "fullname email role");
+
+    res.status(200).json({
+      success: true,
+      message: "Applicant hired successfully",
+      job: populatedJob,
+      employee,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };

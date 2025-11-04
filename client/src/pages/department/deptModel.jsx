@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { TailSpin } from "react-loader-spinner";
-import { FiCheckCircle, FiX, FiUsers, FiActivity } from "react-icons/fi";
-import { Building, TrendingUp } from "lucide-react";
+import { FiCheckCircle, FiX, FiActivity } from "react-icons/fi";
+import { Building } from "lucide-react";
 import {
   useCreateFuctionMutation,
   useUpdateFunctionMutation,
 } from "../../store/DynamicApi";
 
 const DeptModel = ({ isOpen, onClose, onSave, department }) => {
-  const [createDepartment, { isLoading: isCreating }] =
-    useCreateFuctionMutation();
-  const [updateDepartment, { isLoading: isUpdating }] =
-    useUpdateFunctionMutation();
+  const [createDepartment, { isLoading: isCreating }] = useCreateFuctionMutation();
+  const [updateDepartment, { isLoading: isUpdating }] = useUpdateFunctionMutation();
+
   const [formData, setFormData] = useState({
     name: "",
     status: "Active",
@@ -47,17 +46,31 @@ const DeptModel = ({ isOpen, onClose, onSave, department }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Normalize status for Joi validation (capitalize first letter)
+    const normalizedData = {
+      ...formData,
+      status:
+        formData.status.charAt(0).toUpperCase() +
+        formData.status.slice(1).toLowerCase(),
+    };
+
     try {
       if (isEditing) {
         await updateDepartment({
           url: "departments",
           id: department._id,
-          formData,
+          formData: normalizedData,
         }).unwrap();
       } else {
-        await createDepartment({ url: "departments", formData }).unwrap();
+        await createDepartment({
+          url: "departments",
+          formData: normalizedData,
+        }).unwrap();
       }
+
       onSave();
+      onClose();
     } catch (error) {
       console.error("Error saving department:", error);
     }
@@ -113,30 +126,25 @@ const DeptModel = ({ isOpen, onClose, onSave, department }) => {
             />
           </div>
 
-       
+          {/* Status */}
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <FiActivity className="w-4 h-4 text-blue-600" />
+              Status *
+            </label>
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleInputChange}
+              required
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+            >
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
 
-  
-            {/* Status */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <FiActivity className="w-4 h-4 text-blue-600" />
-                Status *
-              </label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-                required
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-              >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-
-        
-
-          {/* Action Buttons */}
+          {/* Buttons */}
           <div className="flex justify-between pt-6 border-t border-gray-200">
             <button
               type="button"
