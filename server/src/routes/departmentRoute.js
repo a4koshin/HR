@@ -7,6 +7,8 @@ import {
   deleteDepartment,
 } from "../controllers/departmentController.js";
 import { protectHR } from "../middlewares/authMiddleware.js";
+import {validate} from "../middlewares/validate.js";
+import { departmentSchema } from "../validation/departmentJoi.js";
 
 const departmentRouter = express.Router();
 
@@ -14,10 +16,10 @@ const departmentRouter = express.Router();
 departmentRouter.use(protectHR);
 
 // HR/Admin can create, list, view, update
-departmentRouter.post("/", createDepartment);
+departmentRouter.post("/", validate(departmentSchema), createDepartment);
 departmentRouter.get("/", getDepartments);
 departmentRouter.get("/:id", getDepartment);
-departmentRouter.put("/:id", updateDepartment);
+departmentRouter.put("/:id", validate(departmentSchema),  updateDepartment);
 
 // Only Admin can delete department
 
