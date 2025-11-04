@@ -33,7 +33,6 @@ const LoginPage = () => {
 
       // Update AuthContext
       setIsAuthenticated(true);
-      setName(data.user.name);
       setAuthEmail(data.user.email);
 
       toast.success("Logged in successfully!");

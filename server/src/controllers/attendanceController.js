@@ -7,17 +7,11 @@ const normalizeDate = (d) => new Date(new Date(d).setHours(0, 0, 0, 0));
 // Utility to calculate worked hours (handles overnight shifts)
 const calculateWorkedHours = (checkIn, checkOut) => {
   if (!checkIn || !checkOut) return 0;
-
   let inTime = new Date(checkIn);
   let outTime = new Date(checkOut);
-
-  // Overnight shift: add 1 day to outTime if before inTime
-  if (outTime < inTime) {
-    outTime.setDate(outTime.getDate() + 1);
-  }
-
+  if (outTime < inTime) outTime.setDate(outTime.getDate() + 1);
   const diffMs = outTime - inTime;
-  return parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2)); // hours with 2 decimals
+  return parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
 };
 
 // Get all attendances
@@ -38,7 +32,7 @@ export const getAttendances = async (req, res) => {
   }
 };
 
-// Get single attendance
+// Get attendance by ID
 export const getAttendanceById = async (req, res) => {
   try {
     const attendance = await Attendance.findById(req.params.id)
@@ -46,9 +40,10 @@ export const getAttendanceById = async (req, res) => {
       .populate("shift", "name startTime endTime");
 
     if (!attendance) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Attendance record not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Attendance record not found",
+      });
     }
 
     res.status(200).json({ success: true, data: attendance });
@@ -58,19 +53,10 @@ export const getAttendanceById = async (req, res) => {
 };
 
 // Create attendance
-// Create attendance
 export const createAttendance = async (req, res) => {
   try {
     const { employee, date, checkIn, checkOut, shift, status } = req.body;
 
-    if (!employee || !date || !shift) {
-      return res.status(400).json({
-        success: false,
-        message: "Employee, date, and shift are required fields",
-      });
-    }
-
-    // Normalize the date safely
     const normalizedDate = new Date(date);
     if (isNaN(normalizedDate)) {
       return res.status(400).json({
@@ -81,7 +67,7 @@ export const createAttendance = async (req, res) => {
 
     const existingAttendance = await Attendance.findOne({
       employee,
-      date: normalizedDate.toISOString().split("T")[0], // compare by YYYY-MM-DD
+      date: normalizedDate.toISOString().split("T")[0],
       shift,
     });
 
@@ -102,17 +88,14 @@ export const createAttendance = async (req, res) => {
       checkOut: checkOut ? new Date(checkOut) : null,
     };
 
-    // Calculate worked hours
     attendanceData.workedHours = calculateWorkedHours(
       attendanceData.checkIn,
       attendanceData.checkOut
     );
 
-    // Save
     const attendance = new Attendance(attendanceData);
     await attendance.save();
 
-    // Re-fetch with populate so frontend gets full object
     const populatedAttendance = await Attendance.findById(attendance._id)
       .populate("employee", "fullname email position department")
       .populate("shift", "name startTime endTime");
@@ -139,27 +122,21 @@ export const updateAttendance = async (req, res) => {
   try {
     const attendance = await Attendance.findById(req.params.id);
     if (!attendance) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Attendance record not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Attendance record not found",
+      });
     }
 
     const { date, checkIn, checkOut, shift, status } = req.body;
 
     if (date) attendance.date = normalizeDate(date);
-    if (checkIn !== undefined)
-      attendance.checkIn = checkIn ? new Date(checkIn) : null;
-    if (checkOut !== undefined)
-      attendance.checkOut = checkOut ? new Date(checkOut) : null;
+    if (checkIn !== undefined) attendance.checkIn = checkIn ? new Date(checkIn) : null;
+    if (checkOut !== undefined) attendance.checkOut = checkOut ? new Date(checkOut) : null;
     if (shift) attendance.shift = shift;
     if (status) attendance.status = status;
 
-    // Recalculate worked hours
-    attendance.workedHours = calculateWorkedHours(
-      attendance.checkIn,
-      attendance.checkOut
-    );
-
+    attendance.workedHours = calculateWorkedHours(attendance.checkIn, attendance.checkOut);
     await attendance.save();
 
     const populatedAttendance = await Attendance.findById(attendance._id)
@@ -186,11 +163,11 @@ export const updateAttendance = async (req, res) => {
 export const deleteAttendance = async (req, res) => {
   try {
     const attendance = await Attendance.findByIdAndDelete(req.params.id);
-
     if (!attendance) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Attendance record not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Attendance record not found",
+      });
     }
 
     res.status(200).json({
@@ -235,14 +212,9 @@ export const markAttendance = async (req, res) => {
 
         if (att.checkIn) attendance.checkIn = new Date(att.checkIn);
         if (att.checkOut) attendance.checkOut = new Date(att.checkOut);
-        if (att.status) attendance.status = att.status; // manual input
+        if (att.status) attendance.status = att.status;
 
-        // Recalculate worked hours
-        attendance.workedHours = calculateWorkedHours(
-          attendance.checkIn,
-          attendance.checkOut
-        );
-
+        attendance.workedHours = calculateWorkedHours(attendance.checkIn, attendance.checkOut);
         await attendance.save();
 
         const populated = await Attendance.findById(attendance._id).populate(
@@ -251,8 +223,8 @@ export const markAttendance = async (req, res) => {
         );
 
         results.push(populated);
-      } catch (error) {
-        errors.push({ employeeId: att.employeeId, error: error.message });
+      } catch (err) {
+        errors.push({ employeeId: att.employeeId, error: err.message });
       }
     }
 
@@ -260,7 +232,7 @@ export const markAttendance = async (req, res) => {
       success: true,
       message: `Attendance processed for ${results.length} employees`,
       data: results,
-      errors: errors.length > 0 ? errors : undefined,
+      errors: errors.length ? errors : undefined,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

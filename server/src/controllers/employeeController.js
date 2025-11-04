@@ -2,13 +2,10 @@ import Employee from "../models/employee.js";
 import Department from "../models/department.js";
 import { employeeSchema } from "../validation/employeeJoi.js";
 
-// ---------------- Create Employee ----------------
+// Create a new employee
 export const createEmployee = async (req, res) => {
   try {
-    // ✅ Step 1: Validate request body using Joi
-    const { error, value } = employeeSchema.validate(req.body, {
-      abortEarly: false, // return all validation errors
-    });
+    const { error, value } = employeeSchema.validate(req.body, { abortEarly: false });
 
     if (error) {
       return res.status(400).json({
@@ -18,7 +15,6 @@ export const createEmployee = async (req, res) => {
       });
     }
 
-    // ✅ Step 2: Check if department exists
     const deptExists = await Department.findById(value.department);
     if (!deptExists) {
       return res.status(400).json({
@@ -27,7 +23,6 @@ export const createEmployee = async (req, res) => {
       });
     }
 
-    // ✅ Step 3: Check for duplicate email or phone
     const existingEmployee = await Employee.findOne({
       $or: [{ email: value.email }, { phone: value.phone }],
     });
@@ -38,10 +33,9 @@ export const createEmployee = async (req, res) => {
       });
     }
 
-    // ✅ Step 4: Create new employee
     const employee = await Employee.create(value);
 
-    // ✅ Step 5: Populate department before sending response
+    // Keep populated department data
     const populatedEmployee = await Employee.findById(employee._id).populate(
       "department",
       "name status"
@@ -50,17 +44,14 @@ export const createEmployee = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Employee created successfully",
-      employee: populatedEmployee,
+      employee: populatedEmployee, // keep original key for frontend
     });
   } catch (error) {
-    console.error("Error in createEmployee:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Server error", error: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ---------------- Get All Employees ----------------
+// Get all employees
 export const getEmployees = async (req, res) => {
   try {
     const employees = await Employee.find()
@@ -70,15 +61,14 @@ export const getEmployees = async (req, res) => {
     res.status(200).json({
       success: true,
       count: employees.length,
-      employees,
+      employees, // keep original key
     });
   } catch (error) {
-    console.error("Error in getEmployees:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ---------------- Get Single Employee ----------------
+// Get single employee by ID
 export const getEmployee = async (req, res) => {
   try {
     const employee = await Employee.findById(req.params.id).populate(
@@ -87,32 +77,25 @@ export const getEmployee = async (req, res) => {
     );
 
     if (!employee) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Employee not found" });
+      return res.status(404).json({ success: false, message: "Employee not found" });
     }
 
-    res.status(200).json({ success: true, employee });
+    res.status(200).json({ success: true, employee }); // keep original key
   } catch (error) {
-    console.error("Error in getEmployee:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ---------------- Update Employee ----------------
+// Update employee
 export const updateEmployee = async (req, res) => {
   try {
     const updates = req.body;
 
-    // ✅ Step 1: Partial validation (some fields optional for update)
-    const updateSchema = employeeValidationSchema.fork(Object.keys(employeeValidationSchema.describe().keys), (field) =>
+    const updateSchema = employeeSchema.fork(Object.keys(employeeSchema.describe().keys), (field) =>
       field.optional()
     );
 
-    const { error, value } = updateSchema.validate(updates, {
-      abortEarly: false,
-    });
-
+    const { error, value } = updateSchema.validate(updates, { abortEarly: false });
     if (error) {
       return res.status(400).json({
         success: false,
@@ -121,7 +104,6 @@ export const updateEmployee = async (req, res) => {
       });
     }
 
-    // ✅ Step 2: Check department if updating it
     if (value.department) {
       const deptExists = await Department.findById(value.department);
       if (!deptExists) {
@@ -132,61 +114,42 @@ export const updateEmployee = async (req, res) => {
       }
     }
 
-    // ✅ Step 3: Check for duplicates
     if (value.email) {
-      const exists = await Employee.findOne({
-        email: value.email,
-        _id: { $ne: req.params.id },
-      });
-      if (exists)
-        return res
-          .status(400)
-          .json({ success: false, message: "Email already in use" });
+      const exists = await Employee.findOne({ email: value.email, _id: { $ne: req.params.id } });
+      if (exists) return res.status(400).json({ success: false, message: "Email already in use" });
     }
 
     if (value.phone) {
-      const exists = await Employee.findOne({
-        phone: value.phone,
-        _id: { $ne: req.params.id },
-      });
-      if (exists)
-        return res
-          .status(400)
-          .json({ success: false, message: "Phone already in use" });
+      const exists = await Employee.findOne({ phone: value.phone, _id: { $ne: req.params.id } });
+      if (exists) return res.status(400).json({ success: false, message: "Phone already in use" });
     }
 
-    // ✅ Step 4: Update employee
     const employee = await Employee.findByIdAndUpdate(req.params.id, value, {
       new: true,
       runValidators: true,
     }).populate("department", "name status");
 
     if (!employee) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Employee not found" });
+      return res.status(404).json({ success: false, message: "Employee not found" });
     }
 
     res.status(200).json({
       success: true,
       message: "Employee updated successfully",
-      employee,
+      employee, // keep populated data visible
     });
   } catch (error) {
-    console.error("Error in updateEmployee:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ---------------- Delete Employee ----------------
+// Delete employee
 export const deleteEmployee = async (req, res) => {
   try {
     const employee = await Employee.findByIdAndDelete(req.params.id);
 
     if (!employee) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Employee not found" });
+      return res.status(404).json({ success: false, message: "Employee not found" });
     }
 
     res.status(200).json({
@@ -194,9 +157,6 @@ export const deleteEmployee = async (req, res) => {
       message: "Employee deleted successfully",
     });
   } catch (error) {
-    console.error("Error in deleteEmployee:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
-
-// ---------------- Search Employees ----------------
