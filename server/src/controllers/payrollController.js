@@ -1,5 +1,4 @@
 import Payroll from "../models/payroll.js";
-import { payrollValidation } from "../validation/payrollValidation.js";
 import { calculatePayroll } from "../helpers/payrollHelper.js";
 
 // CREATE payroll
