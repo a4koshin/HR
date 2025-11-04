@@ -6,7 +6,6 @@ const employeeSchema = new mongoose.Schema(
     fullname: { type: String, required: true, trim: true },
     email: {
       type: String,
-      required: true,
       unique: true,
       lowercase: true,
       trim: true,

@@ -1,12 +1,12 @@
 import Employee from "../models/employee.js";
 import Department from "../models/department.js";
-import { employeeValidationSchema } from "../validation/employeeJoi.js";
+import { employeeSchema } from "../validation/employeeJoi.js";
 
 // ---------------- Create Employee ----------------
 export const createEmployee = async (req, res) => {
   try {
     // ✅ Step 1: Validate request body using Joi
-    const { error, value } = employeeValidationSchema.validate(req.body, {
+    const { error, value } = employeeSchema.validate(req.body, {
       abortEarly: false, // return all validation errors
     });
 
