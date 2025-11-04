@@ -25,7 +25,7 @@ const LoginPage = () => {
         JSON.stringify({
           token: data.token,
           id: data.user.id,
-          fullname: data.user.fullname,
+          name: data.user.name,
           email: data.user.email,
         })
       );
@@ -33,7 +33,7 @@ const LoginPage = () => {
 
       // Update AuthContext
       setIsAuthenticated(true);
-      setName(data.user.fullname);
+      setName(data.user.name);
       setAuthEmail(data.user.email);
 
       toast.success("Logged in successfully!");

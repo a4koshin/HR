@@ -1,48 +1,53 @@
 import React, { useState, useEffect, useContext, createContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
-const AuthProvider = ({ children }) => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null); // store whole user object
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loadingAuth, setLoadingAuth] = useState(true); // start loading
+  const [loadingAuth, setLoadingAuth] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Restore auth on page load
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
+    const storedUser = JSON.parse(localStorage.getItem("user"));
     const token = localStorage.getItem("token");
 
-    if (user && token) {
-      setName(user.fullname || user.name);
-      setEmail(user.email);
+    if (storedUser && token) {
+      setUser(storedUser);
       setIsAuthenticated(true);
-      navigate("/dashboard");
+
+      // Only redirect if you're not already on dashboard
+      if (location.pathname === "/login" || location.pathname === "/") {
+        navigate("/dashboard");
+      }
     }
-    setLoadingAuth(false); // done checking
+
+    setLoadingAuth(false);
   }, []);
+
+  const name =
+    user?.name ||
+    user?.fullname ||
+    (user?.email ? user.email.split("@")[0] : "User");
+  const email = user?.email || "";
 
   return (
     <AuthContext.Provider
       value={{
+        user,
+        setUser,
         name,
-        setName,
         email,
-        setEmail,
         isAuthenticated,
         setIsAuthenticated,
-
-        navigate,
         loadingAuth,
-        setLoadingAuth,
+        navigate,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
 };
-
-export { AuthProvider };

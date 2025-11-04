@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthProvider";
 
 const Header = ({ onToggleSidebar, onLogout }) => {
     const { name, email } = useAuth();
+    console.log("Header - name:", name, "email:", email);
     
     // Get user initials for avatar
     const getUserInitials = (name) => {
