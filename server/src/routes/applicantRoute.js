@@ -9,12 +9,14 @@ import {
 } from "../controllers/applicantController.js";
 
 import { protectHR,  } from "../middlewares/authMiddleware.js";
+import {validate} from "../middlewares/validate.js";
+import { applicantSchema } from "../validation/applicantJoi.js";
 
 const applicantRouter = express.Router();
 
 applicantRouter.use(protectHR);
 
-applicantRouter.post("/", createApplicant);
+applicantRouter.post("/",  validate(applicantSchema), createApplicant);
 applicantRouter.get("/", getApplicants);
 applicantRouter.get("/:id", getApplicantById);
 applicantRouter.put("/:id", updateApplicant);
