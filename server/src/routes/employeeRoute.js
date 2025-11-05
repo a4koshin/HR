@@ -13,7 +13,7 @@ const employeeRouter = express.Router();
 employeeRouter.post("/", validate(employeeSchema), createEmployee);
 employeeRouter.get("/", getEmployees);
 employeeRouter.get("/:id", getEmployee);
-employeeRouter.put("/:id", updateEmployee);
+employeeRouter.put("/:id",  validate(employeeSchema),updateEmployee);
 employeeRouter.delete("/:id", deleteEmployee);
 
 export default employeeRouter;

@@ -19,7 +19,8 @@ import {
   FiCheckCircle,
 } from "react-icons/fi";
 import { HiOutlineOfficeBuilding } from "react-icons/hi";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
+
 const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
   const [createEmployee, { isLoading: isCreating }] =
     useCreateFuctionMutation();
@@ -45,6 +46,7 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
   const isEditing = !!employee;
 
   const { data } = useGetallFunctionQuery({ url: "/departments" });
+   const { data: shiftData } = useGetallFunctionQuery({ url: "/shifts" });
 
   const statusOptions = {
     contractType: [
@@ -52,10 +54,7 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
       { value: "Contract", label: "Contract" },
       { value: "Internship", label: "Internship" },
     ],
-    shiftType: [
-      { value: "Day", label: "Day" },
-      { value: "Night", label: "Night" },
-    ],
+
     status: [
       { value: "Active", label: "Active" },
       { value: "Inactive", label: "Inactive" },
@@ -133,10 +132,13 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
         toast.success("Employee created successfully!");
       }
 
-      onSave(); // Notify parent component
+      onSave();
     } catch (error) {
       console.error("Error saving employee:", error);
-      // Handle error (show toast/notification)
+      const message =
+        error?.data?.message ||
+        "❌ Something went wrong while saving employee.";
+      toast.error(message);
     }
   };
 
@@ -160,6 +162,7 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
   if (!isOpen) return null;
 
   const deptData = data?.departments || [];
+  const shiftTypes = shiftData?.shifts || [];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -429,10 +432,10 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                     required
                   >
-                    <option value="">Select Shift Type</option>
-                    {statusOptions.shiftType.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
+                    <option value="">Select Shift</option>
+                    {shiftData?.shifts?.map((shift) => (
+                      <option key={shift._id} value={shift._id}>
+                        {shift.name}
                       </option>
                     ))}
                   </select>

@@ -19,7 +19,7 @@ export const daynamicApi = createApi({
           headers: {
             Authorization: `Bearer ${user?.token}`,
           },
-          // contentType: "application/json"
+          contentType: "application/json"
         };
       },
       invalidatesTags: ["customers", "invoices", "colors"],

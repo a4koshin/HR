@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { TailSpin } from "react-loader-spinner";
 import { FiCheckCircle, FiX, FiActivity } from "react-icons/fi";
 import { Building } from "lucide-react";
+import { toast } from "react-toastify";
 import {
   useCreateFuctionMutation,
   useUpdateFunctionMutation,
@@ -47,9 +48,8 @@ const DeptModel = ({ isOpen, onClose, onSave, department }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Normalize status for Joi validation (capitalize first letter)
     const normalizedData = {
-      ...formData,
+      name: formData.name,
       status:
         formData.status.charAt(0).toUpperCase() +
         formData.status.slice(1).toLowerCase(),
@@ -62,22 +62,28 @@ const DeptModel = ({ isOpen, onClose, onSave, department }) => {
           id: department._id,
           formData: normalizedData,
         }).unwrap();
+
+        toast.success("✅ Department updated successfully!");
       } else {
         await createDepartment({
           url: "departments",
           formData: normalizedData,
         }).unwrap();
+
+        toast.success("🎉 Department created successfully!");
       }
 
       onSave();
       onClose();
     } catch (error) {
       console.error("Error saving department:", error);
+      const message =
+        error?.data?.message || "❌ Something went wrong while saving department.";
+      toast.error(message);
     }
   };
 
   if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-xl border border-gray-200">

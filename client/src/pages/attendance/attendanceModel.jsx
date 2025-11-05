@@ -247,16 +247,16 @@ const AttendanceModal = ({ isOpen, onClose, onSave, attendance }) => {
                     Shift *
                   </label>
                   <select
-                    name="shift"
-                    value={formData.shift}
+                    name="shiftType"
+                    value={formData.shiftType}
                     onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                   >
                     <option value="">Select Shift</option>
-                    {shifts.map((shift) => (
+                    {shiftData?.shifts?.map((shift) => (
                       <option key={shift._id} value={shift._id}>
-                        {shift.name} ({shift.startTime} - {shift.endTime})
+                        {shift.name}
                       </option>
                     ))}
                   </select>
@@ -282,7 +282,7 @@ const AttendanceModal = ({ isOpen, onClose, onSave, attendance }) => {
                 <button
                   type="button"
                   onClick={nextStep}
-                  disabled={!isBasicInfoValid()}
+                 
                   className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-400 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2"
                 >
                   Continue

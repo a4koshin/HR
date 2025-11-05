@@ -16,10 +16,13 @@ import LeavePage from "./pages/leave/LeavePage";
 import UserPage from "./pages/users/UserPage";
 import ApplicantPage from "./pages/applicant/ApplicantPage";
 import ScrollToTop from "./components/ScrollToTop";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 const App = () => {
   return (
     <div className="bg-blue-500">
       <ScrollToTop />
+      <ToastContainer position="top-right" autoClose={3000} />
       <Toaster position="top-right" reverseOrder={false} />
 
       <Routes>

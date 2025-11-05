@@ -38,12 +38,12 @@ export const employeeSchema = Joi.object({
 
   address: Joi.string()
     .trim()
-    .min(5)
+    .min(2)
     .max(200)
     .required()
     .messages({
       "string.empty": "Address is required",
-      "string.min": "Address must be at least 5 characters",
+      "string.min": "Address must be at least 2 characters",
       "string.max": "Address must not exceed 200 characters",
       "any.required": "Address is required",
     }),
@@ -98,13 +98,21 @@ export const employeeSchema = Joi.object({
       "any.required": "Salary is required",
     }),
 
-  shiftType: Joi.string()
-    .valid("Day", "Night")
+    shiftType: Joi.string()
     .required()
+    .custom((value, helpers) => {
+      if (!mongoose.Types.ObjectId.isValid(value)) {
+        return helpers.error("any.invalid");
+      }
+      return value;
+    })
     .messages({
-      "any.only": "Shift type must be 'Day' or 'Night'",
-      "any.required": "Shift type is required",
+      "string.empty": "Shift is required",
+      "any.required": "Shift is required",
+      "any.invalid": "Shift must be a valid ID",
     }),
+
+
 
   status: Joi.string()
     .valid("Active", "Inactive")
