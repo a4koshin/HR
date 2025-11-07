@@ -21,16 +21,11 @@ const ShiftModel = ({ isOpen, onClose, onSave, shift }) => {
   const isLoading = isCreating || isUpdating;
   const isEditing = !!shift;
 
-  // ✅ Safer and simpler update when modal opens
   useEffect(() => {
     if (shift) {
       setFormData({
         name: shift.name || "",
-<<<<<<< HEAD
-        startTime: shift.startTime || "",
-=======
         startTime: shift.startTime || "", // string HH:mm
->>>>>>> origin/main
         endTime: shift.endTime || "",
         status: shift.status || "Active",
       });
@@ -60,36 +55,13 @@ const ShiftModel = ({ isOpen, onClose, onSave, shift }) => {
     };
 
     try {
-<<<<<<< HEAD
-      const today = new Date();
-      const startTime = new Date(
-        `${today.toDateString()} ${formData.startTime}`
-      );
-      const endTime = new Date(`${today.toDateString()} ${formData.endTime}`);
-
-      if (endTime <= startTime) {
-        alert("End time must be after start time");
-        return;
-      }
-
-      const payload = {
-        name: formData.name,
-        startTime,
-        endTime,
-        status: formData.status,
-      };
-
       if (isEditing) {
         await updateShift({
           url: "shifts",
           id: shift._id,
           formData: payload,
         }).unwrap();
-=======
-      if (isEditing) {
-        await updateShift({ url: "shifts", id: shift._id, formData: payload }).unwrap();
         toast.success("✅ Shift updated successfully!");
->>>>>>> origin/main
       } else {
         await createShift({ url: "shifts", formData: payload }).unwrap();
         toast.success("🎉 Shift created successfully!");
@@ -108,6 +80,7 @@ const ShiftModel = ({ isOpen, onClose, onSave, shift }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl max-w-2xl w-full shadow-xl border border-gray-200 overflow-y-auto">
+        {/* Header */}
         <div className="p-6 rounded-t-2xl flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold text-blue-700">
@@ -127,6 +100,7 @@ const ShiftModel = ({ isOpen, onClose, onSave, shift }) => {
           </button>
         </div>
 
+        {/* Form */}
         <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-6">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">

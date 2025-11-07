@@ -1,24 +1,26 @@
-<<<<<<< HEAD
-import React, { useState, useEffect } from "react";
-
-=======
 import React, { useState } from "react";
->>>>>>> origin/main
 import { TailSpin } from "react-loader-spinner";
 import AttendanceModal from "./attendanceModel";
 import { useGetallFunctionQuery } from "../../store/DynamicApi";
-import { 
-  FiEdit2, FiTrash2, FiPlus, FiUser, FiCalendar, FiClock, FiCheckCircle, FiXCircle 
+import {
+  FiEdit2,
+  FiTrash2,
+  FiPlus,
+  FiUser,
+  FiCalendar,
+  FiClock,
+  FiCheckCircle,
+  FiXCircle,
 } from "react-icons/fi";
 
 const AttendancePage = () => {
-<<<<<<< HEAD
-=======
   // Fetch attendance data
-  const { data: attendanceData = [], isLoading, isError, refetch } =
-    useGetallFunctionQuery({ url: "/attendance" });
-
-
+  const {
+    data: attendanceData = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useGetallFunctionQuery({ url: "/attendance" });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAttendance, setEditingAttendance] = useState(null);
@@ -43,34 +45,52 @@ const AttendancePage = () => {
     refetch();
   };
 
-  // Helpers
-  // const attendanceRecords = attendanceData?.attendance || [];
-  // console.log("Attendance Records:", attendanceRecords);
-
   const formatDate = (d) => (d ? new Date(d).toLocaleDateString() : "-");
-  const formatTime = (t) => (t ? new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "-");
+  const formatTime = (t) =>
+    t
+      ? new Date(t).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "-";
 
   const getStatusBadge = (att) => {
     const statusConfig = {
-      Present: { bg: "bg-green-50", text: "text-green-700", border: "border-green-200", icon: FiCheckCircle },
-      Absent: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200", icon: FiXCircle },
-      Late: { bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-200", icon: FiClock }
+      Present: {
+        bg: "bg-green-50",
+        text: "text-green-700",
+        border: "border-green-200",
+        icon: FiCheckCircle,
+      },
+      Absent: {
+        bg: "bg-red-50",
+        text: "text-red-700",
+        border: "border-red-200",
+        icon: FiXCircle,
+      },
+      Late: {
+        bg: "bg-yellow-50",
+        text: "text-yellow-700",
+        border: "border-yellow-200",
+        icon: FiClock,
+      },
     };
     const config = statusConfig[att.status] || statusConfig.Absent;
     const IconComponent = config.icon;
     return (
-      <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${config.bg} ${config.text} ${config.border}`}>
+      <span
+        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${config.bg} ${config.text} ${config.border}`}
+      >
         <IconComponent className="w-4 h-4" />
         {att.status}
       </span>
     );
   };
 
+  // const attendanceRecords = attendanceData?.data || [];
+  const attendanceRecords = attendanceData?.attendances || [];
+  console.log(attendanceData);
 
-  const attendanceRecords = attendanceData?.data || [];
-
-
->>>>>>> origin/main
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       <div className="max-w-8xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -105,7 +125,9 @@ const AttendancePage = () => {
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Records</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Total Records
+                </p>
                 <p className="text-3xl font-bold text-gray-900 mt-2">
                   {attendanceRecords.length}
                 </p>
@@ -133,26 +155,48 @@ const AttendancePage = () => {
           {isLoading && attendanceRecords.length === 0 ? (
             <div className="text-center py-16">
               <div className="flex justify-center mb-4">
-                <TailSpin height={50} width={50} color="#2563EB" ariaLabel="loading" />
+                <TailSpin
+                  height={50}
+                  width={50}
+                  color="#2563EB"
+                  ariaLabel="loading"
+                />
               </div>
-              <p className="text-gray-600 text-lg">Loading attendance records...</p>
+              <p className="text-gray-600 text-lg">
+                Loading attendance records...
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-8 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Employee Details</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Date & Shift</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Time Tracking</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Worked Hours</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
+                    <th className="px-8 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Employee Details
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Date & Shift
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Time Tracking
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Worked Hours
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {attendanceRecords.map((att) => (
-                    <tr key={att._id} className="hover:bg-gray-50 transition-all duration-200 group">
+                    <tr
+                      key={att._id}
+                      className="hover:bg-gray-50 transition-all duration-200 group"
+                    >
                       <td className="px-8 py-5">
                         <div className="flex items-center space-x-4">
                           <div className="flex-shrink-0">
@@ -161,8 +205,12 @@ const AttendancePage = () => {
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-lg font-semibold text-gray-900 truncate">{att.employee?.fullname || "Unknown Employee"}</p>
-                            <p className="text-gray-500 text-sm truncate">{att.employee?.position || "-"}</p>
+                            <p className="text-lg font-semibold text-gray-900 truncate">
+                              {att.employee?.fullname || "Unknown Employee"}
+                            </p>
+                            <p className="text-gray-500 text-sm truncate">
+                              {att.employee?.position || "-"}
+                            </p>
                           </div>
                         </div>
                       </td>
@@ -172,18 +220,24 @@ const AttendancePage = () => {
                             <FiCalendar className="w-4 h-4 text-blue-600" />
                             {formatDate(att.date)}
                           </div>
-                          <div className="text-sm text-gray-500">{att.shift?.name || "-"}</div>
+                          <div className="text-sm text-gray-500">
+                            {att.shift?.name || "-"}
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-5">
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 text-sm">
                             <FiClock className="w-4 h-4 text-green-600" />
-                            <span className="font-medium">In: {formatTime(att.checkIn)}</span>
+                            <span className="font-medium">
+                              In: {formatTime(att.checkIn)}
+                            </span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             <FiClock className="w-4 h-4 text-red-600" />
-                            <span className="font-medium">Out: {formatTime(att.checkOut)}</span>
+                            <span className="font-medium">
+                              Out: {formatTime(att.checkOut)}
+                            </span>
                           </div>
                         </div>
                       </td>
@@ -228,11 +282,6 @@ const AttendancePage = () => {
           attendance={editingAttendance}
         />
       </div>
-<<<<<<< HEAD
-
-      {/* Add/Edit Attendance Modal */}
-=======
->>>>>>> origin/main
     </div>
   );
 };

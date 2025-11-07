@@ -1,10 +1,11 @@
 import Attendance from "../models/attendance.js";
 import Shift from "../models/shift.js";
+import { attendanceSchema } from "../validation/attendanceJoi.js";
 
-// Utility to normalize date
+// Utility: normalize date
 const normalizeDate = (d) => new Date(new Date(d).setHours(0, 0, 0, 0));
 
-// Utility to calculate worked hours (handles overnight shifts)
+// Utility: calculate worked hours (handles overnight shifts)
 const calculateWorkedHours = (checkIn, checkOut) => {
   if (!checkIn || !checkOut) return 0;
   let inTime = new Date(checkIn);
@@ -14,7 +15,7 @@ const calculateWorkedHours = (checkIn, checkOut) => {
   return parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
 };
 
-// Get all attendances
+// Get all attendance records
 export const getAttendances = async (req, res) => {
   try {
     const attendances = await Attendance.find()
@@ -25,14 +26,14 @@ export const getAttendances = async (req, res) => {
     res.status(200).json({
       success: true,
       count: attendances.length,
-      data: attendances,
+      attendances,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Get attendance by ID
+// Get single attendance by ID
 export const getAttendanceById = async (req, res) => {
   try {
     const attendance = await Attendance.findById(req.params.id)
@@ -46,16 +47,31 @@ export const getAttendanceById = async (req, res) => {
       });
     }
 
-    res.status(200).json({ success: true, data: attendance });
+    res.status(200).json({
+      success: true,
+      attendance,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Create attendance
+// Create new attendance
 export const createAttendance = async (req, res) => {
   try {
-    const { employee, date, checkIn, checkOut, shift, status } = req.body;
+    const { error, value } = attendanceSchema.validate(req.body, {
+      abortEarly: false,
+    });
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: error.details.map((err) => err.message),
+      });
+    }
+
+    const { employee, date, checkIn, checkOut, shift, status } = value;
 
     const normalizedDate = new Date(date);
     if (isNaN(normalizedDate)) {
@@ -93,8 +109,7 @@ export const createAttendance = async (req, res) => {
       attendanceData.checkOut
     );
 
-    const attendance = new Attendance(attendanceData);
-    await attendance.save();
+    const attendance = await Attendance.create(attendanceData);
 
     const populatedAttendance = await Attendance.findById(attendance._id)
       .populate("employee", "fullname email position department")
@@ -103,7 +118,7 @@ export const createAttendance = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Attendance record created successfully",
-      data: populatedAttendance,
+      attendance: populatedAttendance,
     });
   } catch (error) {
     if (error.code === 11000) {
@@ -120,6 +135,23 @@ export const createAttendance = async (req, res) => {
 // Update attendance
 export const updateAttendance = async (req, res) => {
   try {
+    const updateSchema = attendanceSchema.fork(
+      Object.keys(attendanceSchema.describe().keys),
+      (field) => field.optional()
+    );
+
+    const { error, value } = updateSchema.validate(req.body, {
+      abortEarly: false,
+    });
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: error.details.map((err) => err.message),
+      });
+    }
+
     const attendance = await Attendance.findById(req.params.id);
     if (!attendance) {
       return res.status(404).json({
@@ -128,15 +160,18 @@ export const updateAttendance = async (req, res) => {
       });
     }
 
-    const { date, checkIn, checkOut, shift, status } = req.body;
+    if (value.date) attendance.date = normalizeDate(value.date);
+    if (value.checkIn !== undefined)
+      attendance.checkIn = value.checkIn ? new Date(value.checkIn) : null;
+    if (value.checkOut !== undefined)
+      attendance.checkOut = value.checkOut ? new Date(value.checkOut) : null;
+    if (value.shift) attendance.shift = value.shift;
+    if (value.status) attendance.status = value.status;
 
-    if (date) attendance.date = normalizeDate(date);
-    if (checkIn !== undefined) attendance.checkIn = checkIn ? new Date(checkIn) : null;
-    if (checkOut !== undefined) attendance.checkOut = checkOut ? new Date(checkOut) : null;
-    if (shift) attendance.shift = shift;
-    if (status) attendance.status = status;
-
-    attendance.workedHours = calculateWorkedHours(attendance.checkIn, attendance.checkOut);
+    attendance.workedHours = calculateWorkedHours(
+      attendance.checkIn,
+      attendance.checkOut
+    );
     await attendance.save();
 
     const populatedAttendance = await Attendance.findById(attendance._id)
@@ -146,7 +181,7 @@ export const updateAttendance = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Attendance record updated successfully",
-      data: populatedAttendance,
+      attendance: populatedAttendance,
     });
   } catch (error) {
     if (error.code === 11000) {
@@ -163,6 +198,7 @@ export const updateAttendance = async (req, res) => {
 export const deleteAttendance = async (req, res) => {
   try {
     const attendance = await Attendance.findByIdAndDelete(req.params.id);
+
     if (!attendance) {
       return res.status(404).json({
         success: false,
@@ -214,7 +250,10 @@ export const markAttendance = async (req, res) => {
         if (att.checkOut) attendance.checkOut = new Date(att.checkOut);
         if (att.status) attendance.status = att.status;
 
-        attendance.workedHours = calculateWorkedHours(attendance.checkIn, attendance.checkOut);
+        attendance.workedHours = calculateWorkedHours(
+          attendance.checkIn,
+          attendance.checkOut
+        );
         await attendance.save();
 
         const populated = await Attendance.findById(attendance._id).populate(
@@ -231,17 +270,10 @@ export const markAttendance = async (req, res) => {
     res.status(200).json({
       success: true,
       message: `Attendance processed for ${results.length} employees`,
-      data: results,
+      attendances: results,
       errors: errors.length ? errors : undefined,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
-};
-
-// Get attendance enums
-export const getAttendanceEnums = (req, res) => {
-  res.status(200).json({
-    status: ["Present", "Absent"],
-  });
 };

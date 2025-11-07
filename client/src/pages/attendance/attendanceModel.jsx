@@ -5,21 +5,23 @@ import {
   useUpdateFunctionMutation,
   useGetallFunctionQuery,
 } from "../../store/DynamicApi";
-import { 
-  FiX, 
-  FiUser, 
-  FiCalendar, 
-  FiClock, 
-  FiCheckCircle, 
-  FiArrowLeft, 
-  FiWatch, 
+import {
+  FiX,
+  FiUser,
+  FiCalendar,
+  FiClock,
+  FiCheckCircle,
+  FiArrowLeft,
+  FiWatch,
   FiActivity,
-  FiFileText 
+  FiFileText,
 } from "react-icons/fi";
-
+import { toast } from "react-toastify";
 const AttendanceModal = ({ isOpen, onClose, onSave, attendance }) => {
-  const [createAttendance, { isLoading: isCreating }] = useCreateFuctionMutation();
-  const [updateAttendance, { isLoading: isUpdating }] = useUpdateFunctionMutation();
+  const [createAttendance, { isLoading: isCreating }] =
+    useCreateFuctionMutation();
+  const [updateAttendance, { isLoading: isUpdating }] =
+    useUpdateFunctionMutation();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -29,7 +31,6 @@ const AttendanceModal = ({ isOpen, onClose, onSave, attendance }) => {
     checkIn: "",
     checkOut: "",
     status: "Present",
-    notes: ""
   });
 
   const isLoading = isCreating || isUpdating;
@@ -43,21 +44,24 @@ const AttendanceModal = ({ isOpen, onClose, onSave, attendance }) => {
     { value: "Absent", label: "Absent" },
     { value: "On Leave", label: "On Leave" },
     { value: "Late", label: "Late" },
-    { value: "Half Day", label: "Half Day" }
+    { value: "Half Day", label: "Half Day" },
   ];
 
   // Calculate duration
   const calculateDuration = () => {
     if (formData.checkIn && formData.checkOut) {
-      const [startHours, startMinutes] = formData.checkIn.split(':').map(Number);
-      const [endHours, endMinutes] = formData.checkOut.split(':').map(Number);
-      
-      let totalMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
+      const [startHours, startMinutes] = formData.checkIn
+        .split(":")
+        .map(Number);
+      const [endHours, endMinutes] = formData.checkOut.split(":").map(Number);
+
+      let totalMinutes =
+        endHours * 60 + endMinutes - (startHours * 60 + startMinutes);
       if (totalMinutes < 0) totalMinutes += 24 * 60;
-      
+
       const hours = Math.floor(totalMinutes / 60);
       const minutes = totalMinutes % 60;
-      return `${hours}h ${minutes > 0 ? `${minutes}m` : ''}`.trim();
+      return `${hours}h ${minutes > 0 ? `${minutes}m` : ""}`.trim();
     }
     return "";
   };
@@ -70,20 +74,23 @@ const AttendanceModal = ({ isOpen, onClose, onSave, attendance }) => {
         employee: attendance.employee?._id || "",
         shift: attendance.shift?._id || "",
         date: attendance.date ? attendance.date.split("T")[0] : "",
-        checkIn: attendance.checkIn ? new Date(attendance.checkIn).toTimeString().slice(0, 5) : "",
-        checkOut: attendance.checkOut ? new Date(attendance.checkOut).toTimeString().slice(0, 5) : "",
+        checkIn: attendance.checkIn
+          ? new Date(attendance.checkIn).toTimeString().slice(0, 5)
+          : "",
+        checkOut: attendance.checkOut
+          ? new Date(attendance.checkOut).toTimeString().slice(0, 5)
+          : "",
         status: attendance.status || "Present",
-        notes: attendance.notes || ""
       });
+      toast.success("Employee updated successfully!");
     } else {
       setFormData({
         employee: "",
         shift: "",
-        date: new Date().toISOString().split('T')[0],
+        date: new Date().toISOString().split("T")[0],
         checkIn: "",
         checkOut: "",
         status: "Present",
-        notes: ""
       });
     }
     setCurrentStep(1);
@@ -102,9 +109,15 @@ const AttendanceModal = ({ isOpen, onClose, onSave, attendance }) => {
     try {
       const payload = {
         ...formData,
-        checkIn: formData.checkIn ? `${formData.date}T${formData.checkIn}:00` : null,
-        checkOut: formData.checkOut ? `${formData.date}T${formData.checkOut}:00` : null,
-        workedHours: duration ? parseFloat(duration.replace('h', '').replace('m', '').trim()) / 60 : 0
+        checkIn: formData.checkIn
+          ? `${formData.date}T${formData.checkIn}:00`
+          : null,
+        checkOut: formData.checkOut
+          ? `${formData.date}T${formData.checkOut}:00`
+          : null,
+        workedHours: duration
+          ? parseFloat(duration.replace("h", "").replace("m", "").trim()) / 60
+          : 0,
       };
 
       if (isEditing) {
@@ -125,7 +138,8 @@ const AttendanceModal = ({ isOpen, onClose, onSave, attendance }) => {
     }
   };
 
-  const isBasicInfoValid = () => formData.employee && formData.shift && formData.date;
+  const isBasicInfoValid = () =>
+    formData.employee && formData.shift && formData.date;
   const isTimeInfoValid = () => formData.status;
 
   if (!isOpen) return null;
@@ -144,10 +158,9 @@ const AttendanceModal = ({ isOpen, onClose, onSave, attendance }) => {
                 {isEditing ? "Edit Attendance" : "Add Attendance Record"}
               </h2>
               <p className="text-blue-800 mt-1">
-                {isEditing 
-                  ? "Update employee attendance details" 
-                  : "Create new attendance record for employee"
-                }
+                {isEditing
+                  ? "Update employee attendance details"
+                  : "Create new attendance record for employee"}
               </p>
             </div>
             <button
@@ -247,8 +260,8 @@ const AttendanceModal = ({ isOpen, onClose, onSave, attendance }) => {
                     Shift *
                   </label>
                   <select
-                    name="shiftType"
-                    value={formData.shiftType}
+                    name="shift"
+                    value={formData.shift}
                     onChange={handleInputChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                     required
@@ -282,7 +295,6 @@ const AttendanceModal = ({ isOpen, onClose, onSave, attendance }) => {
                 <button
                   type="button"
                   onClick={nextStep}
-                 
                   className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-400 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2"
                 >
                   Continue
@@ -342,21 +354,6 @@ const AttendanceModal = ({ isOpen, onClose, onSave, attendance }) => {
                     ))}
                   </select>
                 </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                    <FiFileText className="w-4 h-4 text-blue-600" />
-                    Notes
-                  </label>
-                  <input
-                    type="text"
-                    name="notes"
-                    value={formData.notes}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                    placeholder="Additional notes (optional)"
-                  />
-                </div>
               </div>
 
               {/* Duration Preview */}
@@ -369,13 +366,19 @@ const AttendanceModal = ({ isOpen, onClose, onSave, attendance }) => {
                         Total Duration: {duration}
                       </span>
                     </div>
-                    <div className={`text-sm font-medium px-3 py-1 rounded-full ${
-                      formData.status === "Present" ? "bg-green-100 text-green-800" :
-                      formData.status === "Absent" ? "bg-red-100 text-red-800" :
-                      formData.status === "On Leave" ? "bg-yellow-100 text-yellow-800" :
-                      formData.status === "Late" ? "bg-orange-100 text-orange-800" :
-                      "bg-purple-100 text-purple-800"
-                    }`}>
+                    <div
+                      className={`text-sm font-medium px-3 py-1 rounded-full ${
+                        formData.status === "Present"
+                          ? "bg-green-100 text-green-800"
+                          : formData.status === "Absent"
+                          ? "bg-red-100 text-red-800"
+                          : formData.status === "On Leave"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : formData.status === "Late"
+                          ? "bg-orange-100 text-orange-800"
+                          : "bg-purple-100 text-purple-800"
+                      }`}
+                    >
                       {formData.status}
                     </div>
                   </div>
