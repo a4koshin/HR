@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { TailSpin } from "react-loader-spinner";
-import { FiCheckCircle, FiX, FiUsers, FiActivity } from "react-icons/fi";
-import { Building, TrendingUp } from "lucide-react";
+import { FiCheckCircle, FiX, FiActivity } from "react-icons/fi";
+import { Building } from "lucide-react";
+import { toast } from "react-toastify";
 import {
   useCreateFuctionMutation,
   useUpdateFunctionMutation,
 } from "../../store/DynamicApi";
 
 const DeptModel = ({ isOpen, onClose, onSave, department }) => {
-  const [createDepartment, { isLoading: isCreating }] =
-    useCreateFuctionMutation();
-  const [updateDepartment, { isLoading: isUpdating }] =
-    useUpdateFunctionMutation();
+  const [createDepartment, { isLoading: isCreating }] = useCreateFuctionMutation();
+  const [updateDepartment, { isLoading: isUpdating }] = useUpdateFunctionMutation();
+
   const [formData, setFormData] = useState({
     name: "",
     status: "Active",
@@ -47,24 +47,43 @@ const DeptModel = ({ isOpen, onClose, onSave, department }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const normalizedData = {
+      name: formData.name,
+      status:
+        formData.status.charAt(0).toUpperCase() +
+        formData.status.slice(1).toLowerCase(),
+    };
+
     try {
       if (isEditing) {
         await updateDepartment({
           url: "departments",
           id: department._id,
-          formData,
+          formData: normalizedData,
         }).unwrap();
+
+        toast.success("✅ Department updated successfully!");
       } else {
-        await createDepartment({ url: "departments", formData }).unwrap();
+        await createDepartment({
+          url: "departments",
+          formData: normalizedData,
+        }).unwrap();
+
+        toast.success("🎉 Department created successfully!");
       }
+
       onSave();
+      onClose();
     } catch (error) {
       console.error("Error saving department:", error);
+      const message =
+        error?.data?.message || "❌ Something went wrong while saving department.";
+      toast.error(message);
     }
   };
 
   if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-xl border border-gray-200">
@@ -113,81 +132,25 @@ const DeptModel = ({ isOpen, onClose, onSave, department }) => {
             />
           </div>
 
-          {/* Description */}
+          {/* Status */}
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-blue-600" />
-              Description
+              <FiActivity className="w-4 h-4 text-blue-600" />
+              Status *
             </label>
-            <textarea
-              name="description"
-              value={formData.description}
+            <select
+              name="status"
+              value={formData.status}
               onChange={handleInputChange}
-              rows="3"
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 resize-none"
-              placeholder="Brief description of the department's role and responsibilities..."
-            />
+              required
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+            >
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Head Count */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <FiUsers className="w-4 h-4 text-blue-600" />
-                Head Count
-              </label>
-              <input
-                type="number"
-                name="headCount"
-                value={formData.headCount}
-                onChange={handleInputChange}
-                min="0"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                placeholder="Number of employees"
-              />
-            </div>
-
-            {/* Status */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <FiActivity className="w-4 h-4 text-blue-600" />
-                Status *
-              </label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-                required
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-              >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Status Preview */}
-          <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-3 h-3 rounded-full ${
-                    formData.status === "Active" ? "bg-green-500" : "bg-red-500"
-                  }`}
-                ></div>
-                <span className="text-sm font-medium text-gray-700">
-                  This department will be {formData.status.toLowerCase()}
-                </span>
-              </div>
-              {formData.headCount && (
-                <div className="text-sm text-gray-500">
-                  {formData.headCount} employees
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Action Buttons */}
+          {/* Buttons */}
           <div className="flex justify-between pt-6 border-t border-gray-200">
             <button
               type="button"

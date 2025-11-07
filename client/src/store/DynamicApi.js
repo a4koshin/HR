@@ -3,6 +3,8 @@ import { API } from "./api";
 
 const user = JSON.parse(localStorage.getItem("user"));
 
+console.log("Dynamic API User Token:", user?.token);
+
 export const daynamicApi = createApi({
   reducerPath: "daynamicApi",
   baseQuery: fetchBaseQuery({ baseUrl: `${API}` }),
@@ -17,7 +19,7 @@ export const daynamicApi = createApi({
           headers: {
             Authorization: `Bearer ${user?.token}`,
           },
-          // contentType: "application/json"
+          contentType: "application/json"
         };
       },
       invalidatesTags: ["customers", "invoices", "colors"],

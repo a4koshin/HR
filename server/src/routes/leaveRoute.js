@@ -3,22 +3,22 @@ import {
   createLeave,
   getLeaves,
   getLeaveById,
-  updateLeaveStatus,
+  updateLeave, // Add this import
   deleteLeave,
 } from "../controllers/leaveController.js";
 
 import { protectHR } from "../middlewares/authMiddleware.js";
-import { validateLeaveAsync } from "../validation/leaveAsyncValidation.js";
+import {validate} from "../middlewares/validate.js";
+import { leaveSchema } from "../validation/leaveJoi.js";
 
 const leaveRouter = express.Router();
 
 // Protected routes
-leaveRouter.post("/", protectHR, validateLeaveAsync, createLeave); // create leave
-leaveRouter.get("/", protectHR, getLeaves);                        // get all leaves
-leaveRouter.get("/:id", protectHR, getLeaveById);                  // get leave by ID
+leaveRouter.post("/", validate(leaveSchema), createLeave); // create leave
+leaveRouter.get("/", getLeaves);                        // get all leaves
+leaveRouter.get("/:id", getLeaveById);                  // get leave by ID
+leaveRouter.put("/:id", updateLeave); // Add this line - general update
+leaveRouter.patch("/:id", updateLeave); // Or use PATCH
 
-// Admin-only routes
-leaveRouter.patch("/:id/status", protectHR, updateLeaveStatus); // approve/reject
-leaveRouter.delete("/:id", protectHR, deleteLeave);             // delete leave
 
 export default leaveRouter;

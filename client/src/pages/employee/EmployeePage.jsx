@@ -48,7 +48,7 @@ const EmployeePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-2 lg:px-2">
+      <div className="max-w-8xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-10">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -252,7 +252,7 @@ const EmployeePage = () => {
 
             {/* Empty State */}
             {employees.length === 0 && !isLoading && (
-              <div className="text-center py-16">
+              <div className="bg-white text-center py-16">
                 <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                   <FiUser className="w-12 h-12 text-gray-400" />
                 </div>

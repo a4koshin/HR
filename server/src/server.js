@@ -12,14 +12,17 @@ import payrollRouter from "./routes/payrollRoute.js";
 import leaveRouter from "./routes/leaveRoute.js";
 import trainingRouter from "./routes/trainingRoute.js";
 import recruitmentRouter from "./routes/recruitmentRoute.js";
+import applicantRouter from "./routes/applicantRoute.js";
 // dotenv
 dotenv.config();
 const app = express();
+
+
 const port = process.env.PORT || 3001;
 // Allow both localhost (dev) and Vercel frontend (prod)
 const allowedOrigins = [
   "http://localhost:5173", // local frontend
-  "https://hrrm.vercel.app", // deployed frontend
+  "https://hr-syss.vercel.app",// deployed frontend
 ];
 
 // middleware
@@ -46,6 +49,7 @@ app.use("/api/payrolls", payrollRouter);
 app.use("/api/leaves", leaveRouter);
 app.use("/api/trainings", trainingRouter);
 app.use("/api/recruitment", recruitmentRouter);
+app.use("/api/applicants", applicantRouter);
 
 // Databse config
 connectDB().then(() => {

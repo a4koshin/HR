@@ -1,28 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { TailSpin } from "react-loader-spinner";
-import TrainingModel from "./TrainingModel";
+import ApplicantModel from "./ApplicantModel";
 import { useGetallFunctionQuery } from "../../store/DynamicApi";
-import { FiEdit2, FiTrash2, FiPlus, FiUsers, FiCalendar, FiClock, FiTrendingUp, FiFilter, FiUserCheck } from "react-icons/fi";
+import { FiEdit2, FiTrash2, FiPlus, FiUser, FiMail, FiBriefcase, FiCalendar, FiTrendingUp, FiFilter } from "react-icons/fi";
 
-const TrainingPage = () => {
+const ApplicantPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTraining, setEditingTraining] = useState(null);
-  const [filter, setFilter] = useState({ status: "" });
+  const [editingApplicant, setEditingApplicant] = useState(null);
+  const [filter, setFilter] = useState({ status: "", job: "" });
 
   const {
-    data: trainingData,
+    data: applicantsData,
     isLoading,
     isError,
     refetch,
-  } = useGetallFunctionQuery({ url: "/trainings" });
+  } = useGetallFunctionQuery({ url: "/applicants" });
 
-  const handleOpenModal = (training = null) => {
-    setEditingTraining(training);
+  // Fetch jobs for filter dropdown
+  const { data: jobsData } = useGetallFunctionQuery({ url: "/recruitment" });
+
+  const handleOpenModal = (applicant = null) => {
+    setEditingApplicant(applicant);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
-    setEditingTraining(null);
+    setEditingApplicant(null);
     setIsModalOpen(false);
   };
 
@@ -30,28 +33,31 @@ const TrainingPage = () => {
     setFilter({ ...filter, [e.target.name]: e.target.value });
   };
 
-  const trainings = trainingData?.trainings || trainingData || [];
+  const applicants = applicantsData?.applicants || applicantsData || [];
+  const jobs = jobsData?.recruitments || jobsData || [];
 
   // Calculate stats
-  const totalTrainings = trainings.length;
-  const notStartedCount = trainings.filter(t => t.completionStatus === "Not Started").length;
-  const inProgressCount = trainings.filter(t => t.completionStatus === "In Progress").length;
-  const completedCount = trainings.filter(t => t.completionStatus === "Completed").length;
-  const totalParticipants = trainings.reduce((sum, training) => sum + (training.participants?.length || 0), 0);
+  const totalApplicants = applicants.length;
+  const appliedCount = applicants.filter(a => a.status === "applied").length;
+  const interviewCount = applicants.filter(a => a.status === "interview").length;
+  const hiredCount = applicants.filter(a => a.status === "hired").length;
 
-  // Filter trainings
-  const filteredTrainings = trainings.filter(training => {
-    return !filter.status || training.completionStatus === filter.status;
+  // Filter applicants
+  const filteredApplicants = applicants.filter(applicant => {
+    const statusMatch = !filter.status || applicant.status === filter.status;
+    const jobMatch = !filter.job || applicant.appliedJob?._id === filter.job;
+    return statusMatch && jobMatch;
   });
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      "Not Started": { bg: "bg-gray-50", text: "text-gray-700", border: "border-gray-200", label: "Not Started", icon: "⏳" },
-      "In Progress": { bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-200", label: "In Progress", icon: "🔄" },
-      "Completed": { bg: "bg-green-50", text: "text-green-700", border: "border-green-200", label: "Completed", icon: "✅" }
+      applied: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", label: "Applied", icon: "📥" },
+      interview: { bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-200", label: "Interview", icon: "📅" },
+      hired: { bg: "bg-green-50", text: "text-green-700", border: "border-green-200", label: "Hired", icon: "✅" },
+      rejected: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200", label: "Rejected", icon: "❌" }
     };
     
-    const config = statusConfig[status] || statusConfig["Not Started"];
+    const config = statusConfig[status] || statusConfig.applied;
     return (
       <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${config.bg} ${config.text} ${config.border}`}>
         {config.icon} {config.label}
@@ -67,31 +73,14 @@ const TrainingPage = () => {
     });
   };
 
-  const getDuration = (startDate, endDate) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
-  };
-
-  const isUpcoming = (startDate) => {
-    return new Date(startDate) > new Date();
-  };
-
-  const isOngoing = (startDate, endDate) => {
-    const now = new Date();
-    return new Date(startDate) <= now && new Date(endDate) >= now;
-  };
-
   if (isError) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FiUsers className="w-8 h-8 text-red-600" />
+            <FiUser className="w-8 h-8 text-red-600" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to load training programs</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to load applicants</h3>
           <p className="text-gray-600">Please try again later</p>
         </div>
       </div>
@@ -106,10 +95,10 @@ const TrainingPage = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div className="mb-6 sm:mb-0">
               <h1 className="text-4xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Training Programs
+                Applicant Tracking
               </h1>
               <p className="text-gray-600 mt-3 text-lg">
-                Organize employee training sessions, track progress, and develop your team
+                Manage job applications, track candidate progress, and streamline hiring
               </p>
             </div>
             <button
@@ -122,7 +111,7 @@ const TrainingPage = () => {
               ) : (
                 <>
                   <FiPlus className="text-xl" />
-                  <span>Create Training</span>
+                  <span>Add Applicant</span>
                 </>
               )}
             </button>
@@ -134,11 +123,11 @@ const TrainingPage = () => {
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Trainings</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{totalTrainings}</p>
+                <p className="text-sm font-medium text-gray-600">Total Applicants</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{totalApplicants}</p>
               </div>
               <div className="p-3 bg-blue-100 rounded-xl">
-                <FiUsers className="text-2xl text-blue-600" />
+                <FiUser className="text-2xl text-blue-600" />
               </div>
             </div>
           </div>
@@ -146,11 +135,11 @@ const TrainingPage = () => {
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Not Started</p>
-                <p className="text-3xl font-bold text-gray-600 mt-2">{notStartedCount}</p>
+                <p className="text-sm font-medium text-gray-600">New Applications</p>
+                <p className="text-3xl font-bold text-blue-600 mt-2">{appliedCount}</p>
               </div>
-              <div className="p-3 bg-gray-100 rounded-xl">
-                <FiClock className="text-2xl text-gray-600" />
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <FiMail className="text-2xl text-blue-600" />
               </div>
             </div>
           </div>
@@ -158,11 +147,11 @@ const TrainingPage = () => {
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">In Progress</p>
-                <p className="text-3xl font-bold text-yellow-600 mt-2">{inProgressCount}</p>
+                <p className="text-sm font-medium text-gray-600">Interview Stage</p>
+                <p className="text-3xl font-bold text-yellow-600 mt-2">{interviewCount}</p>
               </div>
               <div className="p-3 bg-yellow-100 rounded-xl">
-                <FiTrendingUp className="text-2xl text-yellow-600" />
+                <FiCalendar className="text-2xl text-yellow-600" />
               </div>
             </div>
           </div>
@@ -170,11 +159,11 @@ const TrainingPage = () => {
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Participants</p>
-                <p className="text-3xl font-bold text-purple-600 mt-2">{totalParticipants}</p>
+                <p className="text-sm font-medium text-gray-600">Hired</p>
+                <p className="text-3xl font-bold text-green-600 mt-2">{hiredCount}</p>
               </div>
-              <div className="p-3 bg-purple-100 rounded-xl">
-                <FiUserCheck className="text-2xl text-purple-600" />
+              <div className="p-3 bg-green-100 rounded-xl">
+                <FiTrendingUp className="text-2xl text-green-600" />
               </div>
             </div>
           </div>
@@ -184,12 +173,12 @@ const TrainingPage = () => {
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <FiFilter className="w-5 h-5 text-blue-600" />
-            Filter Trainings
+            Filter Applicants
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <FiClock className="w-4 h-4 text-blue-600" />
+                <FiUser className="w-4 h-4 text-blue-600" />
                 Status
               </label>
               <select
@@ -199,9 +188,29 @@ const TrainingPage = () => {
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
               >
                 <option value="">All Status</option>
-                <option value="Not Started">Not Started</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
+                <option value="applied">Applied</option>
+                <option value="interview">Interview</option>
+                <option value="hired">Hired</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <FiBriefcase className="w-4 h-4 text-blue-600" />
+                Job Position
+              </label>
+              <select
+                name="job"
+                value={filter.job}
+                onChange={handleFilterChange}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+              >
+                <option value="">All Jobs</option>
+                {jobs.map(job => (
+                  <option key={job._id} value={job._id}>
+                    {job.title || job.jobTitle}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -213,23 +222,23 @@ const TrainingPage = () => {
             <div className="flex justify-center mb-4">
               <TailSpin height={50} width={50} color="#2563EB" ariaLabel="loading" />
             </div>
-            <p className="text-gray-600 text-lg">Loading training programs...</p>
+            <p className="text-gray-600 text-lg">Loading applicants...</p>
           </div>
         ) : (
-          /* Trainings Table */
+          /* Applicants Table */
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-8 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                      Training Details
+                      Applicant Details
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                      Schedule & Duration
+                      Applied For
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                      Participants
+                      Application Date
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
                       Status
@@ -240,76 +249,60 @@ const TrainingPage = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredTrainings.map((training) => (
-                    <tr key={training._id} className="hover:bg-gray-50 transition-all duration-200 group">
+                  {filteredApplicants.map((applicant) => (
+                    <tr key={applicant._id} className="hover:bg-gray-50 transition-all duration-200 group">
                       <td className="px-8 py-5">
                         <div className="flex items-center space-x-4">
                           <div className="flex-shrink-0">
                             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg">
-                              <FiUsers className="w-6 h-6" />
+                              {applicant.name?.charAt(0) || "A"}
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-lg font-semibold text-gray-900 truncate">
-                              {training.title}
+                              {applicant.name}
                             </p>
-                           
-                            <p className="text-sm text-gray-500 mt-2 flex items-center gap-1">
-                              <FiUserCheck className="w-4 h-4" />
-                              Trainer: {training.trainer}
+                            <p className="text-gray-500 text-sm truncate flex items-center gap-1 mt-1">
+                              <FiMail className="w-4 h-4" />
+                              {applicant.email}
                             </p>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-5">
                         <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-sm">
-                            <FiCalendar className="w-4 h-4 text-blue-600" />
-                            <span className="font-medium">{formatDate(training.startDate)}</span>
-                            <span className="text-gray-400">→</span>
-                            <span className="font-medium">{formatDate(training.endDate)}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
-                            <FiClock className="w-4 h-4" />
-                            {getDuration(training.startDate, training.endDate)}
-                          </div>
-                      
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-gray-900 font-semibold">
-                            <FiUsers className="w-4 h-4 text-purple-600" />
-                            {training.participants?.length || 0} employees
-                          </div>
-                          {training.participants && training.participants.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                           
-                              {training.participants.length > 3 && (
-                                <span className="text-xs text-gray-500">
-                                  +{training.participants.length - 3} more
-                                </span>
-                              )}
-                            </div>
+                          <p className="text-gray-900 font-medium">
+                            {applicant.appliedJob?.title || applicant.appliedJob?.jobTitle || "N/A"}
+                          </p>
+                          {applicant.appliedJob?.department && (
+                            <p className="text-sm text-gray-500">
+                              {applicant.appliedJob.department}
+                            </p>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        {getStatusBadge(training.completionStatus)}
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <FiCalendar className="w-4 h-4 text-gray-400" />
+                          {formatDate(applicant.createdAt)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        {getStatusBadge(applicant.status)}
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => handleOpenModal(training)}
+                            onClick={() => handleOpenModal(applicant)}
                             className="p-2.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-xl transition-all duration-200 group-hover:scale-110"
-                            title="Edit Training"
+                            title="Edit Applicant"
                           >
                             <FiEdit2 className="w-5 h-5" />
                           </button>
                           <button
-                            onClick={() => console.log("Delete training", training._id)}
+                            onClick={() => console.log("Delete applicant", applicant._id)}
                             className="p-2.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200 group-hover:scale-110"
-                            title="Delete Training"
+                            title="Delete Applicant"
                           >
                             <FiTrash2 className="w-5 h-5" />
                           </button>
@@ -322,35 +315,36 @@ const TrainingPage = () => {
             </div>
 
             {/* Empty State */}
-            {filteredTrainings.length === 0 && !isLoading && (
+            {filteredApplicants.length === 0 && !isLoading && (
               <div className="text-center py-16">
                 <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                  <FiUsers className="w-12 h-12 text-gray-400" />
+                  <FiUser className="w-12 h-12 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No training programs found</h3>
-                <p className="text-gray-600 mb-6">Get started by creating your first training program</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No applicants found</h3>
+                <p className="text-gray-600 mb-6">Get started by adding your first applicant</p>
                 <button
                   onClick={() => handleOpenModal()}
                   className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2 mx-auto"
                 >
                   <FiPlus className="text-lg" />
-                  Create First Training
+                  Add First Applicant
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {/* Training Modal */}
+        {/* Applicant Modal */}
         {isModalOpen && (
-          <TrainingModel
+          <ApplicantModel
             isOpen={isModalOpen}
             onClose={handleCloseModal}
-            training={editingTraining}
+            applicant={editingApplicant}
             onSave={() => {
               refetch();
               handleCloseModal();
             }}
+            jobs={jobs}
           />
         )}
       </div>
@@ -358,4 +352,4 @@ const TrainingPage = () => {
   );
 };
 
-export default TrainingPage;
+export default ApplicantPage;

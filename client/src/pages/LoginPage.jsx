@@ -25,7 +25,7 @@ const LoginPage = () => {
         JSON.stringify({
           token: data.token,
           id: data.user.id,
-          fullname: data.user.fullname,
+          name: data.user.name,
           email: data.user.email,
         })
       );
@@ -33,11 +33,10 @@ const LoginPage = () => {
 
       // Update AuthContext
       setIsAuthenticated(true);
-      setName(data.user.fullname);
       setAuthEmail(data.user.email);
 
       toast.success("Logged in successfully!");
-      navigate("/dashboard"); // navigate without reload
+      window.location.reload();
     }
   }, [data]);
 
@@ -106,7 +105,7 @@ const LoginPage = () => {
 
         {/* Right Side - Login Form */}
         <div className="p-8 lg:p-12 flex flex-col justify-center">
-          <div className="text-center lg:text-left mb-8">
+          <div className="text-center lg:text-left mb-10">
             <div className="lg:hidden w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto lg:mx-0 mb-4">
               <svg
                 className="w-6 h-6 text-white"
@@ -144,7 +143,7 @@ const LoginPage = () => {
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                   required
                 />
               </div>
@@ -165,12 +164,12 @@ const LoginPage = () => {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                  className="w-full pl-10 pr-12 py-2 bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                   required
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-blue-600 transition duration-200"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center rounded-md text-gray-400 hover:text-blue-600 transition duration-200"
                   onClick={() => setShowPassword((prev) => !prev)}
                   tabIndex={-1}
                   aria-label={showPassword ? "Hide password" : "Show password"}

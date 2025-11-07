@@ -5,7 +5,7 @@ const user = JSON.parse(localStorage.getItem("user"));
 
 export const authApi = createApi({
   reducerPath: "authApi",
-  baseQuery: fetchBaseQuery({ baseUrl: `${API}` }),
+  baseQuery: fetchBaseQuery({ baseUrl: API }),
   tagTypes: ["provider", "users"],
   endpoints: (builder) => ({
     loginProvider: builder.mutation({

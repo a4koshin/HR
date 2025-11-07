@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { TailSpin } from "react-loader-spinner";
 import { FiX, FiCheckCircle } from "react-icons/fi";
+import { toast } from "react-toastify";
 import {
   useCreateFuctionMutation,
   useUpdateFunctionMutation,
@@ -25,7 +26,11 @@ const ShiftModel = ({ isOpen, onClose, onSave, shift }) => {
     if (shift) {
       setFormData({
         name: shift.name || "",
+<<<<<<< HEAD
         startTime: shift.startTime || "",
+=======
+        startTime: shift.startTime || "", // string HH:mm
+>>>>>>> origin/main
         endTime: shift.endTime || "",
         status: shift.status || "Active",
       });
@@ -46,7 +51,16 @@ const ShiftModel = ({ isOpen, onClose, onSave, shift }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const payload = {
+      name: formData.name.trim(),
+      startTime: formData.startTime,
+      endTime: formData.endTime,
+      status: formData.status,
+    };
+
     try {
+<<<<<<< HEAD
       const today = new Date();
       const startTime = new Date(
         `${today.toDateString()} ${formData.startTime}`
@@ -71,14 +85,21 @@ const ShiftModel = ({ isOpen, onClose, onSave, shift }) => {
           id: shift._id,
           formData: payload,
         }).unwrap();
+=======
+      if (isEditing) {
+        await updateShift({ url: "shifts", id: shift._id, formData: payload }).unwrap();
+        toast.success("✅ Shift updated successfully!");
+>>>>>>> origin/main
       } else {
         await createShift({ url: "shifts", formData: payload }).unwrap();
+        toast.success("🎉 Shift created successfully!");
       }
 
       onSave();
+      onClose();
     } catch (error) {
       console.error("Error saving shift:", error);
-      alert(error?.data?.message || "Failed to save shift");
+      toast.error(error?.data?.message || "❌ Failed to save shift");
     }
   };
 
@@ -170,7 +191,7 @@ const ShiftModel = ({ isOpen, onClose, onSave, shift }) => {
             <button
               type="submit"
               disabled={isLoading}
-              className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2"
             >
               {isLoading ? (
                 <TailSpin height={20} width={20} color="#FFFFFF" />

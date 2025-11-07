@@ -20,6 +20,7 @@ const AuthProvider = ({ children }) => {
       setName(user.fullname || user.name);
       setEmail(user.email);
       setIsAuthenticated(true);
+      navigate("/dashboard");
     }
     setLoadingAuth(false); // done checking
   }, []);
