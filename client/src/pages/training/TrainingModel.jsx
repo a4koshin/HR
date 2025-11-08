@@ -14,7 +14,7 @@ import {
   FiUsers,
   FiCheckCircle,
 } from "react-icons/fi";
-
+import {toast} from "react-toastify";
 const TrainingModel = ({ isOpen, onClose, onSave, training }) => {
   const [createTraining, { isLoading: isCreating }] = useCreateFuctionMutation();
   const [updateTraining, { isLoading: isUpdating }] = useUpdateFunctionMutation();
@@ -106,17 +106,22 @@ const TrainingModel = ({ isOpen, onClose, onSave, training }) => {
           id: training._id,
           formData: formData,
         }).unwrap();
+        toast.success("Training updated successfully");
       } else {
         await createTraining({
           url: "trainings",
           formData: formData,
         }).unwrap();
+        toast.success("Training created successfully");
       }
 
       onSave(); // Notify parent component
     } catch (error) {
-      console.error("Error saving training:", error);
-      // Handle error (show toast/notification)
+      console.error("Error saving Training:", error);
+      const message =
+        error?.data?.message ||
+        "❌ Something went wrong while saving training.";
+      toast.error(message);
     }
   };
 

@@ -12,7 +12,7 @@ import {
   FiTrendingUp,
   FiCheckCircle,
 } from "react-icons/fi";
-
+import { toast } from "react-toastify";
 const ApplicantModel = ({ isOpen, onClose, onSave, applicant, jobs }) => {
   const [createApplicant, { isLoading: isCreating }] = useCreateFuctionMutation();
   const [updateApplicant, { isLoading: isUpdating }] = useUpdateFunctionMutation();
@@ -72,17 +72,22 @@ const ApplicantModel = ({ isOpen, onClose, onSave, applicant, jobs }) => {
           id: applicant._id,
           formData: formData,
         }).unwrap();
+        toast.success("Applicant updated successfully.");
       } else {
         await createApplicant({
           url: "applicants",
           formData: formData,
         }).unwrap();
+        toast.success("Applicant created successfully.");
       }
 
       onSave(); // Notify parent component
     } catch (error) {
-      console.error("Error saving applicant:", error);
-      // Handle error (show toast/notification)
+      console.error("Error saving Applicants:", error);
+      const message =
+        error?.data?.message ||
+        "❌ Something went wrong while saving Applicants .";
+      toast.error(message);
     }
   };
 

@@ -7,15 +7,14 @@ import {
   deleteTraining,
 } from "../controllers/trainingController.js";
 import { protectHR } from "../middlewares/authMiddleware.js";
-import {validate} from "../middlewares/validate.js";
-import { trainingSchema } from "../validation/trainingJoi.js";
 
 const trainingRouter = express.Router();
 
-trainingRouter.get("/", protectHR, getTrainings);
+// Protect all routes
+trainingRouter.use(protectHR);
 
-
-trainingRouter.post("/", validate(trainingSchema), createTraining);
+trainingRouter.post("/", createTraining);
+trainingRouter.get("/", getTrainings);
 trainingRouter.get("/:id", getTraining);
 trainingRouter.put("/:id", updateTraining);
 trainingRouter.delete("/:id", deleteTraining);

@@ -11,7 +11,7 @@ import {
   FiTrendingUp,
   FiCheckCircle,
 } from "react-icons/fi";
-
+import { toast } from "react-toastify";
 const RecruitmentModel = ({ isOpen, onClose, onSave, recruitment }) => {
   const [createRecruitment, { isLoading: isCreating }] = useCreateFuctionMutation();
   const [updateRecruitment, { isLoading: isUpdating }] = useUpdateFunctionMutation();
@@ -67,18 +67,23 @@ const RecruitmentModel = ({ isOpen, onClose, onSave, recruitment }) => {
           id: recruitment._id,
           formData: formData,
         }).unwrap();
+        toast.success("recruitment updated successfully!");
       } else {
         await createRecruitment({
           url: "recruitment",
           formData: formData,
         }).unwrap();
+        toast.success("New recruitment created successfully!");
       }
 
       onSave(); // Notify parent component
     } catch (error) {
-      console.error("Error saving recruitment:", error);
-      // Handle error (show toast/notification)
-    }
+          console.error("Error saving recruitment:", error);
+          const message =
+            error?.data?.message ||
+            "❌ Something went wrong while saving Recruitment.";
+          toast.error(message);
+        }
   };
 
   if (!isOpen) return null;

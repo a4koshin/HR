@@ -65,17 +65,27 @@ const PayrollPage = () => {
     }
   };
 
+  // Updated getStatusBadge function with your exact style
   const getStatusBadge = (status) => {
-    const badgeStyles = {
-      Paid: { bg: "bg-green-50", text: "text-green-700", border: "border-green-200", icon: "🟢" },
-      Pending: { bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-200", icon: "🟡" },
-      Unpaid: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200", icon: "🔴" },
-    };
-    const style = badgeStyles[status] || { bg: "bg-gray-50", text: "text-gray-700", border: "border-gray-200", icon: "⚪" };
-    
     return (
-      <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${style.bg} ${style.text} ${style.border}`}>
-        {style.icon}
+      <span
+        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${
+          status === "Paid"
+            ? "bg-green-50 text-green-700 border border-green-200"
+            : status === "Pending"
+            ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
+            : "bg-red-50 text-red-700 border border-red-200"
+        }`}
+      >
+        <div
+          className={`w-2 h-2 rounded-full ${
+            status === "Paid"
+              ? "bg-green-500"
+              : status === "Pending"
+              ? "bg-yellow-500"
+              : "bg-red-500"
+          }`}
+        ></div>
         {status}
       </span>
     );

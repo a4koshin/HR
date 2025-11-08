@@ -34,7 +34,10 @@ const ApplicantPage = () => {
   };
 
   const applicants = applicantsData?.applicants || applicantsData || [];
-  const jobs = jobsData?.recruitments || jobsData || [];
+  const jobs = jobsData?.recruitments
+  || jobsData?.jobs
+  || (Array.isArray(jobsData) ? jobsData : []);
+
 
   // Calculate stats
   const totalApplicants = applicants.length;

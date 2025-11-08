@@ -17,10 +17,12 @@ import {
   useUpdateFunctionMutation,
   useGetallFunctionQuery,
 } from "../../store/DynamicApi";
+import { toast } from "react-toastify";
 
 const PayModel = ({ isOpen, onClose, onSave, payroll }) => {
   const [createPayroll, { isLoading: isCreating }] = useCreateFuctionMutation();
-  const [updatePayroll, { isLoading: isUpdating }] = useUpdateFunctionMutation();
+  const [updatePayroll, { isLoading: isUpdating }] =
+    useUpdateFunctionMutation();
   const { data: employeesData = [] } = useGetallFunctionQuery({
     url: "/employees",
   });
@@ -127,14 +129,19 @@ const PayModel = ({ isOpen, onClose, onSave, payroll }) => {
           id: payroll._id,
           formData: payload,
         }).unwrap();
+        toast.success("Payroll record updated successfully!");
       } else {
         await createPayroll({ url: "payrolls", formData: payload }).unwrap();
+        toast.success("Payroll record updated successfully!");
       }
 
       onSave();
     } catch (error) {
-      console.error("Error saving payroll:", error);
-      alert(error?.data?.message || "Failed to save payroll");
+      console.error("Error saving Payroll record:", error);
+      const message =
+        error?.data?.message ||
+        "❌ Something went wrong while saving Payroll record.";
+      toast.error(message);
     }
   };
 

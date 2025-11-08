@@ -3,7 +3,6 @@ import { API } from "./api";
 
 const user = JSON.parse(localStorage.getItem("user"));
 
-console.log("Dynamic API User Token:", user?.token);
 
 export const daynamicApi = createApi({
   reducerPath: "daynamicApi",

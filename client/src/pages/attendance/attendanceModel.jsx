@@ -82,7 +82,7 @@ const AttendanceModal = ({ isOpen, onClose, onSave, attendance }) => {
           : "",
         status: attendance.status || "Present",
       });
-      toast.success("Employee updated successfully!");
+      
     } else {
       setFormData({
         employee: "",
@@ -126,11 +126,13 @@ const AttendanceModal = ({ isOpen, onClose, onSave, attendance }) => {
           id: attendance._id,
           formData: payload,
         }).unwrap();
+        toast.success("Attendance record updated successfully!");
       } else {
         await createAttendance({
           url: "attendance",
           formData: payload,
         }).unwrap();
+        toast.success("Attendance record created successfully!");
       }
       onSave();
     } catch (err) {
@@ -140,6 +142,7 @@ const AttendanceModal = ({ isOpen, onClose, onSave, attendance }) => {
 
   const isBasicInfoValid = () =>
     formData.employee && formData.shift && formData.date;
+  
   const isTimeInfoValid = () => formData.status;
 
   if (!isOpen) return null;

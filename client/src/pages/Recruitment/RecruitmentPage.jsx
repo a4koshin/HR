@@ -2,7 +2,18 @@ import React, { useState } from "react";
 import { TailSpin } from "react-loader-spinner";
 import RecruitmentModel from "./RecruitmentModel";
 import { useGetallFunctionQuery } from "../../store/DynamicApi";
-import { FiEdit2, FiTrash2, FiPlus, FiBriefcase, FiUsers, FiUserCheck, FiClock, FiTrendingUp, FiFilter, FiUserPlus } from "react-icons/fi";
+import {
+  FiEdit2,
+  FiTrash2,
+  FiPlus,
+  FiBriefcase,
+  FiUsers,
+  FiUserCheck,
+  FiClock,
+  FiTrendingUp,
+  FiFilter,
+  FiUserPlus,
+} from "react-icons/fi";
 
 const RecruitmentPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,8 +42,9 @@ const RecruitmentPage = () => {
   };
 
   const handleHireApplicant = async (jobId, applicantId) => {
-    if (!window.confirm("Are you sure you want to hire this applicant?")) return;
-    
+    if (!window.confirm("Are you sure you want to hire this applicant?"))
+      return;
+
     try {
       // This would call your hireApplicant API endpoint
       console.log("Hiring applicant:", applicantId, "for job:", jobId);
@@ -44,40 +56,62 @@ const RecruitmentPage = () => {
     }
   };
 
-  const recruitments = recruitmentData?.recruitments || recruitmentData || [];
+  // const recruitments = recruitmentData?.recruitments || recruitmentData || [];
+ 
+  const recruitments = recruitmentData?.recruitments
+  || recruitmentData?.jobs
+  || (Array.isArray(recruitmentData) ? recruitmentData : []);
+
+
 
   // Calculate stats
   const totalJobs = recruitments.length;
-  const openJobs = recruitments.filter(job => job.status === "open").length;
-  const closedJobs = recruitments.filter(job => job.status === "closed").length;
-  const hiredJobs = recruitments.filter(job => job.status === "hired").length;
-  const totalApplicants = recruitments.reduce((sum, job) => sum + (job.applicants?.length || 0), 0);
+  const openJobs = recruitments.filter((job) => job.status === "open").length;
+  const closedJobs = recruitments.filter(
+    (job) => job.status === "closed"
+  ).length;
+  const hiredJobs = recruitments.filter((job) => job.status === "hired").length;
+  const totalApplicants = recruitments.reduce(
+    (sum, job) => sum + (job.applicants?.length || 0),
+    0
+  );
 
   // Filter jobs
-  const filteredRecruitments = recruitments.filter(job => {
+  const filteredRecruitments = recruitments.filter((job) => {
     return !filter.status || job.status === filter.status;
   });
 
+  // Updated getStatusBadge function with your exact style pattern
   const getStatusBadge = (status) => {
-    const statusConfig = {
-      open: { bg: "bg-green-50", text: "text-green-700", border: "border-green-200", label: "Open", icon: "🟢" },
-      closed: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200", label: "Closed", icon: "🔴" },
-      hired: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", label: "Hired", icon: "✅" }
-    };
-    
-    const config = statusConfig[status] || statusConfig.open;
     return (
-      <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${config.bg} ${config.text} ${config.border}`}>
-        {config.icon} {config.label}
+      <span
+        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${
+          status === "open"
+            ? "bg-green-50 text-green-700 border border-green-200"
+            : status === "closed"
+            ? "bg-red-50 text-red-700 border border-red-200"
+            : "bg-blue-50 text-blue-700 border border-blue-200"
+        }`}
+      >
+        <div
+          className={`w-2 h-2 rounded-full ${
+            status === "open"
+              ? "bg-green-500"
+              : status === "closed"
+              ? "bg-red-500"
+              : "bg-blue-500"
+          }`}
+        ></div>
+        {status === "open" ? "Open" : status === "closed" ? "Closed" : "Hired"}
       </span>
     );
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -88,7 +122,9 @@ const RecruitmentPage = () => {
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <FiBriefcase className="w-8 h-8 text-red-600" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to load job positions</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Failed to load job positions
+          </h3>
           <p className="text-gray-600">Please try again later</p>
         </div>
       </div>
@@ -106,7 +142,8 @@ const RecruitmentPage = () => {
                 Job Positions
               </h1>
               <p className="text-gray-600 mt-3 text-lg">
-                Manage job openings, track applicants, and hire talented candidates
+                Manage job openings, track applicants, and hire talented
+                candidates
               </p>
             </div>
             <button
@@ -132,7 +169,9 @@ const RecruitmentPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Jobs</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{totalJobs}</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {totalJobs}
+                </p>
               </div>
               <div className="p-3 bg-blue-100 rounded-xl">
                 <FiBriefcase className="text-2xl text-blue-600" />
@@ -143,8 +182,12 @@ const RecruitmentPage = () => {
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Open Positions</p>
-                <p className="text-3xl font-bold text-green-600 mt-2">{openJobs}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Open Positions
+                </p>
+                <p className="text-3xl font-bold text-green-600 mt-2">
+                  {openJobs}
+                </p>
               </div>
               <div className="p-3 bg-green-100 rounded-xl">
                 <FiTrendingUp className="text-2xl text-green-600" />
@@ -155,8 +198,12 @@ const RecruitmentPage = () => {
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Applicants</p>
-                <p className="text-3xl font-bold text-purple-600 mt-2">{totalApplicants}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Total Applicants
+                </p>
+                <p className="text-3xl font-bold text-purple-600 mt-2">
+                  {totalApplicants}
+                </p>
               </div>
               <div className="p-3 bg-purple-100 rounded-xl">
                 <FiUsers className="text-2xl text-purple-600" />
@@ -167,8 +214,12 @@ const RecruitmentPage = () => {
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Successful Hires</p>
-                <p className="text-3xl font-bold text-blue-600 mt-2">{hiredJobs}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Successful Hires
+                </p>
+                <p className="text-3xl font-bold text-blue-600 mt-2">
+                  {hiredJobs}
+                </p>
               </div>
               <div className="p-3 bg-blue-100 rounded-xl">
                 <FiUserCheck className="text-2xl text-blue-600" />
@@ -208,7 +259,12 @@ const RecruitmentPage = () => {
         {isLoading ? (
           <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
             <div className="flex justify-center mb-4">
-              <TailSpin height={50} width={50} color="#2563EB" ariaLabel="loading" />
+              <TailSpin
+                height={50}
+                width={50}
+                color="#2563EB"
+                ariaLabel="loading"
+              />
             </div>
             <p className="text-gray-600 text-lg">Loading job positions...</p>
           </div>
@@ -238,7 +294,10 @@ const RecruitmentPage = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredRecruitments.map((job) => (
-                    <tr key={job._id} className="hover:bg-gray-50 transition-all duration-200 group">
+                    <tr
+                      key={job._id}
+                      className="hover:bg-gray-50 transition-all duration-200 group"
+                    >
                       <td className="px-8 py-5">
                         <div className="flex items-center space-x-4">
                           <div className="flex-shrink-0">
@@ -264,10 +323,18 @@ const RecruitmentPage = () => {
                           </div>
                           {job.applicants && job.applicants.length > 0 && (
                             <div className="flex flex-wrap gap-1">
-                              {job.applicants.slice(0, 3).map(applicant => (
-                                <div key={applicant._id} className="flex items-center gap-1">
+                              {job.applicants.slice(0, 3).map((applicant) => (
+                                <div
+                                  key={applicant._id}
+                                  className="flex items-center gap-1"
+                                >
                                   <button
-                                    onClick={() => handleHireApplicant(job._id, applicant._id)}
+                                    onClick={() =>
+                                      handleHireApplicant(
+                                        job._id,
+                                        applicant._id
+                                      )
+                                    }
                                     className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-lg hover:bg-green-200 transition duration-200 flex items-center gap-1"
                                     title="Hire this applicant"
                                   >
@@ -324,8 +391,12 @@ const RecruitmentPage = () => {
                 <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                   <FiBriefcase className="w-12 h-12 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No job positions found</h3>
-                <p className="text-gray-600 mb-6">Get started by creating your first job opening</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  No job positions found
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Get started by creating your first job opening
+                </p>
                 <button
                   onClick={() => handleOpenModal()}
                   className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2 mx-auto"

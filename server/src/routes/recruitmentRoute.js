@@ -1,25 +1,27 @@
-// routes/recruitmentRoutes.js
 import express from "express";
 import {
   createRecruitment,
   getRecruitments,
-  getRecruitmentById,
+  getRecruitment,
   updateRecruitment,
   deleteRecruitment,
   hireApplicant,
 } from "../controllers/recruitmentController.js";
-import { protectHR,  } from "../middlewares/authMiddleware.js";
-import {validate} from "../middlewares/validate.js";
-import { recruitmentSchema } from "../validation/recruitmentJoi.js";
+import { protectHR } from "../middlewares/authMiddleware.js";
+
 const recruitmentRouter = express.Router();
 
-// CRUD routes
-recruitmentRouter.post("/", validate(recruitmentSchema), createRecruitment); // Only authenticated HR
+// Protect all recruitment routes
+recruitmentRouter.use(protectHR);
+
+// CRUD Routes
+recruitmentRouter.post("/", createRecruitment);
 recruitmentRouter.get("/", getRecruitments);
-recruitmentRouter.get("/:id", getRecruitmentById);
+recruitmentRouter.get("/:id", getRecruitment);
 recruitmentRouter.put("/:id", updateRecruitment);
 recruitmentRouter.delete("/:id", deleteRecruitment);
 
-recruitmentRouter.post("/:id/hire", protectHR, hireApplicant);
+// Hire applicant
+recruitmentRouter.post("/:id/hire", hireApplicant);
 
 export default recruitmentRouter;
