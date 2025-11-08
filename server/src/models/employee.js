@@ -31,7 +31,11 @@ const employeeSchema = new mongoose.Schema(
     salary: { type: Number, required: true },
     shiftType: {type: mongoose.Schema.Types.ObjectId, ref: "Shift"},
     status: { type: String, enum: ["Active", "Inactive"], default: "Active" },
+    deleted: {type:Number, enum:[0,1], default:0}
+
   },
+
+
   { timestamps: true }
 );
 
