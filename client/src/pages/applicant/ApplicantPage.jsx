@@ -52,18 +52,34 @@ const ApplicantPage = () => {
     return statusMatch && jobMatch;
   });
 
+  // Updated getStatusBadge function with your exact style pattern
   const getStatusBadge = (status) => {
-    const statusConfig = {
-      applied: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", label: "Applied", icon: "📥" },
-      interview: { bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-200", label: "Interview", icon: "📅" },
-      hired: { bg: "bg-green-50", text: "text-green-700", border: "border-green-200", label: "Hired", icon: "✅" },
-      rejected: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200", label: "Rejected", icon: "❌" }
-    };
-    
-    const config = statusConfig[status] || statusConfig.applied;
     return (
-      <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${config.bg} ${config.text} ${config.border}`}>
-        {config.icon} {config.label}
+      <span
+        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${
+          status === "hired"
+            ? "bg-green-50 text-green-700 border border-green-200"
+            : status === "interview"
+            ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
+            : status === "rejected"
+            ? "bg-red-50 text-red-700 border border-red-200"
+            : "bg-blue-50 text-blue-700 border border-blue-200"
+        }`}
+      >
+        <div
+          className={`w-2 h-2 rounded-full ${
+            status === "hired"
+              ? "bg-green-500"
+              : status === "interview"
+              ? "bg-yellow-500"
+              : status === "rejected"
+              ? "bg-red-500"
+              : "bg-blue-500"
+          }`}
+        ></div>
+        {status === "applied" ? "Applied" : 
+         status === "interview" ? "Interview" : 
+         status === "hired" ? "Hired" : "Rejected"}
       </span>
     );
   };

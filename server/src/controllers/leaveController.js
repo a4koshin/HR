@@ -1,15 +1,28 @@
 import Leave from "../models/leave.js";
 import Attendance from "../models/attendance.js";
+import { leaveSchema } from "../validation/leaveJoi.js";
 
-/**
- * Create Leave
- * Uses async validation middleware before hitting this controller
- */
+// CREATE Leave
 export const createLeave = async (req, res) => {
   try {
-    const { emp_id, type, startDate, endDate, reason, shift_id, duration } = req.body;
+    const { error, value } = leaveSchema.validate(req.body, { abortEarly: false });
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: error.details.map((err) => err.message),
+      });
+    }
 
-    const leave = new Leave({
+    const { emp_id, type, startDate, endDate, reason, shift_id, duration } = value;
+
+    // Link attendance records automatically
+    const attendanceRecords = await Attendance.find({
+      employee: emp_id,
+      date: { $gte: startDate, $lte: endDate },
+    });
+
+    const leave = await Leave.create({
       emp_id,
       type,
       startDate,
@@ -17,28 +30,20 @@ export const createLeave = async (req, res) => {
       reason,
       shift_id: shift_id || null,
       duration,
+      attendanceLink: attendanceRecords.map((a) => a._id),
     });
 
-    // Optional: link attendance records automatically
-    const attendanceRecords = await Attendance.find({
-      employee: emp_id,
-      date: { $gte: startDate, $lte: endDate },
+    res.status(201).json({
+      success: true,
+      message: "Leave created successfully",
+      leave,
     });
-
-    leave.attendanceLink = attendanceRecords.map((a) => a._id);
-
-    const savedLeave = await leave.save();
-
-    res.status(201).json({ success: true, leave: savedLeave });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Server Error" });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-/**
- * Get all leaves
- */
+// GET all leaves
 export const getLeaves = async (req, res) => {
   try {
     const leaves = await Leave.find()
@@ -46,15 +51,17 @@ export const getLeaves = async (req, res) => {
       .populate("shift_id", "name startTime endTime")
       .populate("attendanceLink");
 
-    res.json({ success: true, leaves });
+    res.status(200).json({
+      success: true,
+      count: leaves.length,
+      leaves,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error" });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-/**
- * Get leave by ID
- */
+// GET single leave by ID
 export const getLeaveById = async (req, res) => {
   try {
     const leave = await Leave.findById(req.params.id)
@@ -62,60 +69,75 @@ export const getLeaveById = async (req, res) => {
       .populate("shift_id", "name startTime endTime")
       .populate("attendanceLink");
 
-    if (!leave) return res.status(404).json({ success: false, message: "Leave not found" });
+    if (!leave) {
+      return res.status(404).json({ success: false, message: "Leave not found" });
+    }
 
-    res.json({ success: true, leave });
+    res.status(200).json({ success: true, leave });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error" });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-/**
- * Update leave (General update for all fields except status)
- */
+// UPDATE leave
 export const updateLeave = async (req, res) => {
   try {
-    const { emp_id, type, startDate, endDate, reason, shift_id, duration } = req.body;
+    // Make all fields optional for update
+    const updateSchema = leaveSchema.fork(
+      Object.keys(leaveSchema.describe().keys),
+      (field) => field.optional()
+    );
+
+    const { error, value } = updateSchema.validate(req.body, { abortEarly: false });
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: error.details.map((err) => err.message),
+      });
+    }
 
     const leave = await Leave.findById(req.params.id);
     if (!leave) return res.status(404).json({ success: false, message: "Leave not found" });
 
-    // Update basic fields (don't allow status update here - use status endpoint for that)
-    if (emp_id) leave.emp_id = emp_id;
-    if (type) leave.type = type;
-    if (startDate) leave.startDate = startDate;
-    if (endDate) leave.endDate = endDate;
-    if (reason !== undefined) leave.reason = reason;
-    if (shift_id !== undefined) leave.shift_id = shift_id;
-    if (duration) leave.duration = duration;
+    Object.assign(leave, value);
+
+    // Re-link attendance if startDate or endDate changed
+    if (value.startDate || value.endDate || value.emp_id) {
+      const attendanceRecords = await Attendance.find({
+        employee: value.emp_id || leave.emp_id,
+        date: { $gte: value.startDate || leave.startDate, $lte: value.endDate || leave.endDate },
+      });
+      leave.attendanceLink = attendanceRecords.map((a) => a._id);
+    }
 
     const updatedLeave = await leave.save();
-    
-    // Populate the response
+
     const populatedLeave = await Leave.findById(updatedLeave._id)
       .populate("emp_id", "fullname email")
       .populate("shift_id", "name startTime endTime")
       .populate("attendanceLink");
 
-    res.json({ success: true, leave: populatedLeave });
+    res.status(200).json({
+      success: true,
+      message: "Leave updated successfully",
+      leave: populatedLeave,
+    });
   } catch (error) {
-    console.error("Update leave error:", error);
-    res.status(500).json({ success: false, message: "Server Error" });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-/**
- * Delete leave (Admin/HR only)
- */
+// DELETE leave
 export const deleteLeave = async (req, res) => {
   try {
     const leave = await Leave.findById(req.params.id);
     if (!leave) return res.status(404).json({ success: false, message: "Leave not found" });
 
-    await leave.remove();
+    await leave.deleteOne();
 
-    res.json({ success: true, message: "Leave deleted successfully" });
+    res.status(200).json({ success: true, message: "Leave deleted successfully" });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error" });
+    res.status(500).json({ success: false, message: error.message });
   }
 };

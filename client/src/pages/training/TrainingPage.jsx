@@ -44,17 +44,28 @@ const TrainingPage = () => {
     return !filter.status || training.completionStatus === filter.status;
   });
 
+  // Updated getStatusBadge function with your exact style pattern
   const getStatusBadge = (status) => {
-    const statusConfig = {
-      "Not Started": { bg: "bg-gray-50", text: "text-gray-700", border: "border-gray-200", label: "Not Started", icon: "⏳" },
-      "In Progress": { bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-200", label: "In Progress", icon: "🔄" },
-      "Completed": { bg: "bg-green-50", text: "text-green-700", border: "border-green-200", label: "Completed", icon: "✅" }
-    };
-    
-    const config = statusConfig[status] || statusConfig["Not Started"];
     return (
-      <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${config.bg} ${config.text} ${config.border}`}>
-        {config.icon} {config.label}
+      <span
+        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${
+          status === "Completed"
+            ? "bg-green-50 text-green-700 border border-green-200"
+            : status === "In Progress"
+            ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
+            : "bg-gray-50 text-gray-700 border border-gray-200"
+        }`}
+      >
+        <div
+          className={`w-2 h-2 rounded-full ${
+            status === "Completed"
+              ? "bg-green-500"
+              : status === "In Progress"
+              ? "bg-yellow-500"
+              : "bg-gray-500"
+          }`}
+        ></div>
+        {status}
       </span>
     );
   };
