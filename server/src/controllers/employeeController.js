@@ -5,7 +5,9 @@ import { employeeSchema } from "../validation/employeeJoi.js";
 // Create a new employee
 export const createEmployee = async (req, res) => {
   try {
-    const { error, value } = employeeSchema.validate(req.body, { abortEarly: false });
+    const { error, value } = employeeSchema.validate(req.body, {
+      abortEarly: false,
+    });
 
     if (error) {
       return res.status(400).json({
@@ -77,7 +79,9 @@ export const getEmployee = async (req, res) => {
     );
 
     if (!employee) {
-      return res.status(404).json({ success: false, message: "Employee not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Employee not found" });
     }
 
     res.status(200).json({ success: true, employee }); // keep original key
@@ -91,11 +95,14 @@ export const updateEmployee = async (req, res) => {
   try {
     const updates = req.body;
 
-    const updateSchema = employeeSchema.fork(Object.keys(employeeSchema.describe().keys), (field) =>
-      field.optional()
+    const updateSchema = employeeSchema.fork(
+      Object.keys(employeeSchema.describe().keys),
+      (field) => field.optional()
     );
 
-    const { error, value } = updateSchema.validate(updates, { abortEarly: false });
+    const { error, value } = updateSchema.validate(updates, {
+      abortEarly: false,
+    });
     if (error) {
       return res.status(400).json({
         success: false,
@@ -115,13 +122,25 @@ export const updateEmployee = async (req, res) => {
     }
 
     if (value.email) {
-      const exists = await Employee.findOne({ email: value.email, _id: { $ne: req.params.id } });
-      if (exists) return res.status(400).json({ success: false, message: "Email already in use" });
+      const exists = await Employee.findOne({
+        email: value.email,
+        _id: { $ne: req.params.id },
+      });
+      if (exists)
+        return res
+          .status(400)
+          .json({ success: false, message: "Email already in use" });
     }
 
     if (value.phone) {
-      const exists = await Employee.findOne({ phone: value.phone, _id: { $ne: req.params.id } });
-      if (exists) return res.status(400).json({ success: false, message: "Phone already in use" });
+      const exists = await Employee.findOne({
+        phone: value.phone,
+        _id: { $ne: req.params.id },
+      });
+      if (exists)
+        return res
+          .status(400)
+          .json({ success: false, message: "Phone already in use" });
     }
 
     const employee = await Employee.findByIdAndUpdate(req.params.id, value, {
@@ -130,7 +149,9 @@ export const updateEmployee = async (req, res) => {
     }).populate("department", "name status");
 
     if (!employee) {
-      return res.status(404).json({ success: false, message: "Employee not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Employee not found" });
     }
 
     res.status(200).json({
@@ -149,7 +170,9 @@ export const deleteEmployee = async (req, res) => {
     const employee = await Employee.findByIdAndDelete(req.params.id);
 
     if (!employee) {
-      return res.status(404).json({ success: false, message: "Employee not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Employee not found" });
     }
 
     res.status(200).json({
