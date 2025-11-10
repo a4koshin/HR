@@ -35,22 +35,55 @@ export const createRecruitment = async (req, res) => {
 };
 
 // ✅ Get all recruitments
+// export const getRecruitments = async (req, res) => {
+//   try {
+//     const jobs = await Recruitment.find()
+//       .populate("applicants", "name email status")
+//       .populate("hiredEmployeeId", "fullname email role")
+//       .sort({ createdAt: -1 });
+
+//     res.status(200).json({
+//       success: true,
+//       count: jobs.length,
+//       jobs,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
+// ---------------- Get All Recruitments with Pagination ----------------
 export const getRecruitments = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1; // default page 1
+    const limit = 10;
+
+    const total = await Recruitment.countDocuments();
+
     const jobs = await Recruitment.find()
       .populate("applicants", "name email status")
       .populate("hiredEmployeeId", "fullname email role")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
-      count: jobs.length,
-      jobs,
+      total,             // total job records
+      page,              // current page
+      pages: Math.ceil(total / limit), // total pages
+      jobs,              // records for this page
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+
+
+
+
+
 
 // ✅ Get recruitment by ID
 export const getRecruitment = async (req, res) => {

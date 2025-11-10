@@ -19,9 +19,18 @@ const formatTimeRange = (startTime, endTime) => {
 };
 
 // ---------------- Get All Shifts ----------------
+// ---------------- Get All Shifts with Pagination ----------------
 export const getShifts = async (req, res) => {
   try {
-    const shifts = await Shift.find();
+    const page = parseInt(req.query.page) || 1; // default to page 1
+    const limit = 10; // fixed 10 shifts per page
+
+    const total = await Shift.countDocuments();
+
+    const shifts = await Shift.find()
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     const shiftsWithStats = await Promise.all(
       shifts.map(async (shift) => {
@@ -50,11 +59,18 @@ export const getShifts = async (req, res) => {
       })
     );
 
-    res.status(200).json({ success: true, count: shifts.length, shifts: shiftsWithStats });
+    res.status(200).json({
+      success: true,
+      total,                   // total number of shifts
+      page,                    // current page
+      pages: Math.ceil(total / limit), // total pages
+      shifts: shiftsWithStats, // shifts for this page
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // ---------------- Get Single Shift ----------------
 export const getShiftById = async (req, res) => {

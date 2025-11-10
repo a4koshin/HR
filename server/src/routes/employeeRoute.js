@@ -8,7 +8,10 @@ import {
 } from "../controllers/employeeController.js";
 import {validate} from "../middlewares/validate.js";
 import {employeeSchema} from "../validation/employeeJoi.js";
+import { protectHR } from "../middlewares/authMiddleware.js";
 const employeeRouter = express.Router();
+
+employeeRouter.use(protectHR)
 
 employeeRouter.post("/", validate(employeeSchema), createEmployee);
 employeeRouter.get("/", getEmployees);

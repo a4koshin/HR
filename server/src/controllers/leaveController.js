@@ -44,22 +44,51 @@ export const createLeave = async (req, res) => {
 };
 
 // GET all leaves
+// export const getLeaves = async (req, res) => {
+//   try {
+//     const leaves = await Leave.find()
+//       .populate("emp_id", "fullname email")
+//       .populate("shift_id", "name startTime endTime")
+//       .populate("attendanceLink");
+
+//     res.status(200).json({
+//       success: true,
+//       count: leaves.length,
+//       leaves,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
+// ---------------- Get All Leaves with Pagination ----------------
 export const getLeaves = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1; // default page 1
+    const limit = 10;
+
+    const total = await Leave.countDocuments();
+
     const leaves = await Leave.find()
       .populate("emp_id", "fullname email")
       .populate("shift_id", "name startTime endTime")
-      .populate("attendanceLink");
+      .populate("attendanceLink")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
-      count: leaves.length,
-      leaves,
+      total,             // total leave records
+      page,              // current page
+      pages: Math.ceil(total / limit), // total pages
+      leaves,            // records for this page
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // GET single leave by ID
 export const getLeaveById = async (req, res) => {

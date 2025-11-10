@@ -38,18 +38,50 @@ export const createApplicant = async (req, res) => {
 };
 
 // GET all applicants
+// export const getApplicants = async (req, res) => {
+//   try {
+//     const applicants = await Applicant.find().populate(
+//       "appliedJob",
+//       "jobTitle description status"
+//     );
+
+//     res.status(200).json({ success: true, count: applicants.length, applicants });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
+// ---------------- Get All Applicants with Pagination ----------------
 export const getApplicants = async (req, res) => {
   try {
-    const applicants = await Applicant.find().populate(
-      "appliedJob",
-      "jobTitle description status"
-    );
+    const page = parseInt(req.query.page) || 1; // default page 1
+    const limit = 10;
 
-    res.status(200).json({ success: true, count: applicants.length, applicants });
+    const total = await Applicant.countDocuments();
+
+    const applicants = await Applicant.find()
+      .populate("appliedJob", "jobTitle description status")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.status(200).json({
+      success: true,
+      total,             // total applicant records
+      page,              // current page
+      pages: Math.ceil(total / limit), // total pages
+      applicants,        // records for this page
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+
+
+
+
+
 
 // GET single applicant by ID
 export const getApplicantById = async (req, res) => {

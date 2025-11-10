@@ -20,7 +20,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
           </div>
           {!collapsed && (
             <div className="flex-1">
-              <h1 className="text-xl font-bold text-white">MedCare HRM</h1>
+              <h1 className="text-xl font-bold text-white">HRM</h1>
               <p className="text-sm text-gray-300">Hospital Management</p>
             </div>
           )}

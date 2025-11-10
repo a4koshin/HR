@@ -2,19 +2,70 @@ import React, { useState } from "react";
 import { TailSpin } from "react-loader-spinner";
 import TrainingModel from "./TrainingModel";
 import { useGetallFunctionQuery } from "../../store/DynamicApi";
-import { FiEdit2, FiTrash2, FiPlus, FiUsers, FiCalendar, FiClock, FiTrendingUp, FiFilter, FiUserCheck } from "react-icons/fi";
+import {
+  FiEdit2,
+  FiTrash2,
+  FiPlus,
+  FiUsers,
+  FiCalendar,
+  FiClock,
+  FiTrendingUp,
+  FiFilter,
+  FiUserCheck,
+  FiChevronLeft,
+  FiChevronRight,
+} from "react-icons/fi";
 
 const TrainingPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTraining, setEditingTraining] = useState(null);
   const [filter, setFilter] = useState({ status: "" });
+  const [currentPage, setCurrentPage] = useState(1);
 
   const {
     data: trainingData,
     isLoading,
     isError,
     refetch,
-  } = useGetallFunctionQuery({ url: "/trainings" });
+  } = useGetallFunctionQuery({ url: `/trainings?page=${currentPage}` });
+
+
+// Add these functions
+const handlePageChange = (page) => {
+  setCurrentPage(page);
+};
+
+const generatePageNumbers = () => {
+  const totalPages = trainingData.pages || 1;
+  const current = currentPage;
+  const delta = 2;
+  const range = [];
+  const rangeWithDots = [];
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= current - delta && i <= current + delta)) {
+      range.push(i);
+    }
+  }
+
+  let prev = 0;
+  for (let i of range) {
+    if (prev) {
+      if (i - prev === 2) {
+        rangeWithDots.push(prev + 1);
+      } else if (i - prev !== 1) {
+        rangeWithDots.push("...");
+      }
+    }
+    rangeWithDots.push(i);
+    prev = i;
+  }
+
+  return rangeWithDots;
+};
+
+const totalPages = trainingData?.pages || 1;
+const totalRecords = trainingData?.total || 0;
 
   const handleOpenModal = (training = null) => {
     setEditingTraining(training);
@@ -141,55 +192,56 @@ const TrainingPage = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Trainings</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{totalTrainings}</p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-xl">
-                <FiUsers className="text-2xl text-blue-600" />
-              </div>
-            </div>
-          </div>
+       {/* Stats Cards */}
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+  <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm font-medium text-gray-600">Total Trainings</p>
+        <p className="text-3xl font-bold text-gray-900 mt-2">{totalRecords}</p>
+      </div>
+      <div className="p-3 bg-blue-100 rounded-xl">
+        <FiUsers className="text-2xl text-blue-600" />
+      </div>
+    </div>
+  </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Not Started</p>
-                <p className="text-3xl font-bold text-gray-600 mt-2">{notStartedCount}</p>
-              </div>
-              <div className="p-3 bg-gray-100 rounded-xl">
-                <FiClock className="text-2xl text-gray-600" />
-              </div>
-            </div>
-          </div>
+  <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm font-medium text-gray-600">Not Started</p>
+        <p className="text-3xl font-bold text-gray-600 mt-2">{notStartedCount}</p>
+      </div>
+      <div className="p-3 bg-gray-100 rounded-xl">
+        <FiClock className="text-2xl text-gray-600" />
+      </div>
+    </div>
+  </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">In Progress</p>
-                <p className="text-3xl font-bold text-yellow-600 mt-2">{inProgressCount}</p>
-              </div>
-              <div className="p-3 bg-yellow-100 rounded-xl">
-                <FiTrendingUp className="text-2xl text-yellow-600" />
-              </div>
-            </div>
-          </div>
+  <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm font-medium text-gray-600">In Progress</p>
+        <p className="text-3xl font-bold text-yellow-600 mt-2">{inProgressCount}</p>
+      </div>
+      <div className="p-3 bg-yellow-100 rounded-xl">
+        <FiTrendingUp className="text-2xl text-yellow-600" />
+      </div>
+    </div>
+  </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Participants</p>
-                <p className="text-3xl font-bold text-purple-600 mt-2">{totalParticipants}</p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-xl">
-                <FiUserCheck className="text-2xl text-purple-600" />
-              </div>
-            </div>
-          </div>
-        </div>
+  <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm font-medium text-gray-600">Total Participants</p>
+        <p className="text-3xl font-bold text-purple-600 mt-2">{totalParticipants}</p>
+      </div>
+      <div className="p-3 bg-purple-100 rounded-xl">
+        <FiUserCheck className="text-2xl text-purple-600" />
+      </div>
+    </div>
+  </div>
+</div>
 
         {/* Filters */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
@@ -351,6 +403,57 @@ const TrainingPage = () => {
             )}
           </div>
         )}
+        {/* Pagination - Clean & Beautiful */}
+{totalPages > 1 && (
+  <div className="flex flex-col items-center justify-center mt-8 space-y-4">
+    {/* Page Info */}
+    <div className="text-sm text-gray-600">
+      Page <span className="font-semibold text-blue-600">{currentPage}</span> of{" "}
+      <span className="font-semibold text-blue-600">{totalPages}</span>
+    </div>
+
+    {/* Pagination Controls */}
+    <div className="flex items-center space-x-2">
+      {/* Previous Button */}
+      <button
+        onClick={() => handlePageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+      >
+        <FiChevronLeft className="w-5 h-5" />
+      </button>
+
+      {/* Page Numbers */}
+      {generatePageNumbers().map((pageNum, index) => (
+        <button
+          key={index}
+          onClick={() => typeof pageNum === "number" && handlePageChange(pageNum)}
+          disabled={pageNum === "..."}
+          className={`
+            flex items-center justify-center w-10 h-10 rounded-lg font-medium transition-all duration-200
+            ${currentPage === pageNum
+              ? "bg-blue-600 text-white shadow-md scale-105"
+              : pageNum === "..."
+              ? "text-gray-400 cursor-default"
+              : "text-gray-600 hover:bg-blue-50 hover:border hover:border-blue-200 hover:text-blue-600"
+            }
+          `}
+        >
+          {pageNum}
+        </button>
+      ))}
+
+      {/* Next Button */}
+      <button
+        onClick={() => handlePageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+      >
+        <FiChevronRight className="w-5 h-5" />
+      </button>
+    </div>
+  </div>
+)}
 
         {/* Training Modal */}
         {isModalOpen && (

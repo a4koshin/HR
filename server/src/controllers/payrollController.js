@@ -70,21 +70,48 @@ export const createPayroll = async (req, res) => {
 
 
 // ✅ Get all payrolls
+// export const getPayrolls = async (req, res) => {
+//   try {
+//     const payrolls = await Payroll.find()
+//       .populate("employee", "fullname salary email position")
+//       .sort({ createdAt: -1 });
+
+//     res.status(200).json({
+//       success: true,
+//       count: payrolls.length,
+//       payrolls,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
+// ---------------- Get All Payrolls with Pagination ----------------
 export const getPayrolls = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1; // default to page 1
+    const limit = 10; // 10 payrolls per page
+
+    const total = await Payroll.countDocuments();
+
     const payrolls = await Payroll.find()
       .populate("employee", "fullname salary email position")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
-      count: payrolls.length,
-      payrolls,
+      total,                    // total payroll records
+      page,                     // current page
+      pages: Math.ceil(total / limit), // total pages
+      payrolls,                 // records for this page
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // ✅ Get single payroll by ID
 export const getPayroll = async (req, res) => {

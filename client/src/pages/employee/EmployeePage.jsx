@@ -10,16 +10,19 @@ import {
   FiMail,
   FiPhone,
   FiDollarSign,
+  FiChevronLeft,
+  FiChevronRight,
 } from "react-icons/fi";
 import { HiOutlineOfficeBuilding, HiStatusOnline } from "react-icons/hi";
 
 const EmployeePage = () => {
+  const [currentPage, setCurrentPage] = useState(1);
   const {
-    data: employeeData = [],
+    data: employeeData = {},
     isLoading,
     isError,
     refetch,
-  } = useGetallFunctionQuery({ url: "/employees" });
+  } = useGetallFunctionQuery({ url: `/employees?page=${currentPage}` });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
@@ -42,9 +45,52 @@ const EmployeePage = () => {
   const handleEmployeeSaved = () => {
     closeModal();
     refetch();
+    // Reset to first page when adding/editing to see the changes
+    setCurrentPage(1);
+  };
+
+  // Handle page change
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  // Generate page numbers for pagination
+  const generatePageNumbers = () => {
+    const totalPages = employeeData.pages || 1;
+    const current = currentPage;
+    const delta = 2; // Number of pages to show on each side of current page
+    const range = [];
+    const rangeWithDots = [];
+
+    for (let i = 1; i <= totalPages; i++) {
+      if (
+        i === 1 ||
+        i === totalPages ||
+        (i >= current - delta && i <= current + delta)
+      ) {
+        range.push(i);
+      }
+    }
+
+    let prev = 0;
+    for (let i of range) {
+      if (prev) {
+        if (i - prev === 2) {
+          rangeWithDots.push(prev + 1);
+        } else if (i - prev !== 1) {
+          rangeWithDots.push("...");
+        }
+      }
+      rangeWithDots.push(i);
+      prev = i;
+    }
+
+    return rangeWithDots;
   };
 
   const employees = employeeData?.employees || [];
+  const totalEmployees = employeeData?.total || 0;
+  const totalPages = employeeData?.pages || 1;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
@@ -86,7 +132,7 @@ const EmployeePage = () => {
                   Total Employees
                 </p>
                 <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {employees.length}
+                  {totalEmployees}
                 </p>
               </div>
               <div className="p-3 bg-blue-100 rounded-xl">
@@ -105,6 +151,35 @@ const EmployeePage = () => {
               </div>
               <div className="p-3 bg-green-100 rounded-xl">
                 <HiStatusOnline className="text-2xl text-green-600" />
+              </div>
+            </div>
+          </div>
+
+          {/* Additional stats */}
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Current Page</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {currentPage}
+                </p>
+              </div>
+              <div className="p-3 bg-purple-100 rounded-xl">
+                <FiUser className="text-2xl text-purple-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Pages</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {totalPages}
+                </p>
+              </div>
+              <div className="p-3 bg-orange-100 rounded-xl">
+                <FiUser className="text-2xl text-orange-600" />
               </div>
             </div>
           </div>
@@ -135,142 +210,199 @@ const EmployeePage = () => {
             <p className="text-gray-600 text-lg">Loading employees...</p>
           </div>
         ) : (
-          // Employee Table
-          <div className="bg-blue-800 rounded-2xl shadow-lg overflow-hidden border border-gray-100">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-8 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                      Employee Details
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                      Position
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                      Department
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                      Salary
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {employees.map((emp) => (
-                    <tr
-                      key={emp._id}
-                      className="hover:bg-gray-50 transition-all duration-200 group cursor-pointer"
-                    >
-                      <td className="px-8 py-5">
-                        <div className="flex items-center space-x-4">
-                          <div className="flex-shrink-0">
-                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-lg">
-                              {emp.fullname?.charAt(0) || "U"}
-                            </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-lg font-semibold text-gray-900 truncate">
-                              {emp.fullname}
-                            </p>
-                            <div className="flex items-center gap-3 mt-1">
-                              <div className="flex items-center gap-1 text-gray-500 text-sm">
-                                <FiMail className="w-4 h-4" />
-                                <span>{emp.email}</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-gray-500 text-sm">
-                                <FiPhone className="w-4 h-4" />
-                                <span>{emp.phone}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className="text-gray-900 font-medium">
-                          {emp.position}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                          <HiOutlineOfficeBuilding className="w-4 h-4" />
-                          {emp.department?.name || "N/A"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-2 text-gray-900 font-semibold">
-                          <FiDollarSign className="w-4 h-4 text-green-600" />$
-                          {emp.salary?.toLocaleString()}
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span
-                          className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold ${
-                            emp.status === "Active"
-                              ? "bg-green-50 text-green-700 border border-green-200"
-                              : "bg-red-50 text-red-700 border border-red-200"
-                          }`}
-                        >
-                          <div
-                            className={`w-2 h-2 rounded-full ${
-                              emp.status === "Active"
-                                ? "bg-green-500"
-                                : "bg-red-500"
-                            }`}
-                          ></div>
-                          {emp.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => openEditModal(emp)}
-                            className="p-2.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-xl transition-all duration-200 group-hover:scale-110"
-                            title="Edit Employee"
-                          >
-                            <FiEdit2 className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(emp._id)}
-                            className="p-2.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200 group-hover:scale-110"
-                            title="Delete Employee"
-                          >
-                            <FiTrash2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </td>
+          <>
+            {/* Employee Table */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 mb-6">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-8 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                        Employee Details
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                        Position
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                        Department
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                        Salary
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {employees.map((emp) => (
+                      <tr
+                        key={emp._id}
+                        className="hover:bg-gray-50 transition-all duration-200 group cursor-pointer"
+                      >
+                        <td className="px-8 py-5">
+                          <div className="flex items-center space-x-4">
+                            <div className="flex-shrink-0">
+                              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+                                {emp.fullname?.charAt(0) || "U"}
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-lg font-semibold text-gray-900 truncate">
+                                {emp.fullname}
+                              </p>
+                              <div className="flex items-center gap-3 mt-1">
+                                <div className="flex items-center gap-1 text-gray-500 text-sm">
+                                  <FiMail className="w-4 h-4" />
+                                  <span>{emp.email}</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-gray-500 text-sm">
+                                  <FiPhone className="w-4 h-4" />
+                                  <span>{emp.phone}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <span className="text-gray-900 font-medium">
+                            {emp.position}
+                          </span>
+                        </td>
+                        <td className="px-6 py-5">
+                          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                            <HiOutlineOfficeBuilding className="w-4 h-4" />
+                            {emp.department?.name || "N/A"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-2 text-gray-900 font-semibold">
+                            <FiDollarSign className="w-4 h-4 text-green-600" />$
+                            {emp.salary?.toLocaleString()}
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <span
+                            className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold ${
+                              emp.status === "Active"
+                                ? "bg-green-50 text-green-700 border border-green-200"
+                                : "bg-red-50 text-red-700 border border-red-200"
+                            }`}
+                          >
+                            <div
+                              className={`w-2 h-2 rounded-full ${
+                                emp.status === "Active"
+                                  ? "bg-green-500"
+                                  : "bg-red-500"
+                              }`}
+                            ></div>
+                            {emp.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => openEditModal(emp)}
+                              className="p-2.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-xl transition-all duration-200 group-hover:scale-110"
+                              title="Edit Employee"
+                            >
+                              <FiEdit2 className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(emp._id)}
+                              className="p-2.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200 group-hover:scale-110"
+                              title="Delete Employee"
+                            >
+                              <FiTrash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Empty State */}
+              {employees.length === 0 && !isLoading && (
+                <div className="bg-white text-center py-16">
+                  <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                    <FiUser className="w-12 h-12 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    No employees found
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Get started by adding your first employee
+                  </p>
+                  <button
+                    onClick={openAddModal}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition duration-200"
+                  >
+                    Add First Employee
+                  </button>
+                </div>
+              )}
             </div>
 
-            {/* Empty State */}
-            {employees.length === 0 && !isLoading && (
-              <div className="bg-white text-center py-16">
-                <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                  <FiUser className="w-12 h-12 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  No employees found
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Get started by adding your first employee
-                </p>
-                <button
-                  onClick={openAddModal}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition duration-200"
-                >
-                  Add First Employee
-                </button>
-              </div>
-            )}
-          </div>
+            {/* Pagination */}
+{/* Pagination - Clean & Beautiful */}
+{totalPages > 1 && (
+  <div className="flex flex-col items-center justify-center mt-8 space-y-4">
+    
+    {/* Page Info */}
+    <div className="text-sm text-gray-600">
+      Page <span className="font-semibold text-blue-600">{currentPage}</span> of{" "}
+      <span className="font-semibold text-blue-600">{totalPages}</span>
+    </div>
+
+    {/* Pagination Controls */}
+    <div className="flex items-center space-x-2">
+      
+      {/* Previous Button */}
+      <button
+        onClick={() => handlePageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+      >
+        <FiChevronLeft className="w-5 h-5" />
+      </button>
+
+      {/* Page Numbers */}
+      {generatePageNumbers().map((pageNum, index) => (
+        <button
+          key={index}
+          onClick={() => typeof pageNum === "number" && handlePageChange(pageNum)}
+          disabled={pageNum === "..."}
+          className={`
+            flex items-center justify-center w-10 h-10 rounded-lg font-medium transition-all duration-200
+            ${currentPage === pageNum
+              ? "bg-blue-600 text-white shadow-md scale-105"
+              : pageNum === "..."
+              ? "text-gray-400 cursor-default"
+              : "text-gray-600 hover:bg-blue-50 hover:border hover:border-blue-200 hover:text-blue-600"
+            }
+          `}
+        >
+          {pageNum}
+        </button>
+      ))}
+
+      {/* Next Button */}
+      <button
+        onClick={() => handlePageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+      >
+        <FiChevronRight className="w-5 h-5" />
+      </button>
+    </div>
+  </div>
+)}
+          </>
         )}
 
         {/* Employee Modal */}

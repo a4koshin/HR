@@ -35,15 +35,25 @@ export const createDepartment = async (req, res) => {
   }
 };
 
-// ✅ Get all departments
+// ✅ Get all departments with pagination
 export const getDepartments = async (req, res) => {
   try {
-    const departments = await Department.find().sort({ createdAt: -1 });
+    const page = parseInt(req.query.page) || 1; // default to page 1
+    const limit = 10; // fixed 10 departments per page
+
+    const total = await Department.countDocuments();
+
+    const departments = await Department.find()
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
-      count: departments.length,
-      departments,
+      total,                   // total number of departments
+      page,                    // current page
+      pages: Math.ceil(total / limit), // total pages
+      departments,             // departments for this page
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -73,7 +83,6 @@ export const updateDepartment = async (req, res) => {
   try {
     const updates = req.body;
 
-    // make all fields optional for update
     const updateSchema = departmentSchema.fork(Object.keys(departmentSchema.describe().keys), (field) =>
       field.optional()
     );

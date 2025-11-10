@@ -17,7 +17,7 @@ export const protectHR = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("Decoded JWT:", decoded);
+  
     const user = await userModel.findById(decoded.userId);
 
     if (!user) {

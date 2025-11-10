@@ -48,21 +48,48 @@ export const createTraining = async (req, res) => {
 };
 
 // GET all trainings
+// export const getTrainings = async (req, res) => {
+//   try {
+//     const trainings = await Training.find()
+//       .populate("participants", "fullname email role")
+//       .sort({ createdAt: -1 });
+
+//     res.status(200).json({
+//       success: true,
+//       count: trainings.length,
+//       trainings,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
+// ---------------- Get All Trainings with Pagination ----------------
 export const getTrainings = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1; // default page 1
+    const limit = 10;
+
+    const total = await Training.countDocuments();
+
     const trainings = await Training.find()
       .populate("participants", "fullname email role")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
-      count: trainings.length,
-      trainings,
+      total,             // total training records
+      page,              // current page
+      pages: Math.ceil(total / limit), // total pages
+      trainings,         // records for this page
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // GET single training
 export const getTraining = async (req, res) => {

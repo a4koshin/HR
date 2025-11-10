@@ -38,18 +38,32 @@ export const createDocument = async (req, res) => {
     }
   };
 // GET all documents
+// ---------------- Get All Documents with Pagination ----------------
 export const getDocuments = async (req, res) => {
   try {
-    const documents = await Document.find().populate("employeeId", "fullname email");
+    const page = parseInt(req.query.page) || 1; // default page 1
+    const limit = 10;
+
+    const total = await Document.countDocuments();
+
+    const documents = await Document.find()
+      .populate("employeeId", "fullname email")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
     res.status(200).json({
       success: true,
-      count: documents.length,
-      documents,
+      total,                // total documents
+      page,                 // current page
+      pages: Math.ceil(total / limit), // total pages
+      documents,            // records for this page
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // GET single document by ID
 export const getDocumentById = async (req, res) => {

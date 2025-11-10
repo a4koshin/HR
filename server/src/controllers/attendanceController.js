@@ -16,22 +16,33 @@ const calculateWorkedHours = (checkIn, checkOut) => {
 };
 
 // Get all attendance records
+// ---------------- Get All Attendances with Pagination ----------------
 export const getAttendances = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1; // default to page 1
+    const limit = 10; // fixed 10 records per page
+
+    const total = await Attendance.countDocuments();
+
     const attendances = await Attendance.find()
       .populate("employee", "fullname email position department")
       .populate("shift", "name startTime endTime")
-      .sort({ date: -1, createdAt: -1 });
+      .sort({ date: -1, createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
-      count: attendances.length,
-      attendances,
+      total,                   // total attendance records
+      page,                    // current page
+      pages: Math.ceil(total / limit), // total pages
+      attendances,             // records for this page
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // Get single attendance by ID
 export const getAttendanceById = async (req, res) => {
