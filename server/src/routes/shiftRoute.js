@@ -19,6 +19,6 @@ shiftRouter.get("/", getShifts);
 shiftRouter.get("/:id", getShiftById);
 shiftRouter.put("/:id", updateShift);
 shiftRouter.get("/:id/attendance-report", getShiftAttendanceReport);
-shiftRouter.delete("/:id", deleteShift);
+shiftRouter.put("/delete/:id", deleteShift);
 
 export default shiftRouter;

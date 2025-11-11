@@ -38,7 +38,7 @@ export const createDepartment = async (req, res) => {
 // ✅ Get all departments (no pagination)
 export const getDepartments = async (req, res) => {
   try {
-    const departments = await Department.find().sort({ createdAt: -1 });
+    const departments = await Department.find({deleted:0}).sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -59,7 +59,7 @@ export const getPaginatedDepartments = async (req, res) => {
 
     const total = await Department.countDocuments();
 
-    const departments = await Department.find()
+    const departments = await Department.find({deleted:0})
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
@@ -141,15 +141,18 @@ export const updateDepartment = async (req, res) => {
   }
 };
 
-// ✅ Delete department
+// ✅ Soft delete department
 export const deleteDepartment = async (req, res) => {
   try {
     const department = await Department.findById(req.params.id);
 
     if (!department) {
-      return res.status(404).json({ success: false, message: "Department not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Department not found" });
     }
 
+    // Check if department has assigned employees
     const employeeCount = await Employee.countDocuments({ department: req.params.id });
     if (employeeCount > 0) {
       return res.status(400).json({
@@ -158,13 +161,16 @@ export const deleteDepartment = async (req, res) => {
       });
     }
 
-    await Department.findByIdAndDelete(req.params.id);
+    // ✅ Soft delete: set deleted = 1 instead of removing from DB
+    department.deleted = 1;
+    await department.save();
 
     res.status(200).json({
       success: true,
-      message: "Department deleted successfully",
+      message: "Department soft deleted successfully",
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+

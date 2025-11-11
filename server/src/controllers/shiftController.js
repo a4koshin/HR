@@ -27,7 +27,7 @@ export const getShifts = async (req, res) => {
 
     const total = await Shift.countDocuments();
 
-    const shifts = await Shift.find()
+    const shifts = await Shift.find({deleted:0})
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
@@ -178,12 +178,14 @@ export const updateShift = async (req, res) => {
   }
 };
 
-// ---------------- Delete Shift ----------------
+// ---------------- Soft Delete Shift ----------------
 export const deleteShift = async (req, res) => {
   try {
     const shift = await Shift.findById(req.params.id);
-    if (!shift) return res.status(404).json({ success: false, message: "Shift not found" });
+    if (!shift)
+      return res.status(404).json({ success: false, message: "Shift not found" });
 
+    // Check if there are attendance records linked to this shift
     const attendanceCount = await Attendance.countDocuments({ shift: shift._id });
     if (attendanceCount > 0) {
       return res.status(400).json({
@@ -192,12 +194,18 @@ export const deleteShift = async (req, res) => {
       });
     }
 
-    await Shift.findByIdAndDelete(req.params.id);
-    res.status(200).json({ success: true, message: "Shift deleted successfully" });
+    // ✅ Soft delete instead of removing from DB
+    shift.deleted = 1;
+    await shift.save();
+
+    res
+      .status(200)
+      .json({ success: true, message: "Shift soft deleted successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // ---------------- Shift Attendance Report ----------------
 export const getShiftAttendanceReport = async (req, res) => {

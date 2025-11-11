@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { TailSpin } from "react-loader-spinner";
 import DeptModel from "./deptModel";
-import { useGetallFunctionQuery } from "../../store/DynamicApi";
+import {
+  useGetallFunctionQuery,
+  useUpdateFunctionMutation,
+} from "../../store/DynamicApi";
 import {
   FiEdit2,
   FiTrash2,
@@ -9,6 +12,7 @@ import {
   FiUsers,
   FiCalendar,
   FiInfo,
+  FiAlertTriangle,
 } from "react-icons/fi";
 import { HiOutlineOfficeBuilding, HiStatusOnline } from "react-icons/hi";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
@@ -22,8 +26,13 @@ const DepartmentPage = () => {
     refetch,
   } = useGetallFunctionQuery({ url: `/departments?page=${currentPage}` });
 
+  const [updateDepartment, { isLoading: isUpdating }] =
+    useUpdateFunctionMutation();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDept, setEditingDept] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [departmentToDelete, setDepartmentToDelete] = useState(null);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -80,6 +89,42 @@ const DepartmentPage = () => {
   const handleDeptSaved = () => {
     closeModal();
     refetch();
+  };
+
+  // Open delete confirmation modal
+  const openDeleteModal = (department) => {
+    setDepartmentToDelete(department);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Close delete confirmation modal
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setDepartmentToDelete(null);
+  };
+
+  // Handle department deletion
+  const handleDelete = async () => {
+    if (!departmentToDelete) return;
+
+    try {
+      await updateDepartment({
+        id: departmentToDelete._id,
+        url: "departments/delete",
+      }).unwrap();
+
+      console.log("Department deleted successfully!");
+      refetch();
+
+      // Adjust pagination if last item on page was deleted
+      if (departments.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
+
+      closeDeleteModal();
+    } catch (error) {
+      console.error("Error deleting department:", error);
+    }
   };
 
   const departments = deptData?.departments || [];
@@ -319,13 +364,20 @@ const DepartmentPage = () => {
                             <FiEdit2 className="w-5 h-5" />
                           </button>
                           <button
-                            onClick={() => {
-                              /* handleDelete(dep._id) */
-                            }}
-                            className="p-2.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200 group-hover:scale-110"
+                            onClick={() => openDeleteModal(dep)}
+                            disabled={isUpdating}
+                            className="p-2.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200 group-hover:scale-110 disabled:opacity-50"
                             title="Delete Department"
                           >
-                            <FiTrash2 className="w-5 h-5" />
+                            {isUpdating ? (
+                              <TailSpin
+                                height={16}
+                                width={16}
+                                color="#DC2626"
+                              />
+                            ) : (
+                              <FiTrash2 className="w-5 h-5" />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -390,15 +442,15 @@ const DepartmentPage = () => {
                   }
                   disabled={pageNum === "..."}
                   className={`
-            flex items-center justify-center w-10 h-10 rounded-lg font-medium transition-all duration-200
-            ${
-              currentPage === pageNum
-                ? "bg-blue-600 text-white shadow-md scale-105"
-                : pageNum === "..."
-                ? "text-gray-400 cursor-default"
-                : "text-gray-600 hover:bg-blue-50 hover:border hover:border-blue-200 hover:text-blue-600"
-            }
-          `}
+                    flex items-center justify-center w-10 h-10 rounded-lg font-medium transition-all duration-200
+                    ${
+                      currentPage === pageNum
+                        ? "bg-blue-600 text-white shadow-md scale-105"
+                        : pageNum === "..."
+                        ? "text-gray-400 cursor-default"
+                        : "text-gray-600 hover:bg-blue-50 hover:border hover:border-blue-200 hover:text-blue-600"
+                    }
+                  `}
                 >
                   {pageNum}
                 </button>
@@ -423,6 +475,77 @@ const DepartmentPage = () => {
           onSave={handleDeptSaved}
           department={editingDept}
         />
+
+        {/* Delete Confirmation Modal */}
+        {isDeleteModalOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+            <div
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scaleIn"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-red-50 rounded-full">
+                  <FiAlertTriangle className="w-6 h-6 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    Delete Department
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    This action is permanent
+                  </p>
+                </div>
+              </div>
+
+              <div className="my-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-gray-700">
+                  Are you sure you want to delete{" "}
+                  <strong className="text-red-600">
+                    {departmentToDelete?.name}
+                  </strong>
+                  ? This action cannot be undone and all associated data will be
+                  permanently removed.
+                </p>
+                {employees.filter(
+                  (emp) =>
+                    emp.department?._id === departmentToDelete?._id ||
+                    emp.department === departmentToDelete?.name
+                ).length > 0 && (
+                  <p className="text-orange-600 text-sm mt-2 font-medium">
+                    ⚠️ This department has employees assigned to it!
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={closeDeleteModal}
+                  disabled={isUpdating}
+                  className="px-5 py-2.5 text-gray-700 hover:text-gray-900 hover:bg-gray-100 font-medium rounded-lg transition-all duration-200 disabled:opacity-50 border border-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isUpdating}
+                  className="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-all duration-200 disabled:opacity-50 flex items-center gap-2 shadow-md hover:shadow-lg transform"
+                >
+                  {isUpdating ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <FiTrash2 className="w-4 h-4" />
+                      Delete Department
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

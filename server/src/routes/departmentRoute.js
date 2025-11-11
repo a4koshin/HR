@@ -18,6 +18,6 @@ departmentRouter.get("/", getPaginatedDepartments);
 departmentRouter.get("/all", getDepartments);       
 departmentRouter.get("/:id", getDepartment);
 departmentRouter.put("/:id", updateDepartment);
-departmentRouter.delete("/:id", deleteDepartment);
+departmentRouter.put("/delete/:id", deleteDepartment);
 
 export default departmentRouter;
