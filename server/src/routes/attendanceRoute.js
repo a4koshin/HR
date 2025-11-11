@@ -21,6 +21,6 @@ attendanceRouter.get("/", getAttendances);
 attendanceRouter.post("/mark", markAttendance);
 attendanceRouter.get("/:id", getAttendanceById);
 attendanceRouter.put("/:id", updateAttendance);
-attendanceRouter.delete("/:id", deleteAttendance);
+attendanceRouter.put("/delete/:id", deleteAttendance);
 
 export default attendanceRouter;

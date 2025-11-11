@@ -24,7 +24,7 @@ export const getAttendances = async (req, res) => {
 
     const total = await Attendance.countDocuments();
 
-    const attendances = await Attendance.find()
+    const attendances = await Attendance.find({deleted:0})
       .populate("employee", "fullname email position department")
       .populate("shift", "name startTime endTime")
       .sort({ date: -1, createdAt: -1 })
@@ -206,9 +206,11 @@ export const updateAttendance = async (req, res) => {
 };
 
 // Delete attendance
+// ---------------- Soft Delete Attendance ----------------
 export const deleteAttendance = async (req, res) => {
   try {
-    const attendance = await Attendance.findByIdAndDelete(req.params.id);
+    // Find the attendance record by ID
+    const attendance = await Attendance.findById(req.params.id);
 
     if (!attendance) {
       return res.status(404).json({
@@ -217,14 +219,19 @@ export const deleteAttendance = async (req, res) => {
       });
     }
 
+    // ✅ Soft delete instead of removing from the database
+    attendance.deleted = 1;
+    await attendance.save();
+
     res.status(200).json({
       success: true,
-      message: "Attendance record deleted successfully",
+      message: "Attendance record soft deleted successfully",
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // Bulk mark attendance
 export const markAttendance = async (req, res) => {
