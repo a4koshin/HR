@@ -15,6 +15,8 @@ const trainingSchema = new mongoose.Schema(
       enum: ["Not Started", "In Progress", "Completed"],
       default: "Not Started",
     },
+    deleted: {type:Number, enum:[0,1], default:0}
+
   },
   { timestamps: true }
 );

@@ -37,7 +37,6 @@ export const createEmployee = async (req, res) => {
 
     const employee = await Employee.create(value);
 
-    // Keep populated department data
     const populatedEmployee = await Employee.findById(employee._id).populate(
       "department",
       "name status"
@@ -46,39 +45,39 @@ export const createEmployee = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Employee created successfully",
-      employee: populatedEmployee, // keep original key for frontend
+      employee: populatedEmployee,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Get all employees
+// Get all employees (only active ones)
 export const getEmployees = async (req, res) => {
   try {
-    const employees = await Employee.find()
+    const employees = await Employee.find({ deleted: 0 })
       .populate("department", "name status")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
       count: employees.length,
-      employees, // keep original key
+      employees,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-
+// Get paginated employees (only active ones)
 export const getPaginatedEmployees = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1; // default to page 1
-    const limit = 10; // fixed 10 employees per page
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
 
-    const total = await Employee.countDocuments();
+    const total = await Employee.countDocuments({ deleted: 0 });
 
-    const employees = await Employee.find()
+    const employees = await Employee.find({ deleted: 0 })
       .populate("department", "name status")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
@@ -86,26 +85,23 @@ export const getPaginatedEmployees = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      total,                  // total number of employees
-      page,                   // current page
-      pages: Math.ceil(total / limit), // total pages
-      employees,              // employees for this page
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      employees,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-
-
-
 // Get single employee by ID
 export const getEmployee = async (req, res) => {
   try {
-    const employee = await Employee.findById(req.params.id).populate(
-      "department",
-      "name status"
-    );
+    const employee = await Employee.findOne({
+      _id: req.params.id,
+      deleted: 0,
+    }).populate("department", "name status");
 
     if (!employee) {
       return res
@@ -113,7 +109,7 @@ export const getEmployee = async (req, res) => {
         .json({ success: false, message: "Employee not found" });
     }
 
-    res.status(200).json({ success: true, employee }); // keep original key
+    res.status(200).json({ success: true, employee });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -186,17 +182,21 @@ export const updateEmployee = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Employee updated successfully",
-      employee, // keep populated data visible
+      employee,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Delete employee
-export const deleteEmployee = async (req, res) => {
+// Soft delete employee (update deleted = 1)
+export const softDeleteEmployee = async (req, res) => {
   try {
-    const employee = await Employee.findByIdAndDelete(req.params.id);
+    const employee = await Employee.findByIdAndUpdate(
+      req.params.id,
+      { deleted: 1 },
+      { new: true }
+    );
 
     if (!employee) {
       return res
@@ -206,7 +206,8 @@ export const deleteEmployee = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Employee deleted successfully",
+      message: "Employee soft deleted successfully",
+      employee,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

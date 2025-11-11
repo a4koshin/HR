@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { TailSpin } from "react-loader-spinner";
 import EmpModel from "./EmpModel";
-import { useGetallFunctionQuery } from "../../store/DynamicApi";
+import {
+  useGetallFunctionQuery,
+  useUpdateFunctionMutation,
+} from "../../store/DynamicApi";
 import {
   FiEdit2,
   FiTrash2,
@@ -12,6 +15,7 @@ import {
   FiDollarSign,
   FiChevronLeft,
   FiChevronRight,
+  FiAlertTriangle,
 } from "react-icons/fi";
 import { HiOutlineOfficeBuilding, HiStatusOnline } from "react-icons/hi";
 
@@ -24,9 +28,13 @@ const EmployeePage = () => {
     refetch,
   } = useGetallFunctionQuery({ url: `/employees?page=${currentPage}` });
 
+  const [updateEmployee, { isLoading: isUpdating }] =
+    useUpdateFunctionMutation();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState(null);
 
   const openAddModal = () => {
     setEditingEmployee(null);
@@ -46,20 +54,55 @@ const EmployeePage = () => {
   const handleEmployeeSaved = () => {
     closeModal();
     refetch();
-    // Reset to first page when adding/editing to see the changes
     setCurrentPage(1);
   };
 
-  // Handle page change
+  // Open delete confirmation modal
+  const openDeleteModal = (employee) => {
+    setEmployeeToDelete(employee);
+    setIsDeleteModalOpen(true);
+  };
+
   const handlePageChange = (page) => {
     setCurrentPage(page);
+  };
+
+  // Close delete confirmation modal
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setEmployeeToDelete(null);
+  };
+
+  const handleDelete = async () => {
+    if (!employeeToDelete) return;
+
+    try {
+      await updateEmployee({
+        id: employeeToDelete._id,
+        url: "employees/delete",
+      }).unwrap();
+
+      // Show success message (you can replace this with toast when you set it up)
+      console.log("Employee deleted successfully!");
+      refetch();
+
+      if (employees.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
+
+      closeDeleteModal();
+    } catch (error) {
+      console.error("Error deleting employee:", error);
+      // Show error message
+      console.error("❌ Something went wrong while deleting employee.");
+    }
   };
 
   // Generate page numbers for pagination
   const generatePageNumbers = () => {
     const totalPages = employeeData.pages || 1;
     const current = currentPage;
-    const delta = 2; // Number of pages to show on each side of current page
+    const delta = 2;
     const range = [];
     const rangeWithDots = [];
 
@@ -156,7 +199,6 @@ const EmployeePage = () => {
             </div>
           </div>
 
-          {/* Additional stats */}
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
@@ -315,11 +357,20 @@ const EmployeePage = () => {
                               <FiEdit2 className="w-5 h-5" />
                             </button>
                             <button
-                              onClick={() => handleDelete(emp._id)}
-                              className="p-2.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200 group-hover:scale-110"
+                              onClick={() => openDeleteModal(emp)}
+                              disabled={isUpdating}
+                              className="p-2.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200 group-hover:scale-110 disabled:opacity-50"
                               title="Delete Employee"
                             >
-                              <FiTrash2 className="w-5 h-5" />
+                              {isUpdating ? (
+                                <TailSpin
+                                  height={16}
+                                  width={16}
+                                  color="#DC2626"
+                                />
+                              ) : (
+                                <FiTrash2 className="w-5 h-5" />
+                              )}
                             </button>
                           </div>
                         </td>
@@ -352,10 +403,8 @@ const EmployeePage = () => {
             </div>
 
             {/* Pagination */}
-            {/* Pagination - Clean & Beautiful */}
             {totalPages > 1 && (
               <div className="flex flex-col items-center justify-center mt-8 space-y-4">
-                {/* Page Info */}
                 <div className="text-sm text-gray-600">
                   Page{" "}
                   <span className="font-semibold text-blue-600">
@@ -367,9 +416,7 @@ const EmployeePage = () => {
                   </span>
                 </div>
 
-                {/* Pagination Controls */}
                 <div className="flex items-center space-x-2">
-                  {/* Previous Button */}
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
@@ -378,7 +425,6 @@ const EmployeePage = () => {
                     <FiChevronLeft className="w-5 h-5" />
                   </button>
 
-                  {/* Page Numbers */}
                   {generatePageNumbers().map((pageNum, index) => (
                     <button
                       key={index}
@@ -387,21 +433,20 @@ const EmployeePage = () => {
                       }
                       disabled={pageNum === "..."}
                       className={`
-            flex items-center justify-center w-10 h-10 rounded-lg font-medium transition-all duration-200
-            ${
-              currentPage === pageNum
-                ? "bg-blue-600 text-white shadow-md scale-105"
-                : pageNum === "..."
-                ? "text-gray-400 cursor-default"
-                : "text-gray-600 hover:bg-blue-50 hover:border hover:border-blue-200 hover:text-blue-600"
-            }
-          `}
+                        flex items-center justify-center w-10 h-10 rounded-lg font-medium transition-all duration-200
+                        ${
+                          currentPage === pageNum
+                            ? "bg-blue-600 text-white shadow-md scale-105"
+                            : pageNum === "..."
+                            ? "text-gray-400 cursor-default"
+                            : "text-gray-600 hover:bg-blue-50 hover:border hover:border-blue-200 hover:text-blue-600"
+                        }
+                      `}
                     >
                       {pageNum}
                     </button>
                   ))}
 
-                  {/* Next Button */}
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
@@ -422,6 +467,68 @@ const EmployeePage = () => {
           onSave={handleEmployeeSaved}
           employee={editingEmployee}
         />
+
+        {/* Delete Confirmation Modal */}
+        {isDeleteModalOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+            <div
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scaleIn"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-red-50 rounded-full">
+                  <FiAlertTriangle className="w-6 h-6 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    Delete Employee
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    This action is permanent
+                  </p>
+                </div>
+              </div>
+
+              <div className="my-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-gray-700">
+                  Are you sure you want to delete{" "}
+                  <strong className="text-red-600">
+                    {employeeToDelete?.fullname}
+                  </strong>
+                  ? This action cannot be undone and all associated data will be
+                  permanently removed.
+                </p>
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={closeDeleteModal}
+                  disabled={isUpdating}
+                  className="px-5 py-2.5 text-gray-700 hover:text-gray-900 hover:bg-gray-100 font-medium rounded-lg transition-all duration-200 disabled:opacity-50 border border-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isUpdating}
+                  className="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-all duration-200 disabled:opacity-50 flex items-center gap-2 shadow-md hover:shadow-lg transform"
+                >
+                  {isUpdating ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <FiTrash2 className="w-4 h-4" />
+                      Delete Employee
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

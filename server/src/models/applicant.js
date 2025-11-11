@@ -27,6 +27,8 @@ const applicantSchema = new Schema(
       ref: "Recruitment",
       required: [true, "Applied job ID is required"],
     },
+
+    deleted: {type:Number, enum:[0,1], default:0}
   },
   { timestamps: true, versionKey: false }
 );

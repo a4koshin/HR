@@ -30,6 +30,7 @@ const payrollSchema = new mongoose.Schema(
       enum: ["Bank Transfer", "Cash"],
       default: "Bank Transfer",
     },
+    deleted: {type:Number, enum:[0,1], default:0}
   },
   { timestamps: true }
 );

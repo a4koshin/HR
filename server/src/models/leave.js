@@ -12,7 +12,8 @@ const leaveSchema = new mongoose.Schema({
   approvedAt: { type: Date },
   duration: { type: Number }, 
   shift_id: { type: mongoose.Schema.Types.ObjectId, ref: "Shift" }, 
-  attendanceLink: [{ type: mongoose.Schema.Types.ObjectId, ref: "Attendance" }] 
+  attendanceLink: [{ type: mongoose.Schema.Types.ObjectId, ref: "Attendance" }] ,
+  deleted: {type:Number, enum:[0,1], default:0}
 });
 
 

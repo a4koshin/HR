@@ -35,6 +35,7 @@ const attendanceSchema = new mongoose.Schema(
       type: Number, // you can let HR/Admin enter this manually
       default: 0,
     },
+    deleted: {type:Number, enum:[0,1], default:0}
   },
   { timestamps: true }
 );
