@@ -54,24 +54,24 @@ export const createEmployee = async (req, res) => {
 };
 
 // Get all employees
-// export const getEmployees = async (req, res) => {
-//   try {
-//     const employees = await Employee.find()
-//       .populate("department", "name status")
-//       .sort({ createdAt: -1 });
-
-//     res.status(200).json({
-//       success: true,
-//       count: employees.length,
-//       employees, // keep original key
-//     });
-//   } catch (error) {
-//     res.status(500).json({ success: false, message: error.message });
-//   }
-// };
-
-
 export const getEmployees = async (req, res) => {
+  try {
+    const employees = await Employee.find()
+      .populate("department", "name status")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: employees.length,
+      employees, // keep original key
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+export const getPaginatedEmployees = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1; // default to page 1
     const limit = 10; // fixed 10 employees per page

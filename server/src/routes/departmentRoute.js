@@ -2,6 +2,7 @@ import express from "express";
 import {
   createDepartment,
   getDepartments,
+  getPaginatedDepartments,
   getDepartment,
   updateDepartment,
   deleteDepartment,
@@ -13,7 +14,8 @@ const departmentRouter = express.Router();
 departmentRouter.use(protectHR);
 
 departmentRouter.post("/", createDepartment);
-departmentRouter.get("/", getDepartments);
+departmentRouter.get("/", getPaginatedDepartments); 
+departmentRouter.get("/all", getDepartments);       
 departmentRouter.get("/:id", getDepartment);
 departmentRouter.put("/:id", updateDepartment);
 departmentRouter.delete("/:id", deleteDepartment);

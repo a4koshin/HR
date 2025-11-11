@@ -47,8 +47,12 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
 
   const { data } = useGetallFunctionQuery({ url: "/departments" });
    const { data: shiftData } = useGetallFunctionQuery({ url: "/shifts" });
-
-  const statusOptions = {
+     const { data: allDeptData } = useGetallFunctionQuery({
+       url: "/departments/all",
+     });
+     
+     
+     const statusOptions = {
     contractType: [
       { value: "Permanent", label: "Permanent" },
       { value: "Contract", label: "Contract" },
@@ -60,7 +64,7 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
       { value: "Inactive", label: "Inactive" },
     ],
   };
-
+  
   useEffect(() => {
     if (employee) {
       setFormData({
@@ -102,18 +106,18 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
       [name]: value,
     }));
   };
-
+  
   const nextStep = () => {
     setCurrentStep(2);
   };
-
+  
   const prevStep = () => {
     setCurrentStep(1);
   };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    
     try {
       if (isEditing) {
         // Update existing employee
@@ -138,31 +142,32 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
       const message =
         error?.data?.message ||
         "❌ Something went wrong while saving employee.";
-      toast.error(message);
-    }
-  };
-
-  const isPersonalInfoValid = () => {
-    return (
-      formData.fullname && formData.email && formData.phone && formData.address
+        toast.error(message);
+      }
+    };
+    
+    const isPersonalInfoValid = () => {
+      return (
+        formData.fullname  && formData.phone && formData.address
+      );
+    };
+    
+    const isEmploymentInfoValid = () => {
+      return (
+        formData.department &&
+        formData.position &&
+        formData.contractType &&
+        formData.hireDate &&
+        formData.salary &&
+        formData.shiftType
     );
   };
-
-  const isEmploymentInfoValid = () => {
-    return (
-      formData.department &&
-      formData.position &&
-      formData.contractType &&
-      formData.hireDate &&
-      formData.salary &&
-      formData.shiftType
-    );
-  };
-
+  
   if (!isOpen) return null;
-
+  
   const deptData = data?.departments || [];
   const shiftTypes = shiftData?.shifts || [];
+  const allDepartments = allDeptData?.departments || [];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -345,7 +350,7 @@ const EmpModel = ({ isOpen, onClose, onSave, employee }) => {
                     required
                   >
                     <option value="">Select Department</option>
-                    {deptData.map((dept) => (
+                    {allDepartments.map((dept) => (
                       <option key={dept._id} value={dept._id}>
                         {dept.name}
                       </option>

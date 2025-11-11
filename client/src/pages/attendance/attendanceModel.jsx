@@ -36,7 +36,7 @@ const AttendanceModal = ({ isOpen, onClose, onSave, attendance }) => {
   const isLoading = isCreating || isUpdating;
   const isEditing = !!attendance;
 
-  const { data } = useGetallFunctionQuery({ url: "/employees" });
+  const { data } = useGetallFunctionQuery({ url: "/employees/all" });
   const { data: shiftData } = useGetallFunctionQuery({ url: "/shifts" });
 
   const statusOptions = [
@@ -147,8 +147,13 @@ const AttendanceModal = ({ isOpen, onClose, onSave, attendance }) => {
 
   if (!isOpen) return null;
 
-  const employees = data?.employees || [];
-  const shifts = shiftData?.shifts || [];
+  // const employees = data?.employees || [];
+  // const shifts = shiftData?.shifts || [];
+  // const { data: allEmpData } = useGetallFunctionQuery({
+  //   url: "/employees/all",
+  // });
+  const allemployees = data?.employees || [];
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -249,7 +254,7 @@ const AttendanceModal = ({ isOpen, onClose, onSave, attendance }) => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                   >
                     <option value="">Select Employee</option>
-                    {employees.map((emp) => (
+                    {allemployees.map((emp) => (
                       <option key={emp._id} value={emp._id}>
                         {emp.fullname || emp.name} - {emp.position || "-"}
                       </option>

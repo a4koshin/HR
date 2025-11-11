@@ -24,6 +24,7 @@ const EmployeePage = () => {
     refetch,
   } = useGetallFunctionQuery({ url: `/employees?page=${currentPage}` });
 
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
 
@@ -159,7 +160,9 @@ const EmployeePage = () => {
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Current Page</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Current Page
+                </p>
                 <p className="text-3xl font-bold text-gray-900 mt-2">
                   {currentPage}
                 </p>
@@ -349,59 +352,66 @@ const EmployeePage = () => {
             </div>
 
             {/* Pagination */}
-{/* Pagination - Clean & Beautiful */}
-{totalPages > 1 && (
-  <div className="flex flex-col items-center justify-center mt-8 space-y-4">
-    
-    {/* Page Info */}
-    <div className="text-sm text-gray-600">
-      Page <span className="font-semibold text-blue-600">{currentPage}</span> of{" "}
-      <span className="font-semibold text-blue-600">{totalPages}</span>
-    </div>
+            {/* Pagination - Clean & Beautiful */}
+            {totalPages > 1 && (
+              <div className="flex flex-col items-center justify-center mt-8 space-y-4">
+                {/* Page Info */}
+                <div className="text-sm text-gray-600">
+                  Page{" "}
+                  <span className="font-semibold text-blue-600">
+                    {currentPage}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold text-blue-600">
+                    {totalPages}
+                  </span>
+                </div>
 
-    {/* Pagination Controls */}
-    <div className="flex items-center space-x-2">
-      
-      {/* Previous Button */}
-      <button
-        onClick={() => handlePageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-      >
-        <FiChevronLeft className="w-5 h-5" />
-      </button>
+                {/* Pagination Controls */}
+                <div className="flex items-center space-x-2">
+                  {/* Previous Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                  >
+                    <FiChevronLeft className="w-5 h-5" />
+                  </button>
 
-      {/* Page Numbers */}
-      {generatePageNumbers().map((pageNum, index) => (
-        <button
-          key={index}
-          onClick={() => typeof pageNum === "number" && handlePageChange(pageNum)}
-          disabled={pageNum === "..."}
-          className={`
+                  {/* Page Numbers */}
+                  {generatePageNumbers().map((pageNum, index) => (
+                    <button
+                      key={index}
+                      onClick={() =>
+                        typeof pageNum === "number" && handlePageChange(pageNum)
+                      }
+                      disabled={pageNum === "..."}
+                      className={`
             flex items-center justify-center w-10 h-10 rounded-lg font-medium transition-all duration-200
-            ${currentPage === pageNum
-              ? "bg-blue-600 text-white shadow-md scale-105"
-              : pageNum === "..."
-              ? "text-gray-400 cursor-default"
-              : "text-gray-600 hover:bg-blue-50 hover:border hover:border-blue-200 hover:text-blue-600"
+            ${
+              currentPage === pageNum
+                ? "bg-blue-600 text-white shadow-md scale-105"
+                : pageNum === "..."
+                ? "text-gray-400 cursor-default"
+                : "text-gray-600 hover:bg-blue-50 hover:border hover:border-blue-200 hover:text-blue-600"
             }
           `}
-        >
-          {pageNum}
-        </button>
-      ))}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
 
-      {/* Next Button */}
-      <button
-        onClick={() => handlePageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-      >
-        <FiChevronRight className="w-5 h-5" />
-      </button>
-    </div>
-  </div>
-)}
+                  {/* Next Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                  >
+                    <FiChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         )}
 

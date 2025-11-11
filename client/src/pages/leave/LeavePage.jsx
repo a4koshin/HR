@@ -64,7 +64,7 @@ const generatePageNumbers = () => {
   return rangeWithDots;
 };
   
-  const { data: employeesData = {} } = useGetallFunctionQuery({ url: "/employees" });
+  const { data: employeesData = {} } = useGetallFunctionQuery({ url: "/employees/all" });
   const { data: shiftsData = {} } = useGetallFunctionQuery({ url: "/shifts" });
 
   const [isModalOpen, setIsModalOpen] = useState(false);

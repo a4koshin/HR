@@ -24,7 +24,7 @@ const PayModel = ({ isOpen, onClose, onSave, payroll }) => {
   const [updatePayroll, { isLoading: isUpdating }] =
     useUpdateFunctionMutation();
   const { data: employeesData = [] } = useGetallFunctionQuery({
-    url: "/employees",
+    url: "/employees/all",
   });
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -162,6 +162,8 @@ const PayModel = ({ isOpen, onClose, onSave, payroll }) => {
   const isPaymentInfoValid = () => {
     return true; // All payment fields are optional except basic info which is already validated
   };
+
+  
 
   if (!isOpen) return null;
 

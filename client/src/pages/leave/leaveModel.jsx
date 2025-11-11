@@ -28,6 +28,7 @@ const LeaveModal = ({ isOpen, onClose, leave, employees, shifts, refetchLeaves, 
     duration: "",
   });
 
+  
   const [approvalData, setApprovalData] = useState({
     status: "Pending",
     approvedBy: "",

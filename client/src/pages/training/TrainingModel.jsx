@@ -18,7 +18,7 @@ import {toast} from "react-toastify";
 const TrainingModel = ({ isOpen, onClose, onSave, training }) => {
   const [createTraining, { isLoading: isCreating }] = useCreateFuctionMutation();
   const [updateTraining, { isLoading: isUpdating }] = useUpdateFunctionMutation();
-  const { data: employeesData } = useGetallFunctionQuery({ url: "/employees" });
+  const { data: employeesData } = useGetallFunctionQuery({ url: "/employees/all" });
 
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({

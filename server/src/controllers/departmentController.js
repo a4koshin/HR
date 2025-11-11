@@ -35,8 +35,24 @@ export const createDepartment = async (req, res) => {
   }
 };
 
-// ✅ Get all departments with pagination
+// ✅ Get all departments (no pagination)
 export const getDepartments = async (req, res) => {
+  try {
+    const departments = await Department.find().sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: departments.length,
+      departments,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+// ✅ Get all departments with pagination
+export const getPaginatedDepartments = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1; // default to page 1
     const limit = 10; // fixed 10 departments per page

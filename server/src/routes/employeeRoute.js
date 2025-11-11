@@ -5,6 +5,7 @@ import {
   getEmployee,
   updateEmployee,
   deleteEmployee,
+  getPaginatedEmployees
 } from "../controllers/employeeController.js";
 import {validate} from "../middlewares/validate.js";
 import {employeeSchema} from "../validation/employeeJoi.js";
@@ -13,10 +14,11 @@ const employeeRouter = express.Router();
 
 employeeRouter.use(protectHR)
 
-employeeRouter.post("/", validate(employeeSchema), createEmployee);
-employeeRouter.get("/", getEmployees);
+employeeRouter.post("/", createEmployee);
+employeeRouter.get("/", getPaginatedEmployees);
+employeeRouter.get("/all", getEmployees);
 employeeRouter.get("/:id", getEmployee);
-employeeRouter.put("/:id",  validate(employeeSchema),updateEmployee);
+employeeRouter.put("/:id",updateEmployee);
 employeeRouter.delete("/:id", deleteEmployee);
 
 export default employeeRouter;
