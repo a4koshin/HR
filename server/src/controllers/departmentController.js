@@ -35,10 +35,10 @@ export const createDepartment = async (req, res) => {
   }
 };
 
-// ✅ Get all departments (no pagination)
+// ✅ Get all departments (like getEmployees)
 export const getDepartments = async (req, res) => {
   try {
-    const departments = await Department.find({deleted:0}).sort({ createdAt: -1 });
+    const departments = await Department.find({ deleted: 0 }).sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -50,26 +50,25 @@ export const getDepartments = async (req, res) => {
   }
 };
 
-
-// ✅ Get all departments with pagination
+// ✅ Get paginated departments (optional)
 export const getPaginatedDepartments = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1; // default to page 1
-    const limit = 10; // fixed 10 departments per page
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
 
-    const total = await Department.countDocuments();
+    const total = await Department.countDocuments({ deleted: 0 });
 
-    const departments = await Department.find({deleted:0})
+    const departments = await Department.find({ deleted: 0 })
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
 
     res.status(200).json({
       success: true,
-      total,                   // total number of departments
-      page,                    // current page
-      pages: Math.ceil(total / limit), // total pages
-      departments,             // departments for this page
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      departments,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -79,7 +78,7 @@ export const getPaginatedDepartments = async (req, res) => {
 // ✅ Get single department by ID
 export const getDepartment = async (req, res) => {
   try {
-    const department = await Department.findById(req.params.id);
+    const department = await Department.findOne({ _id: req.params.id, deleted: 0 });
 
     if (!department) {
       return res.status(404).json({
@@ -99,8 +98,9 @@ export const updateDepartment = async (req, res) => {
   try {
     const updates = req.body;
 
-    const updateSchema = departmentSchema.fork(Object.keys(departmentSchema.describe().keys), (field) =>
-      field.optional()
+    const updateSchema = departmentSchema.fork(
+      Object.keys(departmentSchema.describe().keys),
+      (field) => field.optional()
     );
 
     const { error, value } = updateSchema.validate(updates, { abortEarly: false });
@@ -144,14 +144,6 @@ export const updateDepartment = async (req, res) => {
 // ✅ Soft delete department
 export const deleteDepartment = async (req, res) => {
   try {
-    const department = await Department.findById(req.params.id);
-
-    if (!department) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Department not found" });
-    }
-
     // Check if department has assigned employees
     const employeeCount = await Employee.countDocuments({ department: req.params.id });
     if (employeeCount > 0) {
@@ -161,16 +153,23 @@ export const deleteDepartment = async (req, res) => {
       });
     }
 
-    // ✅ Soft delete: set deleted = 1 instead of removing from DB
-    department.deleted = 1;
-    await department.save();
+    // Soft delete: update deleted = 1
+    const department = await Department.findByIdAndUpdate(
+      req.params.id,
+      { deleted: 1 },
+      { new: true }
+    );
+
+    if (!department) {
+      return res.status(404).json({ success: false, message: "Department not found" });
+    }
 
     res.status(200).json({
       success: true,
       message: "Department soft deleted successfully",
+      department,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
