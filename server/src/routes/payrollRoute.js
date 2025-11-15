@@ -17,6 +17,6 @@ payrollRouter.post("/", createPayroll);
 payrollRouter.get("/", getPayrolls);
 payrollRouter.get("/:id", getPayroll);
 payrollRouter.put("/:id", updatePayroll);
-payrollRouter.delete("/:id", deletePayroll);
+payrollRouter.put("/delete/:id", deletePayroll);
 
 export default payrollRouter;
