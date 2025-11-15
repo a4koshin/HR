@@ -1,9 +1,9 @@
 import Payroll from "../models/payroll.js";
+import Employee from "../models/employee.js"; // Optional but recommended for existence check
 import { calculatePayroll } from "../helpers/payrollHelper.js";
 import { payrollSchema } from "../validation/payrollJoi.js";
 
-// ✅ Create new payroll
-// ✅ Create new payroll
+// ---------------------- Create Payroll ----------------------
 export const createPayroll = async (req, res) => {
   try {
     const { error, value } = payrollSchema.validate(req.body, {
@@ -29,8 +29,16 @@ export const createPayroll = async (req, res) => {
       paymentMethod,
     } = value;
 
-    // 🚨 Prevent duplicate payroll for same employee & month
-    const existingPayroll = await Payroll.findOne({ employee, month });
+    // Check if employee exists
+    const empExists = await Employee.findById(employee);
+    if (!empExists) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Assigned employee does not exist" });
+    }
+
+    // Prevent duplicate payroll for same employee + month
+    const existingPayroll = await Payroll.findOne({ employee, month, deleted: 0 });
     if (existingPayroll) {
       return res.status(400).json({
         success: false,
@@ -38,7 +46,7 @@ export const createPayroll = async (req, res) => {
       });
     }
 
-    // 🧮 Calculate payroll
+    // Calculate payroll
     const { overtimePay, grossPay, netPay } = calculatePayroll({
       basicSalary,
       overtimeHours,
@@ -70,32 +78,15 @@ export const createPayroll = async (req, res) => {
   }
 };
 
-// ✅ Get all payrolls
-// export const getPayrolls = async (req, res) => {
-//   try {
-//     const payrolls = await Payroll.find()
-//       .populate("employee", "fullname salary email position")
-//       .sort({ createdAt: -1 });
-
-//     res.status(200).json({
-//       success: true,
-//       count: payrolls.length,
-//       payrolls,
-//     });
-//   } catch (error) {
-//     res.status(500).json({ success: false, message: error.message });
-//   }
-// };
-
-// ---------------- Get All Payrolls with Pagination ----------------
+// ---------------------- Get All Payrolls (Paginated) ----------------------
 export const getPayrolls = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1; // default to page 1
-    const limit = 10; // 10 payrolls per page
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
 
-    const total = await Payroll.countDocuments();
+    const total = await Payroll.countDocuments({ deleted: 0 });
 
-    const payrolls = await Payroll.find({deleted:0})
+    const payrolls = await Payroll.find({ deleted: 0 })
       .populate("employee", "fullname salary email position")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
@@ -103,29 +94,28 @@ export const getPayrolls = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      total, // total payroll records
-      page, // current page
-      pages: Math.ceil(total / limit), // total pages
-      payrolls, // records for this page
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      payrolls,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ✅ Get single payroll by ID
+// ---------------------- Get Single Payroll ----------------------
 export const getPayroll = async (req, res) => {
   try {
-    const payroll = await Payroll.findById(req.params.id).populate(
-      "employee",
-      "fullname email role"
-    );
+    const payroll = await Payroll.findOne({
+      _id: req.params.id,
+      deleted: 0,
+    }).populate("employee", "fullname email role");
 
     if (!payroll) {
-      return res.status(404).json({
-        success: false,
-        message: "Payroll not found",
-      });
+      return res
+        .status(404)
+        .json({ success: false, message: "Payroll not found" });
     }
 
     res.status(200).json({ success: true, payroll });
@@ -134,10 +124,9 @@ export const getPayroll = async (req, res) => {
   }
 };
 
-// ✅ Update payroll
+// ---------------------- Update Payroll ----------------------
 export const updatePayroll = async (req, res) => {
   try {
-    // make all fields optional for update
     const updateSchema = payrollSchema.fork(
       Object.keys(payrollSchema.describe().keys),
       (field) => field.optional()
@@ -154,25 +143,30 @@ export const updatePayroll = async (req, res) => {
       });
     }
 
-    const payroll = await Payroll.findById(req.params.id);
+    const payroll = await Payroll.findOne({
+      _id: req.params.id,
+      deleted: 0,
+    });
+
     if (!payroll) {
-      return res.status(404).json({
-        success: false,
-        message: "Payroll not found",
-      });
+      return res
+        .status(404)
+        .json({ success: false, message: "Payroll not found" });
     }
 
+    // Extract updated fields + fallback defaults
     const {
       basicSalary = payroll.basicSalary,
       overtimeHours = payroll.overtimeHours,
       overtimeRate = payroll.overtimeRate,
       deduction = payroll.deduction,
       paySlipUrl = payroll.paySlipUrl,
+      paymentMethod = payroll.paymentMethod,
       paidStatus = payroll.paidStatus,
       paymentDate = payroll.paymentDate,
-      paymentMethod = payroll.paymentMethod,
     } = value;
 
+    // Recalculate payroll details
     const { overtimePay, grossPay, netPay } = calculatePayroll({
       basicSalary,
       overtimeHours,
@@ -191,9 +185,9 @@ export const updatePayroll = async (req, res) => {
         deduction,
         netPay,
         paySlipUrl,
+        paymentMethod,
         paidStatus,
         paymentDate,
-        paymentMethod,
       },
       { new: true, runValidators: true }
     );
@@ -208,7 +202,7 @@ export const updatePayroll = async (req, res) => {
   }
 };
 
-// ✅ Delete payroll
+// ---------------------- Soft Delete Payroll ----------------------
 export const deletePayroll = async (req, res) => {
   try {
     const payroll = await Payroll.findByIdAndUpdate(
@@ -218,15 +212,15 @@ export const deletePayroll = async (req, res) => {
     );
 
     if (!payroll) {
-      return res.status(404).json({
-        success: false,
-        message: "Payroll not found",
-      });
+      return res
+        .status(404)
+        .json({ success: false, message: "Payroll not found" });
     }
 
     res.status(200).json({
       success: true,
       message: "Payroll deleted successfully",
+      payroll,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

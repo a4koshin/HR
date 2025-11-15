@@ -15,6 +15,7 @@ import {
   FiChevronRight,
   FiAlertTriangle,
 } from "react-icons/fi";
+import { toast } from "react-toastify";
 
 const PayrollPage = () => {
   // --- RTK Query ---
@@ -80,7 +81,7 @@ const PayrollPage = () => {
         url: "payrolls/delete",
       }).unwrap();
 
-      console.log("Payroll deleted successfully!");
+      toast.success("Payroll deleted successfully!");
       refetch();
 
       // Using the same pattern as EmployeePage but with payrolls
