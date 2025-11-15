@@ -2,7 +2,7 @@ import Applicant from "../models/applicant.js";
 import Recruitment from "../models/recruitment.js";
 import { applicantSchema } from "../validation/applicantJoi.js";
 
-// ---------------- CREATE applicant ----------------
+// ---------------------- Create Applicant ----------------------
 export const createApplicant = async (req, res) => {
   try {
     const { error, value } = applicantSchema.validate(req.body, {
@@ -28,8 +28,8 @@ export const createApplicant = async (req, res) => {
     }
 
     // Prevent duplicate applicant for same job
-    const existingApplicant = await Applicant.findOne({ email, appliedJob });
-    if (existingApplicant) {
+    const existing = await Applicant.findOne({ email, appliedJob, deleted: 0 });
+    if (existing) {
       return res.status(400).json({
         success: false,
         message: "Applicant already applied for this job",
@@ -42,6 +42,7 @@ export const createApplicant = async (req, res) => {
       appliedJob,
     });
 
+    // Add applicant to the job list
     job.applicants.push(applicant._id);
     await job.save();
 
@@ -55,7 +56,7 @@ export const createApplicant = async (req, res) => {
   }
 };
 
-// ---------------- GET all applicants (paginated, active only) ----------------
+// ---------------------- Get All Applicants (Paginated) ----------------------
 export const getApplicants = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -81,7 +82,7 @@ export const getApplicants = async (req, res) => {
   }
 };
 
-// ---------------- GET single applicant ----------------
+// ---------------------- Get Single Applicant ----------------------
 export const getApplicantById = async (req, res) => {
   try {
     const applicant = await Applicant.findOne({
@@ -101,9 +102,10 @@ export const getApplicantById = async (req, res) => {
   }
 };
 
-// ---------------- UPDATE applicant ----------------
+// ---------------------- Update Applicant ----------------------
 export const updateApplicant = async (req, res) => {
   try {
+    // Make all schema fields optional on update
     const updateSchema = applicantSchema.fork(
       Object.keys(applicantSchema.describe().keys),
       (field) => field.optional()
@@ -112,6 +114,7 @@ export const updateApplicant = async (req, res) => {
     const { error, value } = updateSchema.validate(req.body, {
       abortEarly: false,
     });
+
     if (error) {
       return res.status(400).json({
         success: false,
@@ -131,21 +134,26 @@ export const updateApplicant = async (req, res) => {
         .json({ success: false, message: "Applicant not found" });
     }
 
-    // If appliedJob changed
-    if (value.appliedJob && value.appliedJob !== applicant.appliedJob.toString()) {
-      const job = await Recruitment.findById(value.appliedJob);
-      if (!job) {
+    // Handle job change logic
+    if (
+      value.appliedJob &&
+      value.appliedJob !== applicant.appliedJob.toString()
+    ) {
+      const newJob = await Recruitment.findById(value.appliedJob);
+      if (!newJob) {
         return res
           .status(404)
           .json({ success: false, message: "Recruitment job not found" });
       }
 
-      // Remove applicant from old job and add to new one
+      // Remove from old job
       await Recruitment.findByIdAndUpdate(applicant.appliedJob, {
         $pull: { applicants: applicant._id },
       });
-      job.applicants.push(applicant._id);
-      await job.save();
+
+      // Add to new job
+      newJob.applicants.push(applicant._id);
+      await newJob.save();
     }
 
     const updatedApplicant = await Applicant.findByIdAndUpdate(
@@ -164,10 +172,15 @@ export const updateApplicant = async (req, res) => {
   }
 };
 
-// ---------------- SOFT DELETE applicant ----------------
+// ---------------------- Soft Delete Applicant ----------------------
 export const deleteApplicant = async (req, res) => {
   try {
-    const applicant = await Applicant.findById(req.params.id);
+    // Corrected soft delete — your old code had a bug
+    const applicant = await Applicant.findByIdAndUpdate(
+      req.params.id,
+      { deleted: 1 },
+      { new: true }
+    );
 
     if (!applicant) {
       return res
@@ -175,14 +188,10 @@ export const deleteApplicant = async (req, res) => {
         .json({ success: false, message: "Applicant not found" });
     }
 
-    // Remove applicant reference from recruitment (optional)
+    // Remove applicant from Recruitment job list
     await Recruitment.findByIdAndUpdate(applicant.appliedJob, {
       $pull: { applicants: applicant._id },
     });
-
-    // Soft delete instead of hard delete
-    applicant.deleted = 1;
-    await applicant.save();
 
     res.status(200).json({
       success: true,

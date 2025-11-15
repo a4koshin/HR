@@ -6,7 +6,9 @@ import { recruitmentSchema } from "../validation/recruitmentJoi.js";
 // ✅ Create new recruitment
 export const createRecruitment = async (req, res) => {
   try {
-    const { error, value } = recruitmentSchema.validate(req.body, { abortEarly: false });
+    const { error, value } = recruitmentSchema.validate(req.body, {
+      abortEarly: false,
+    });
 
     if (error) {
       return res.status(400).json({
@@ -60,7 +62,7 @@ export const getRecruitments = async (req, res) => {
 
     const total = await Recruitment.countDocuments();
 
-    const jobs = await Recruitment.find()
+    const jobs = await Recruitment.find({ deleted: 0 })
       .populate("applicants", "name email status")
       .populate("hiredEmployeeId", "fullname email role")
       .sort({ createdAt: -1 })
@@ -69,21 +71,15 @@ export const getRecruitments = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      total,             // total job records
-      page,              // current page
+      total, // total job records
+      page, // current page
       pages: Math.ceil(total / limit), // total pages
-      jobs,              // records for this page
+      jobs, // records for this page
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
-
-
-
-
-
 
 // ✅ Get recruitment by ID
 export const getRecruitment = async (req, res) => {
@@ -117,7 +113,9 @@ export const updateRecruitment = async (req, res) => {
       (field) => field.optional()
     );
 
-    const { error, value } = updateSchema.validate(req.body, { abortEarly: false });
+    const { error, value } = updateSchema.validate(req.body, {
+      abortEarly: false,
+    });
 
     if (error) {
       return res.status(400).json({
@@ -154,7 +152,11 @@ export const updateRecruitment = async (req, res) => {
 // ✅ Delete recruitment
 export const deleteRecruitment = async (req, res) => {
   try {
-    const job = await Recruitment.findById(req.params.id);
+    const job = await Recruitment.findByIdAndUpdate(
+      req.params.id,
+      { deleted: 1 },
+      { new: true }
+    );
 
     if (!job) {
       return res.status(404).json({
@@ -162,9 +164,6 @@ export const deleteRecruitment = async (req, res) => {
         message: "Job not found",
       });
     }
-
-    await Recruitment.findByIdAndDelete(req.params.id);
-
     res.status(200).json({
       success: true,
       message: "Job deleted successfully",
@@ -179,7 +178,10 @@ export const hireApplicant = async (req, res) => {
   try {
     const { applicantId } = req.body;
 
-    const job = await Recruitment.findById(req.params.id).populate("applicants", "name email status");
+    const job = await Recruitment.findById(req.params.id).populate(
+      "applicants",
+      "name email status"
+    );
     if (!job) {
       return res.status(404).json({
         success: false,

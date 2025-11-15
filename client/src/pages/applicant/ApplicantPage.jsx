@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { TailSpin } from "react-loader-spinner";
 import ApplicantModel from "./ApplicantModel";
-import { useGetallFunctionQuery } from "../../store/DynamicApi";
+import { 
+  useGetallFunctionQuery, 
+  useUpdateFunctionMutation 
+} from "../../store/DynamicApi";
 import {
   FiEdit2,
   FiTrash2,
@@ -14,13 +17,17 @@ import {
   FiFilter,
   FiChevronLeft,
   FiChevronRight,
+  FiAlertTriangle,
 } from "react-icons/fi";
+import { toast } from "react-toastify";
 
 const ApplicantPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingApplicant, setEditingApplicant] = useState(null);
   const [filter, setFilter] = useState({ status: "", job: "" });
   const [currentPage, setCurrentPage] = useState(1);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [applicantToDelete, setApplicantToDelete] = useState(null);
 
   // Fetch applicants with pagination
   const {
@@ -30,10 +37,12 @@ const ApplicantPage = () => {
     refetch,
   } = useGetallFunctionQuery({ url: `/applicants?page=${currentPage}` });
 
+  const [updateApplicant, { isLoading: isUpdating }] = useUpdateFunctionMutation();
+
   // Fetch jobs for filter dropdown
   const { data: jobsData } = useGetallFunctionQuery({ url: "/recruitment" });
 
-  // Pagination functions
+  // --- Using EmployeePage pattern for pagination ---
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
@@ -75,6 +84,41 @@ const ApplicantPage = () => {
   const handleCloseModal = () => {
     setEditingApplicant(null);
     setIsModalOpen(false);
+  };
+
+  // --- Using EmployeePage pattern for delete functionality ---
+  const openDeleteModal = (applicant) => {
+    setApplicantToDelete(applicant);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setApplicantToDelete(null);
+  };
+
+  const handleDelete = async () => {
+    if (!applicantToDelete) return;
+
+    try {
+      await updateApplicant({
+        id: applicantToDelete._id,
+        url: "applicants/delete",
+      }).unwrap();
+
+      toast.success("Applicant deleted successfully!");
+      refetch();
+
+      // Using the same pattern as EmployeePage but with applicants
+      if (applicants.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
+
+      closeDeleteModal();
+    } catch (error) {
+      console.error("Error deleting applicant:", error);
+      toast.error("Failed to delete applicant");
+    }
   };
 
   const handleFilterChange = (e) => {
@@ -367,11 +411,20 @@ const ApplicantPage = () => {
                             <FiEdit2 className="w-5 h-5" />
                           </button>
                           <button
-                            onClick={() => console.log("Delete applicant", applicant._id)}
-                            className="p-2.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200 group-hover:scale-110"
+                            onClick={() => openDeleteModal(applicant)}
+                            disabled={isUpdating}
+                            className="p-2.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200 group-hover:scale-110 disabled:opacity-50"
                             title="Delete Applicant"
                           >
-                            <FiTrash2 className="w-5 h-5" />
+                            {isUpdating ? (
+                              <TailSpin
+                                height={16}
+                                width={16}
+                                color="#DC2626"
+                              />
+                            ) : (
+                              <FiTrash2 className="w-5 h-5" />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -401,18 +454,15 @@ const ApplicantPage = () => {
           </div>
         )}
 
-        {/* Pagination - Clean & Beautiful */}
+        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex flex-col items-center justify-center mt-8 space-y-4">
-            {/* Page Info */}
             <div className="text-sm text-gray-600">
               Page <span className="font-semibold text-blue-600">{currentPage}</span> of{" "}
               <span className="font-semibold text-blue-600">{totalPages}</span>
             </div>
 
-            {/* Pagination Controls */}
             <div className="flex items-center space-x-2">
-              {/* Previous Button */}
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
@@ -421,7 +471,6 @@ const ApplicantPage = () => {
                 <FiChevronLeft className="w-5 h-5" />
               </button>
 
-              {/* Page Numbers */}
               {generatePageNumbers().map((pageNum, index) => (
                 <button
                   key={index}
@@ -441,7 +490,6 @@ const ApplicantPage = () => {
                 </button>
               ))}
 
-              {/* Next Button */}
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
@@ -465,6 +513,74 @@ const ApplicantPage = () => {
             }}
             jobs={jobs}
           />
+        )}
+
+        {/* Delete Confirmation Modal - Using EmployeePage pattern */}
+        {isDeleteModalOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+            <div
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scaleIn"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-red-50 rounded-full">
+                  <FiAlertTriangle className="w-6 h-6 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    Delete Applicant
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    This action is permanent
+                  </p>
+                </div>
+              </div>
+
+              <div className="my-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-gray-700">
+                  Are you sure you want to delete the application from{" "}
+                  <strong className="text-red-600">
+                    {applicantToDelete?.name}
+                  </strong>
+                  ? This action cannot be undone and all associated data will be
+                  permanently removed.
+                </p>
+                {applicantToDelete && (
+                  <div className="mt-3 text-sm text-gray-600">
+                    <p><strong>Applied for:</strong> {applicantToDelete.appliedJob?.title || applicantToDelete.appliedJob?.jobTitle || "N/A"}</p>
+                    <p><strong>Status:</strong> {applicantToDelete.status}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={closeDeleteModal}
+                  disabled={isUpdating}
+                  className="px-5 py-2.5 text-gray-700 hover:text-gray-900 hover:bg-gray-100 font-medium rounded-lg transition-all duration-200 disabled:opacity-50 border border-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isUpdating}
+                  className="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-all duration-200 disabled:opacity-50 flex items-center gap-2 shadow-md hover:shadow-lg transform"
+                >
+                  {isUpdating ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <FiTrash2 className="w-4 h-4" />
+                      Delete Applicant
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

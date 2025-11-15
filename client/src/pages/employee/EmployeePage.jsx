@@ -18,6 +18,7 @@ import {
   FiAlertTriangle,
 } from "react-icons/fi";
 import { HiOutlineOfficeBuilding, HiStatusOnline } from "react-icons/hi";
+import { toast } from "react-toastify";
 
 const EmployeePage = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -83,7 +84,7 @@ const EmployeePage = () => {
       }).unwrap();
 
       // Show success message (you can replace this with toast when you set it up)
-      console.log("Employee deleted successfully!");
+      toast.success("Employee deleted successfully!");
       refetch();
 
       if (employees.length === 1 && currentPage > 1) {

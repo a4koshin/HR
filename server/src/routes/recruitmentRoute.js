@@ -19,7 +19,7 @@ recruitmentRouter.post("/", createRecruitment);
 recruitmentRouter.get("/", getRecruitments);
 recruitmentRouter.get("/:id", getRecruitment);
 recruitmentRouter.put("/:id", updateRecruitment);
-recruitmentRouter.delete("/:id", deleteRecruitment);
+recruitmentRouter.put("/delete/:id", deleteRecruitment);
 
 // Hire applicant
 recruitmentRouter.post("/:id/hire", hireApplicant);

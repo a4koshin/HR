@@ -17,6 +17,6 @@ applicantRouter.post("/", createApplicant);
 applicantRouter.get("/", getApplicants);
 applicantRouter.get("/:id", getApplicantById);
 applicantRouter.put("/:id", updateApplicant);
-applicantRouter.put("delete/:id", deleteApplicant);
+applicantRouter.put("/delete/:id", deleteApplicant);
 
 export default applicantRouter;

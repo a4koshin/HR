@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { TailSpin } from "react-loader-spinner";
 import RecruitmentModel from "./RecruitmentModel";
-import { useGetallFunctionQuery } from "../../store/DynamicApi";
+import { 
+  useGetallFunctionQuery, 
+  useUpdateFunctionMutation 
+} from "../../store/DynamicApi";
 import {
   FiEdit2,
   FiTrash2,
@@ -15,13 +18,17 @@ import {
   FiUserPlus,
   FiChevronLeft,
   FiChevronRight,
+  FiAlertTriangle,
 } from "react-icons/fi";
+import { toast } from "react-toastify";
 
 const RecruitmentPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecruitment, setEditingRecruitment] = useState(null);
   const [filter, setFilter] = useState({ status: "" });
   const [currentPage, setCurrentPage] = useState(1);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [recruitmentToDelete, setRecruitmentToDelete] = useState(null);
 
   const {
     data: recruitmentData,
@@ -30,7 +37,9 @@ const RecruitmentPage = () => {
     refetch,
   } = useGetallFunctionQuery({ url: `/recruitment?page=${currentPage}` });
 
-  // Add these functions
+  const [updateRecruitment, { isLoading: isUpdating }] = useUpdateFunctionMutation();
+
+  // --- Using EmployeePage pattern for pagination ---
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
@@ -78,6 +87,41 @@ const RecruitmentPage = () => {
     setIsModalOpen(false);
   };
 
+  // --- Using EmployeePage pattern for delete functionality ---
+  const openDeleteModal = (recruitment) => {
+    setRecruitmentToDelete(recruitment);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setRecruitmentToDelete(null);
+  };
+
+  const handleDelete = async () => {
+    if (!recruitmentToDelete) return;
+
+    try {
+      await updateRecruitment({
+        id: recruitmentToDelete._id,
+        url: "recruitment/delete",
+      }).unwrap();
+
+      toast.success("Job position deleted successfully!");
+      refetch();
+
+      // Using the same pattern as EmployeePage but with recruitments
+      if (recruitments.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
+
+      closeDeleteModal();
+    } catch (error) {
+      console.error("Error deleting job position:", error);
+      toast.error("Failed to delete job position");
+    }
+  };
+
   const handleFilterChange = (e) => {
     setFilter({ ...filter, [e.target.name]: e.target.value });
   };
@@ -96,8 +140,6 @@ const RecruitmentPage = () => {
       alert("Failed to hire applicant");
     }
   };
-
-  // const recruitments = recruitmentData?.recruitments || recruitmentData || [];
 
   const recruitments =
     recruitmentData?.recruitments ||
@@ -207,70 +249,6 @@ const RecruitmentPage = () => {
         </div>
 
         {/* Stats Cards */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Jobs</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {totalJobs}
-                </p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-xl">
-                <FiBriefcase className="text-2xl text-blue-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Open Positions
-                </p>
-                <p className="text-3xl font-bold text-green-600 mt-2">
-                  {openJobs}
-                </p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-xl">
-                <FiTrendingUp className="text-2xl text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Total Applicants
-                </p>
-                <p className="text-3xl font-bold text-purple-600 mt-2">
-                  {totalApplicants}
-                </p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-xl">
-                <FiUsers className="text-2xl text-purple-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Successful Hires
-                </p>
-                <p className="text-3xl font-bold text-blue-600 mt-2">
-                  {hiredJobs}
-                </p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-xl">
-                <FiUserCheck className="text-2xl text-blue-600" />
-              </div>
-            </div>
-          </div>
-        </div> */}
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
             <div className="flex items-center justify-between">
@@ -334,6 +312,7 @@ const RecruitmentPage = () => {
             </div>
           </div>
         </div>
+
         {/* Filters */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -477,11 +456,20 @@ const RecruitmentPage = () => {
                             <FiEdit2 className="w-5 h-5" />
                           </button>
                           <button
-                            onClick={() => console.log("Delete job", job._id)}
-                            className="p-2.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200 group-hover:scale-110"
+                            onClick={() => openDeleteModal(job)}
+                            disabled={isUpdating}
+                            className="p-2.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200 group-hover:scale-110 disabled:opacity-50"
                             title="Delete Job"
                           >
-                            <FiTrash2 className="w-5 h-5" />
+                            {isUpdating ? (
+                              <TailSpin
+                                height={16}
+                                width={16}
+                                color="#DC2626"
+                              />
+                            ) : (
+                              <FiTrash2 className="w-5 h-5" />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -515,58 +503,57 @@ const RecruitmentPage = () => {
           </div>
         )}
 
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex flex-col items-center justify-center mt-8 space-y-4">
+            <div className="text-sm text-gray-600">
+              Page{" "}
+              <span className="font-semibold text-blue-600">{currentPage}</span>{" "}
+              of{" "}
+              <span className="font-semibold text-blue-600">{totalPages}</span>
+            </div>
 
-        {/* Pagination - Clean & Beautiful */}
-{totalPages > 1 && (
-  <div className="flex flex-col items-center justify-center mt-8 space-y-4">
-    {/* Page Info */}
-    <div className="text-sm text-gray-600">
-      Page <span className="font-semibold text-blue-600">{currentPage}</span> of{" "}
-      <span className="font-semibold text-blue-600">{totalPages}</span>
-    </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+              >
+                <FiChevronLeft className="w-5 h-5" />
+              </button>
 
-    {/* Pagination Controls */}
-    <div className="flex items-center space-x-2">
-      {/* Previous Button */}
-      <button
-        onClick={() => handlePageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-      >
-        <FiChevronLeft className="w-5 h-5" />
-      </button>
+              {generatePageNumbers().map((pageNum, index) => (
+                <button
+                  key={index}
+                  onClick={() =>
+                    typeof pageNum === "number" && handlePageChange(pageNum)
+                  }
+                  disabled={pageNum === "..."}
+                  className={`
+                    flex items-center justify-center w-10 h-10 rounded-lg font-medium transition-all duration-200
+                    ${
+                      currentPage === pageNum
+                        ? "bg-blue-600 text-white shadow-md scale-105"
+                        : pageNum === "..."
+                        ? "text-gray-400 cursor-default"
+                        : "text-gray-600 hover:bg-blue-50 hover:border hover:border-blue-200 hover:text-blue-600"
+                    }
+                  `}
+                >
+                  {pageNum}
+                </button>
+              ))}
 
-      {/* Page Numbers */}
-      {generatePageNumbers().map((pageNum, index) => (
-        <button
-          key={index}
-          onClick={() => typeof pageNum === "number" && handlePageChange(pageNum)}
-          disabled={pageNum === "..."}
-          className={`
-            flex items-center justify-center w-10 h-10 rounded-lg font-medium transition-all duration-200
-            ${currentPage === pageNum
-              ? "bg-blue-600 text-white shadow-md scale-105"
-              : pageNum === "..."
-              ? "text-gray-400 cursor-default"
-              : "text-gray-600 hover:bg-blue-50 hover:border hover:border-blue-200 hover:text-blue-600"
-            }
-          `}
-        >
-          {pageNum}
-        </button>
-      ))}
-
-      {/* Next Button */}
-      <button
-        onClick={() => handlePageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-      >
-        <FiChevronRight className="w-5 h-5" />
-      </button>
-    </div>
-  </div>
-)}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+              >
+                <FiChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Recruitment Modal */}
         {isModalOpen && (
@@ -579,6 +566,68 @@ const RecruitmentPage = () => {
               handleCloseModal();
             }}
           />
+        )}
+
+        {/* Delete Confirmation Modal - Using EmployeePage pattern */}
+        {isDeleteModalOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+            <div
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scaleIn"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-red-50 rounded-full">
+                  <FiAlertTriangle className="w-6 h-6 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    Delete Job Position
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    This action is permanent
+                  </p>
+                </div>
+              </div>
+
+              <div className="my-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-gray-700">
+                  Are you sure you want to delete the job position{" "}
+                  <strong className="text-red-600">
+                    "{recruitmentToDelete?.jobTitle}"
+                  </strong>
+                  ? This action cannot be undone and all associated data will be
+                  permanently removed.
+                </p>
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={closeDeleteModal}
+                  disabled={isUpdating}
+                  className="px-5 py-2.5 text-gray-700 hover:text-gray-900 hover:bg-gray-100 font-medium rounded-lg transition-all duration-200 disabled:opacity-50 border border-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isUpdating}
+                  className="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-all duration-200 disabled:opacity-50 flex items-center gap-2 shadow-md hover:shadow-lg transform"
+                >
+                  {isUpdating ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <FiTrash2 className="w-4 h-4" />
+                      Delete Job
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
