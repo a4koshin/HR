@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { TailSpin } from "react-loader-spinner";
 import TrainingModel from "./TrainingModel";
-import { useGetallFunctionQuery } from "../../store/DynamicApi";
+import { 
+  useGetallFunctionQuery, 
+  useUpdateFunctionMutation 
+} from "../../store/DynamicApi";
 import {
   FiEdit2,
   FiTrash2,
@@ -14,13 +17,17 @@ import {
   FiUserCheck,
   FiChevronLeft,
   FiChevronRight,
+  FiAlertTriangle,
 } from "react-icons/fi";
+import { toast } from "react-toastify";
 
 const TrainingPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTraining, setEditingTraining] = useState(null);
   const [filter, setFilter] = useState({ status: "" });
   const [currentPage, setCurrentPage] = useState(1);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [trainingToDelete, setTrainingToDelete] = useState(null);
 
   const {
     data: trainingData,
@@ -29,43 +36,41 @@ const TrainingPage = () => {
     refetch,
   } = useGetallFunctionQuery({ url: `/trainings?page=${currentPage}` });
 
+  const [updateTraining, { isLoading: isUpdating }] = useUpdateFunctionMutation();
 
-// Add these functions
-const handlePageChange = (page) => {
-  setCurrentPage(page);
-};
+  // --- Using EmployeePage pattern for pagination ---
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
 
-const generatePageNumbers = () => {
-  const totalPages = trainingData.pages || 1;
-  const current = currentPage;
-  const delta = 2;
-  const range = [];
-  const rangeWithDots = [];
+  const generatePageNumbers = () => {
+    const totalPages = trainingData.pages || 1;
+    const current = currentPage;
+    const delta = 2;
+    const range = [];
+    const rangeWithDots = [];
 
-  for (let i = 1; i <= totalPages; i++) {
-    if (i === 1 || i === totalPages || (i >= current - delta && i <= current + delta)) {
-      range.push(i);
-    }
-  }
-
-  let prev = 0;
-  for (let i of range) {
-    if (prev) {
-      if (i - prev === 2) {
-        rangeWithDots.push(prev + 1);
-      } else if (i - prev !== 1) {
-        rangeWithDots.push("...");
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= current - delta && i <= current + delta)) {
+        range.push(i);
       }
     }
-    rangeWithDots.push(i);
-    prev = i;
-  }
 
-  return rangeWithDots;
-};
+    let prev = 0;
+    for (let i of range) {
+      if (prev) {
+        if (i - prev === 2) {
+          rangeWithDots.push(prev + 1);
+        } else if (i - prev !== 1) {
+          rangeWithDots.push("...");
+        }
+      }
+      rangeWithDots.push(i);
+      prev = i;
+    }
 
-const totalPages = trainingData?.pages || 1;
-const totalRecords = trainingData?.total || 0;
+    return rangeWithDots;
+  };
 
   const handleOpenModal = (training = null) => {
     setEditingTraining(training);
@@ -75,6 +80,41 @@ const totalRecords = trainingData?.total || 0;
   const handleCloseModal = () => {
     setEditingTraining(null);
     setIsModalOpen(false);
+  };
+
+  // --- Using EmployeePage pattern for delete functionality ---
+  const openDeleteModal = (training) => {
+    setTrainingToDelete(training);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setTrainingToDelete(null);
+  };
+
+  const handleDelete = async () => {
+    if (!trainingToDelete) return;
+
+    try {
+      await updateTraining({
+        id: trainingToDelete._id,
+        url: "trainings/delete",
+      }).unwrap();
+
+      toast.success("Training program deleted successfully!");
+      refetch();
+
+      // Using the same pattern as EmployeePage but with trainings
+      if (trainings.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
+
+      closeDeleteModal();
+    } catch (error) {
+      console.error("Error deleting training program:", error);
+      toast.error("Failed to delete training program");
+    }
   };
 
   const handleFilterChange = (e) => {
@@ -94,6 +134,9 @@ const totalRecords = trainingData?.total || 0;
   const filteredTrainings = trainings.filter(training => {
     return !filter.status || training.completionStatus === filter.status;
   });
+
+  const totalPages = trainingData?.pages || 1;
+  const totalRecords = trainingData?.total || 0;
 
   // Updated getStatusBadge function with your exact style pattern
   const getStatusBadge = (status) => {
@@ -192,56 +235,55 @@ const totalRecords = trainingData?.total || 0;
         </div>
 
         {/* Stats Cards */}
-       {/* Stats Cards */}
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-  <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-gray-600">Total Trainings</p>
-        <p className="text-3xl font-bold text-gray-900 mt-2">{totalRecords}</p>
-      </div>
-      <div className="p-3 bg-blue-100 rounded-xl">
-        <FiUsers className="text-2xl text-blue-600" />
-      </div>
-    </div>
-  </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Trainings</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{totalRecords}</p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <FiUsers className="text-2xl text-blue-600" />
+              </div>
+            </div>
+          </div>
 
-  <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-gray-600">Not Started</p>
-        <p className="text-3xl font-bold text-gray-600 mt-2">{notStartedCount}</p>
-      </div>
-      <div className="p-3 bg-gray-100 rounded-xl">
-        <FiClock className="text-2xl text-gray-600" />
-      </div>
-    </div>
-  </div>
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Not Started</p>
+                <p className="text-3xl font-bold text-gray-600 mt-2">{notStartedCount}</p>
+              </div>
+              <div className="p-3 bg-gray-100 rounded-xl">
+                <FiClock className="text-2xl text-gray-600" />
+              </div>
+            </div>
+          </div>
 
-  <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-gray-600">In Progress</p>
-        <p className="text-3xl font-bold text-yellow-600 mt-2">{inProgressCount}</p>
-      </div>
-      <div className="p-3 bg-yellow-100 rounded-xl">
-        <FiTrendingUp className="text-2xl text-yellow-600" />
-      </div>
-    </div>
-  </div>
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">In Progress</p>
+                <p className="text-3xl font-bold text-yellow-600 mt-2">{inProgressCount}</p>
+              </div>
+              <div className="p-3 bg-yellow-100 rounded-xl">
+                <FiTrendingUp className="text-2xl text-yellow-600" />
+              </div>
+            </div>
+          </div>
 
-  <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-gray-600">Total Participants</p>
-        <p className="text-3xl font-bold text-purple-600 mt-2">{totalParticipants}</p>
-      </div>
-      <div className="p-3 bg-purple-100 rounded-xl">
-        <FiUserCheck className="text-2xl text-purple-600" />
-      </div>
-    </div>
-  </div>
-</div>
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Participants</p>
+                <p className="text-3xl font-bold text-purple-600 mt-2">{totalParticipants}</p>
+              </div>
+              <div className="p-3 bg-purple-100 rounded-xl">
+                <FiUserCheck className="text-2xl text-purple-600" />
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Filters */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
@@ -336,7 +378,6 @@ const totalRecords = trainingData?.total || 0;
                             <FiClock className="w-4 h-4" />
                             {getDuration(training.startDate, training.endDate)}
                           </div>
-                      
                         </div>
                       </td>
                       <td className="px-6 py-5">
@@ -347,7 +388,6 @@ const totalRecords = trainingData?.total || 0;
                           </div>
                           {training.participants && training.participants.length > 0 && (
                             <div className="flex flex-wrap gap-1">
-                           
                               {training.participants.length > 3 && (
                                 <span className="text-xs text-gray-500">
                                   +{training.participants.length - 3} more
@@ -370,11 +410,20 @@ const totalRecords = trainingData?.total || 0;
                             <FiEdit2 className="w-5 h-5" />
                           </button>
                           <button
-                            onClick={() => console.log("Delete training", training._id)}
-                            className="p-2.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200 group-hover:scale-110"
+                            onClick={() => openDeleteModal(training)}
+                            disabled={isUpdating}
+                            className="p-2.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200 group-hover:scale-110 disabled:opacity-50"
                             title="Delete Training"
                           >
-                            <FiTrash2 className="w-5 h-5" />
+                            {isUpdating ? (
+                              <TailSpin
+                                height={16}
+                                width={16}
+                                color="#DC2626"
+                              />
+                            ) : (
+                              <FiTrash2 className="w-5 h-5" />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -403,57 +452,53 @@ const totalRecords = trainingData?.total || 0;
             )}
           </div>
         )}
-        {/* Pagination - Clean & Beautiful */}
-{totalPages > 1 && (
-  <div className="flex flex-col items-center justify-center mt-8 space-y-4">
-    {/* Page Info */}
-    <div className="text-sm text-gray-600">
-      Page <span className="font-semibold text-blue-600">{currentPage}</span> of{" "}
-      <span className="font-semibold text-blue-600">{totalPages}</span>
-    </div>
 
-    {/* Pagination Controls */}
-    <div className="flex items-center space-x-2">
-      {/* Previous Button */}
-      <button
-        onClick={() => handlePageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-      >
-        <FiChevronLeft className="w-5 h-5" />
-      </button>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex flex-col items-center justify-center mt-8 space-y-4">
+            <div className="text-sm text-gray-600">
+              Page <span className="font-semibold text-blue-600">{currentPage}</span> of{" "}
+              <span className="font-semibold text-blue-600">{totalPages}</span>
+            </div>
 
-      {/* Page Numbers */}
-      {generatePageNumbers().map((pageNum, index) => (
-        <button
-          key={index}
-          onClick={() => typeof pageNum === "number" && handlePageChange(pageNum)}
-          disabled={pageNum === "..."}
-          className={`
-            flex items-center justify-center w-10 h-10 rounded-lg font-medium transition-all duration-200
-            ${currentPage === pageNum
-              ? "bg-blue-600 text-white shadow-md scale-105"
-              : pageNum === "..."
-              ? "text-gray-400 cursor-default"
-              : "text-gray-600 hover:bg-blue-50 hover:border hover:border-blue-200 hover:text-blue-600"
-            }
-          `}
-        >
-          {pageNum}
-        </button>
-      ))}
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+              >
+                <FiChevronLeft className="w-5 h-5" />
+              </button>
 
-      {/* Next Button */}
-      <button
-        onClick={() => handlePageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-      >
-        <FiChevronRight className="w-5 h-5" />
-      </button>
-    </div>
-  </div>
-)}
+              {generatePageNumbers().map((pageNum, index) => (
+                <button
+                  key={index}
+                  onClick={() => typeof pageNum === "number" && handlePageChange(pageNum)}
+                  disabled={pageNum === "..."}
+                  className={`
+                    flex items-center justify-center w-10 h-10 rounded-lg font-medium transition-all duration-200
+                    ${currentPage === pageNum
+                      ? "bg-blue-600 text-white shadow-md scale-105"
+                      : pageNum === "..."
+                      ? "text-gray-400 cursor-default"
+                      : "text-gray-600 hover:bg-blue-50 hover:border hover:border-blue-200 hover:text-blue-600"
+                    }
+                  `}
+                >
+                  {pageNum}
+                </button>
+              ))}
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+              >
+                <FiChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Training Modal */}
         {isModalOpen && (
@@ -466,6 +511,75 @@ const totalRecords = trainingData?.total || 0;
               handleCloseModal();
             }}
           />
+        )}
+
+        {/* Delete Confirmation Modal - Using EmployeePage pattern */}
+        {isDeleteModalOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+            <div
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scaleIn"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-red-50 rounded-full">
+                  <FiAlertTriangle className="w-6 h-6 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    Delete Training Program
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    This action is permanent
+                  </p>
+                </div>
+              </div>
+
+              <div className="my-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-gray-700">
+                  Are you sure you want to delete the training program{" "}
+                  <strong className="text-red-600">
+                    "{trainingToDelete?.title}"
+                  </strong>
+                  ? This action cannot be undone and all associated data will be
+                  permanently removed.
+                </p>
+                {trainingToDelete && (
+                  <div className="mt-3 text-sm text-gray-600">
+                    <p><strong>Trainer:</strong> {trainingToDelete.trainer}</p>
+                    <p><strong>Duration:</strong> {getDuration(trainingToDelete.startDate, trainingToDelete.endDate)}</p>
+                    <p><strong>Participants:</strong> {trainingToDelete.participants?.length || 0} employees</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={closeDeleteModal}
+                  disabled={isUpdating}
+                  className="px-5 py-2.5 text-gray-700 hover:text-gray-900 hover:bg-gray-100 font-medium rounded-lg transition-all duration-200 disabled:opacity-50 border border-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isUpdating}
+                  className="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-all duration-200 disabled:opacity-50 flex items-center gap-2 shadow-md hover:shadow-lg transform"
+                >
+                  {isUpdating ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <FiTrash2 className="w-4 h-4" />
+                      Delete Training
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

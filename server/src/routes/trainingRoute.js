@@ -17,6 +17,6 @@ trainingRouter.post("/", createTraining);
 trainingRouter.get("/", getTrainings);
 trainingRouter.get("/:id", getTraining);
 trainingRouter.put("/:id", updateTraining);
-trainingRouter.delete("/:id", deleteTraining);
+trainingRouter.put("/delete/:id", deleteTraining);
 
 export default trainingRouter;
