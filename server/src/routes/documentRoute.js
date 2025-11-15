@@ -17,6 +17,6 @@ documentRouter.post("/", createDocument);
 documentRouter.get("/", getDocuments);
 documentRouter.get("/:id", getDocumentById);
 documentRouter.put("/:id", updateDocument);
-documentRouter.delete("/:id", deleteDocument);
+documentRouter.put("/delete/:id", deleteDocument);
 
 export default documentRouter;

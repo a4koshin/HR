@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { TailSpin } from "react-loader-spinner";
 import DocumentModel from "./DocumentModel";
-import { useGetallFunctionQuery } from "../../store/DynamicApi";
+import { 
+  useGetallFunctionQuery, 
+  useUpdateFunctionMutation 
+} from "../../store/DynamicApi";
 import {
   FiEdit2,
   FiTrash2,
@@ -12,14 +15,18 @@ import {
   FiDownload,
   FiChevronLeft,
   FiChevronRight,
+  FiAlertTriangle,
 } from "react-icons/fi";
 import { HiDocumentDuplicate, HiStatusOnline } from "react-icons/hi";
+import { toast } from "react-toastify";
 
 const DocumentPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState(null);
   const [employeesMap, setEmployeesMap] = useState({});
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState(null);
 
   // Fetch documents with pagination
   const {
@@ -28,6 +35,8 @@ const DocumentPage = () => {
     isError,
     refetch,
   } = useGetallFunctionQuery({ url: `/documents?page=${currentPage}` });
+
+  const [updateDocument, { isLoading: isUpdating }] = useUpdateFunctionMutation();
 
   // Fetch employees to populate the map
   const { data: employeesData } = useGetallFunctionQuery({ url: "/employees" });
@@ -42,7 +51,7 @@ const DocumentPage = () => {
     }
   }, [employeesData]);
 
-  // Pagination functions
+  // --- Using EmployeePage pattern for pagination ---
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
@@ -96,15 +105,38 @@ const DocumentPage = () => {
     refetch();
   };
 
-  const handleDelete = async (documentId) => {
-    if (window.confirm("Are you sure you want to delete this document?")) {
-      try {
-        // You'll need to implement the delete mutation
-        // await deleteDocument(documentId).unwrap();
-        refetch();
-      } catch (error) {
-        console.error("Failed to delete document:", error);
+  // --- Using EmployeePage pattern for delete functionality ---
+  const openDeleteModal = (document) => {
+    setDocumentToDelete(document);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setDocumentToDelete(null);
+  };
+
+  const handleDelete = async () => {
+    if (!documentToDelete) return;
+
+    try {
+      await updateDocument({
+        id: documentToDelete._id,
+        url: "documents/delete",
+      }).unwrap();
+
+      toast.success("Document deleted successfully!");
+      refetch();
+
+      // Using the same pattern as EmployeePage but with documents
+      if (documents.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
       }
+
+      closeDeleteModal();
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      toast.error("Failed to delete document");
     }
   };
 
@@ -129,7 +161,10 @@ const DocumentPage = () => {
     const colors = {
       'Medical License': 'blue',
       'Certification': 'purple',
-      'Compliance Document': 'green'
+      'Compliance Document': 'green',
+      'Contract': 'orange',
+      'ID': 'red',
+      'Other': 'gray'
     };
     return colors[type] || 'gray';
   };
@@ -420,11 +455,20 @@ const DocumentPage = () => {
                               <FiEdit2 className="w-5 h-5" />
                             </button>
                             <button
-                              onClick={() => handleDelete(doc._id)}
-                              className="p-2.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200 group-hover:scale-110"
+                              onClick={() => openDeleteModal(doc)}
+                              disabled={isUpdating}
+                              className="p-2.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200 group-hover:scale-110 disabled:opacity-50"
                               title="Delete Document"
                             >
-                              <FiTrash2 className="w-5 h-5" />
+                              {isUpdating ? (
+                                <TailSpin
+                                  height={16}
+                                  width={16}
+                                  color="#DC2626"
+                                />
+                              ) : (
+                                <FiTrash2 className="w-5 h-5" />
+                              )}
                             </button>
                           </div>
                         </td>
@@ -458,18 +502,15 @@ const DocumentPage = () => {
           </div>
         )}
 
-        {/* Pagination - Clean & Beautiful */}
+        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex flex-col items-center justify-center mt-8 space-y-4">
-            {/* Page Info */}
             <div className="text-sm text-gray-600">
               Page <span className="font-semibold text-blue-600">{currentPage}</span> of{" "}
               <span className="font-semibold text-blue-600">{totalPages}</span>
             </div>
 
-            {/* Pagination Controls */}
             <div className="flex items-center space-x-2">
-              {/* Previous Button */}
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
@@ -478,7 +519,6 @@ const DocumentPage = () => {
                 <FiChevronLeft className="w-5 h-5" />
               </button>
 
-              {/* Page Numbers */}
               {generatePageNumbers().map((pageNum, index) => (
                 <button
                   key={index}
@@ -498,7 +538,6 @@ const DocumentPage = () => {
                 </button>
               ))}
 
-              {/* Next Button */}
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
@@ -517,6 +556,74 @@ const DocumentPage = () => {
           onSave={handleDocumentSaved}
           document={editingDocument}
         />
+
+        {/* Delete Confirmation Modal - Using EmployeePage pattern */}
+        {isDeleteModalOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+            <div
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scaleIn"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-red-50 rounded-full">
+                  <FiAlertTriangle className="w-6 h-6 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    Delete Document
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    This action is permanent
+                  </p>
+                </div>
+              </div>
+
+              <div className="my-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-gray-700">
+                  Are you sure you want to delete the document{" "}
+                  <strong className="text-red-600">
+                    "{documentToDelete?.documentName}"
+                  </strong>
+                  ? This action cannot be undone and the file will be permanently removed.
+                </p>
+                {documentToDelete && (
+                  <div className="mt-3 text-sm text-gray-600">
+                    <p><strong>Employee:</strong> {getEmployeeData(documentToDelete).fullname}</p>
+                    <p><strong>Type:</strong> {documentToDelete.type}</p>
+                    <p><strong>Status:</strong> {getDocumentStatus(documentToDelete.expiryDate).status}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={closeDeleteModal}
+                  disabled={isUpdating}
+                  className="px-5 py-2.5 text-gray-700 hover:text-gray-900 hover:bg-gray-100 font-medium rounded-lg transition-all duration-200 disabled:opacity-50 border border-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isUpdating}
+                  className="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-all duration-200 disabled:opacity-50 flex items-center gap-2 shadow-md hover:shadow-lg transform"
+                >
+                  {isUpdating ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <FiTrash2 className="w-4 h-4" />
+                      Delete Document
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

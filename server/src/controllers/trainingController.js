@@ -53,7 +53,7 @@ export const getTrainings = async (req, res) => {
 
     const total = await Training.countDocuments();
 
-    const trainings = await Training.find()
+    const trainings = await Training.find({deleted:0})
       .populate("participants", "fullname email role")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
@@ -153,7 +153,7 @@ export const updateTraining = async (req, res) => {
 ---------------------------------------------------- */
 export const deleteTraining = async (req, res) => {
   try {
-    const training = await Training.findById(req.params.id);
+    const training = await Training.findByIdAndUpdate(req.params.id,{deleted:1},{new:true});
 
     if (!training) {
       return res.status(404).json({
@@ -161,8 +161,6 @@ export const deleteTraining = async (req, res) => {
         message: "Training not found",
       });
     }
-
-    await training.deleteOne();
 
     res.status(200).json({
       success: true,

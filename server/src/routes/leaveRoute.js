@@ -17,6 +17,6 @@ leaveRouter.post("/", createLeave);
 leaveRouter.get("/", getLeaves);
 leaveRouter.get("/:id", getLeaveById);
 leaveRouter.put("/:id", updateLeave);
-leaveRouter.delete("/:id", deleteLeave);
+leaveRouter.put("/delete/:id", deleteLeave);
 
 export default leaveRouter;
