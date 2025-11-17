@@ -1,24 +1,15 @@
 import express from "express";
-import {
-  login,
-  logout,
-  updateProfile,
-  changePassword,
-  register,
-} from "../controllers/userController.js";
 import { protectHR } from "../middlewares/authMiddleware.js";
 import { validate } from "../middlewares/validate.js";
-import { userSchema,loginSchema } from "../validation/userJoi.js";
+import { userSchema, loginSchema } from "../validation/userJoi.js";
+import { login, createUserWithRoles } from "../controllers/userController.js";
+import { protectSuperAdmin } from "../middlewares/superAdminMiddleware.js";
 
-const userRouter = express.Router();
+const router = express.Router();
 
-// -------- AUTH ROUTES --------
-userRouter.post("/register", validate(userSchema), register);
-userRouter.post("/login", validate(loginSchema), login);
-userRouter.post("/logout", logout);
+router.post("/login", validate(loginSchema), login);
 
-// -------- PROFILE ROUTES --------
-userRouter.put("/me", protectHR, updateProfile);
-userRouter.post("/change-password", protectHR, changePassword);
+// Super Admin creates users
+router.post("/create-user", protectHR, protectSuperAdmin, createUserWithRoles);
 
-export default userRouter;
+export default router;

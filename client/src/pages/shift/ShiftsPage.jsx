@@ -40,6 +40,7 @@ const ShiftPage = () => {
   const shifts = shiftData?.shifts || [];
   const totalPages = shiftData?.pages || 1;
   const totalShifts = shiftData?.total || 0;
+  console.log(totalShifts)
 
   // Helper Functions
   const computeDuration = (startTime, endTime) => {

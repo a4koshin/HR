@@ -10,7 +10,7 @@ const UserPage = () => {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
 
-  const { data: usersData, isLoading, isError, refetch } = useGetUsersQuery();
+  const { data: usersData, isLoading, isError, refetch } = useGetUsersQuery({ url: "/auth" });
   const [registerUser, { isLoading: isRegistering }] = useRegisterUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [updatePassword, { isLoading: isUpdatingPassword }] = useUpdateAppUserPasswordMutation();
@@ -41,6 +41,8 @@ const UserPage = () => {
     setIsPasswordModalOpen(false);
     setEditingUser(null);
   };
+
+console.log(isError)
 
   if (isError) {
     return (

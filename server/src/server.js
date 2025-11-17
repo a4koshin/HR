@@ -14,6 +14,7 @@ import trainingRouter from "./routes/trainingRoute.js";
 import recruitmentRouter from "./routes/recruitmentRoute.js";
 import applicantRouter from "./routes/applicantRoute.js";
 import documentRouter from "./routes/documentRoute.js";
+import roleRouter from "./routes/roleRoutes.js";
 // dotenv
 dotenv.config();
 const app = express();
@@ -52,6 +53,7 @@ app.use("/api/trainings", trainingRouter);
 app.use("/api/recruitment", recruitmentRouter);
 app.use("/api/applicants", applicantRouter);
 app.use("/api/documents", documentRouter);
+app.use("/api/roles", roleRouter);
 
 // Databse config
 connectDB().then(() => {

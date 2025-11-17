@@ -8,12 +8,14 @@ import {
   getPaginatedEmployees,
 } from "../controllers/employeeController.js";
 import { protectHR } from "../middlewares/authMiddleware.js";
+import { allowPage } from "../middlewares/permissionMiddleware.js";
 
 const employeeRouter = express.Router();
 
 employeeRouter.use(protectHR);
 
 employeeRouter.post("/", createEmployee);
+employeeRouter.get("/", allowPage("employee"), getEmployees);
 employeeRouter.get("/", getPaginatedEmployees);
 employeeRouter.get("/all", getEmployees);
 employeeRouter.get("/:id", getEmployee);

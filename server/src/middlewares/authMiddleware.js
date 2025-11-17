@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken";
 import userModel from "../models/user.js";
 
-// Protect routes: Bearer token only
 export const protectHR = async (req, res, next) => {
   let token;
 
@@ -10,23 +9,22 @@ export const protectHR = async (req, res, next) => {
   }
 
   if (!token) {
-    return res
-      .status(401)
-      .json({ success: false, message: "Not authorized, no token" });
+    return res.status(401).json({ success: false, message: "Not authorized, no token" });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  
-    const user = await userModel.findById(decoded.userId);
+    const user = await userModel.findById(decoded.userId).populate("role");
 
-    if (!user) {
-      return res
-        .status(401)
-        .json({ success: false, message: "User not found" });
-    }
+    if (!user) return res.status(401).json({ success: false, message: "User not found" });
 
-    req.user = { id: user._id };
+    req.user = {
+      id: user._id,
+      role: user.role,
+      isSuperAdmin: user.isSuperAdmin,
+    };
+    req.userPermissions = user.permissions;
+
     next();
   } catch (error) {
     console.error("JWT Error:", error);
